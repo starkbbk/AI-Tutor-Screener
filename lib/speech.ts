@@ -75,8 +75,9 @@ export function startListening(
   isSilenceTimeoutReached = false;
   lastProgressTime = Date.now();
 
-  const SILENCE_TIMEOUT = 5000;
-  const MAX_RECORDING_TIME = 3600000; // 1 hour (Increased from 2 mins to handle long silences)
+  const SPEAKING_SILENCE_TIMEOUT = 5000;
+  const IDLE_SILENCE_TIMEOUT = 12000; // 12 seconds if haven't started talking yet
+  const MAX_RECORDING_TIME = 3600000; // 1 hour
 
   let watchdogTimer: NodeJS.Timeout | null = null;
   const WATCHDOG_TIMEOUT = 6000; // 6 seconds of absolute silence (no results) forces restart
@@ -85,8 +86,6 @@ export function startListening(
     const SpeechRecognitionConstructor = window.SpeechRecognition || window.webkitSpeechRecognition;
     const newRecognition = new SpeechRecognitionConstructor();
     
-    // THE FIX: Disable native continuous mode in favor of our more robust manual restart loop.
-    // Safari and mobile browsers deliver data much more reliably in non-continuous mode.
     newRecognition.continuous = false; 
     newRecognition.interimResults = true;
     newRecognition.lang = 'en-US';
@@ -105,37 +104,41 @@ export function startListening(
 
     const resetSilenceTimeout = () => {
       if (silenceTimeout) clearTimeout(silenceTimeout);
+      
+      // THE FIX: Switch between a short timeout (finished talking) 
+      // and a long timeout (just thinking)
+      const timeoutDuration = accumulatedTranscript.trim().length > 0 
+        ? SPEAKING_SILENCE_TIMEOUT 
+        : IDLE_SILENCE_TIMEOUT;
+
       silenceTimeout = setTimeout(() => {
-        console.log("Silence timeout reached");
+        console.log("Silence timeout reached. Transcript empty:", !accumulatedTranscript.trim());
         isSilenceTimeoutReached = true;
         stopListening();
-      }, SILENCE_TIMEOUT);
+      }, timeoutDuration);
     };
 
     const resetWatchdogTimer = () => {
       if (watchdogTimer) clearTimeout(watchdogTimer);
       watchdogTimer = setTimeout(() => {
         if (!isManualStop && !isSilenceTimeoutReached) {
-          console.warn("Watchdog: No results detected for 6s. Reconnecting mic...");
-          newRecognition.stop(); // This will trigger onend and our manual auto-restart
+          console.warn("Watchdog: Reconnecting mic...");
+          newRecognition.stop(); 
         }
       }, WATCHDOG_TIMEOUT);
     };
 
     newRecognition.onsoundstart = () => {
-       console.log("Sound detected by hardware");
-       resetWatchdogTimer(); // Mic is definitely hearing something
+       resetWatchdogTimer(); 
     };
 
     newRecognition.onresult = (event: SpeechRecognitionEvent) => {
-      resetSilenceTimeout();
       resetWatchdogTimer();
       lastProgressTime = Date.now();
 
       let interimTranscript = '';
       let currentFinalTranscript = '';
 
-      // Standard result extraction
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const result = event.results[i];
         if (result.isFinal) {
@@ -148,6 +151,11 @@ export function startListening(
       const fullFinal = (accumulatedTranscript + " " + currentFinalTranscript).trim();
       const fullInterim = (fullFinal + " " + interimTranscript).trim();
 
+      if (currentFinalTranscript || interimTranscript) {
+        // We received actual words, so we can now use the shorter 5s finished-talking timeout
+        resetSilenceTimeout();
+      }
+
       if (currentFinalTranscript) {
         accumulatedTranscript = fullFinal;
         onResult({ transcript: accumulatedTranscript, isFinal: true });
@@ -158,11 +166,7 @@ export function startListening(
 
     newRecognition.onerror = (event: any) => {
       if (event.error === 'aborted') return;
-
-      if (event.error === 'no-speech' && !isManualStop && !isSilenceTimeoutReached) {
-        // no-speech on non-continuous mode is normal, it just means the browser timed out
-        return; 
-      }
+      if (event.error === 'no-speech' && !isManualStop && !isSilenceTimeoutReached) return; 
 
       console.error('Speech Recognition Error:', event.error);
       if (isManualStop || isSilenceTimeoutReached) {
@@ -176,18 +180,26 @@ export function startListening(
     };
 
     newRecognition.onend = () => {
-      console.log("Speech session ended. Restarting if needed...");
       if (watchdogTimer) clearTimeout(watchdogTimer);
       
-      if (!isManualStop && !isSilenceTimeoutReached) {
+      const hasContent = accumulatedTranscript.trim().length > 0;
+      
+      // IMPROVED RESTART LOGIC:
+      // If it wasn't a manual stop AND (it wasn't a silence timeout OR we have no words yet)
+      // we should keep the loop going.
+      if (!isManualStop && (!isSilenceTimeoutReached || !hasContent)) {
         setTimeout(() => {
-          if (!isManualStop && !isSilenceTimeoutReached) {
+          if (!isManualStop && (!isSilenceTimeoutReached || !hasContent)) {
+            // Reset silence timeout flag if we are auto-restarting due to empty silence
+            if (!hasContent) isSilenceTimeoutReached = false;
+            
             const instance = initRecognition();
             recognition = instance;
             try {
               instance.start();
             } catch (e) {
               console.error("Failed to start mic instance:", e);
+              onEnd(accumulatedTranscript);
             }
           }
         }, 100);
