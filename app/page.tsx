@@ -15,7 +15,7 @@ export default function LandingPage() {
   }, [reset])
 
   return (
-    <div className="min-h-screen flex flex-col bg-brand-black cuemath-grid selection:bg-brand-amber selection:text-brand-black">
+    <div className="min-h-screen flex flex-col bg-background cuemath-grid selection:bg-brand-amber selection:text-foreground">
       <main className="flex-1 flex flex-col items-center justify-center p-6 sm:p-10 w-full max-w-7xl mx-auto py-20 relative">
         {/* Abstract background glows */}
         <div className="absolute top-[10%] left-[10%] w-[30%] h-[30%] bg-brand-amber/5 rounded-full blur-[120px] pointer-events-none" />

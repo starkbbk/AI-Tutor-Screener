@@ -76,18 +76,24 @@ export function startListening(
   };
 
   newRecognition.onerror = (event: any) => {
+    // Softly ignore 'aborted' errors as they are often benign 
+    // (e.g., stopping programmatically, navigating away, fast tapping)
+    if (event.error === 'aborted') {
+      console.log('Speech Recognition aborted cleanly.');
+      return;
+    }
+
     const errorMap: Record<string, string> = {
       'no-speech': "I didn't catch that. Could you try again?",
-      'audio-capture': 'No microphone found. Please check your audio settings and try again.',
-      'not-allowed': 'Microphone access denied. Please click the Lock icon in the address bar to allow permissions.',
-      'network': 'Network error! This often happens due to a slow connection or a firewall blocking speech services. Please refresh the page or try a different network.',
-      'aborted': 'The microphone was disconnected. Click to try again.',
+      'audio-capture': 'No microphone found. Please check your audio settings.',
+      'not-allowed': 'Microphone access denied. Please allow permissions.',
+      'network': 'Network error! This often happens due to a slow connection.',
     };
     
     // Log for debugging
     console.error('Speech Recognition Error:', event.error);
     
-    onError(errorMap[event.error] || `Mic Error (${event.error}). Please check permissions and try again.`);
+    onError(errorMap[event.error] || `Mic Error (${event.error}). Please try again.`);
   };
 
 

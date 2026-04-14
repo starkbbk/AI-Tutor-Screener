@@ -17,18 +17,21 @@ export async function POST(request: NextRequest) {
     if (!message && history.length === 0) {
       // Initial greeting
       const model = getChatModel();
-      const chat = model.startChat({
-        history: [],
-        systemInstruction: AI_SYSTEM_PROMPT,
-      });
+      
+      const response = await withRetry(async () => {
+        const chat = model.startChat({
+          history: [],
+        });
 
-      const result = await chat.sendMessage(
-        `The candidate's name is ${candidateName}. Start the interview with a warm greeting and ask question 1.`
-      );
-      const response = result.response.text();
+        const result = await chat.sendMessage(
+          `The candidate's name is ${candidateName}. Start the interview with a warm greeting and ask question 1.`
+        );
+        return result.response.text();
+      });
 
       return NextResponse.json({ response });
     }
+
 
     const model = getChatModel();
 
