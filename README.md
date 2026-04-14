@@ -16,9 +16,6 @@ An intelligent, voice-first screening platform built for **Cuemath**. This appli
 
 ## 📸 Core Experience
 
-### 🎨 Modern Landing Page
-A premium entrance tailored to the Cuemath brand identity.
-![Landing Page](public/screenshots/landing.png)
 
 ### 🎙️ Pre-Session Mic Test
 Ensuring hardware readiness with a simple, intuitive audio check.
@@ -28,9 +25,6 @@ Ensuring hardware readiness with a simple, intuitive audio check.
 The heart of the experience—conducting structured 1:1 screening sessions.
 ![Interview Room](public/screenshots/interview.png)
 
-### 📄 Assessment Reports
-Detailed evaluations generated automatically after every session.
-![Assessment Report](public/screenshots/report.png)
 
 ---
 
