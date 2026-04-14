@@ -38,7 +38,7 @@ The heart of the experience—conducting structured 1:1 screening sessions.
 - **Styling**: Vanilla CSS + Tailwind for layout
 - **AI Engine**: Groq (Llama-3.3-70b)
 - **State Management**: React Context + Hooks
-- **PDF Generation**: html2canvas + jsPDF
+- **PDF Generation**: html2canvas-pro + jsPDF (with robust Print fallback)
 
 ---
 
