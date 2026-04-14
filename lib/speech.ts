@@ -40,6 +40,25 @@ export function isSpeechSynthesisSupported(): boolean {
   return !!window.speechSynthesis;
 }
 
+export function unlockMic(): void {
+  if (!isSpeechRecognitionSupported()) return;
+  
+  try {
+    const SpeechRecognitionConstructor = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const tempRecog = new SpeechRecognitionConstructor();
+    tempRecog.onstart = () => {
+      tempRecog.stop();
+      console.log("Mic unlocked successfully");
+    };
+    tempRecog.onerror = () => {
+      // Ignore errors during unlock
+    };
+    tempRecog.start();
+  } catch (e) {
+    console.warn("Failed to unlock mic:", e);
+  }
+}
+
 export function startListening(
   onResult: SpeechCallback,
   onEnd: EndCallback,

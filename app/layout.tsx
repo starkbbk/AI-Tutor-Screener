@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Lexend } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
@@ -14,6 +14,13 @@ export const metadata: Metadata = {
   title: "Cuemath Tutor Screening | AI-Powered Interview",
   description: "Complete your Cuemath tutor screening interview in under 10 minutes. Our AI interviewer will guide you through a friendly, voice-based conversation to assess your teaching potential.",
   keywords: ["Cuemath", "tutor screening", "AI interview", "teaching assessment"],
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default function RootLayout({

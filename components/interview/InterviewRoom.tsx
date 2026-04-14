@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input"
 import { ThemeToggle } from "@/components/ui/theme-toggle"
 import { formatTime } from "@/lib/utils"
 import { TOTAL_QUESTIONS } from "@/lib/constants"
-import { speak, startListening, stopListening, stopSpeaking, SpeechRecognitionResult, preloadVoices } from "@/lib/speech"
+import { speak, startListening, stopListening, stopSpeaking, SpeechRecognitionResult, preloadVoices, unlockMic } from "@/lib/speech"
 
 export function InterviewRoom() {
   const router = useRouter()
@@ -415,7 +415,10 @@ export function InterviewRoom() {
               </div>
               
               <Button 
-                onClick={() => setHasStarted(true)}
+                onClick={() => {
+                  unlockMic();
+                  setHasStarted(true);
+                }}
                 className="w-full h-14 sm:h-16 rounded-2xl sm:rounded-[1.2rem] font-black tracking-widest uppercase amber-button shadow-2xl shadow-brand-amber/20 text-sm sm:text-base group"
               >
                 Begin Interview 
@@ -490,7 +493,7 @@ export function InterviewRoom() {
                 value={textInput}
                 onChange={(e) => setTextInput(e.target.value)}
                 placeholder="Type your response..."
-                className="flex-1 bg-background border-border h-12 sm:h-16 rounded-xl sm:rounded-[1.5rem] text-sm sm:text-lg px-4 sm:px-8 focus:ring-2 focus:ring-brand-amber/30 transition-all font-light"
+                className="flex-1 bg-background border-border h-12 sm:h-16 rounded-xl sm:rounded-[1.5rem] text-base sm:text-lg px-4 sm:px-8 focus:ring-2 focus:ring-brand-amber/30 transition-all font-light"
                 disabled={state.isProcessing || state.isAISpeaking}
               />
               <Button 
