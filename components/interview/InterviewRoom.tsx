@@ -283,15 +283,15 @@ export function InterviewRoom() {
           </div>
         )}
 
-        {/* Action Buttons overlay */}
-        <div className="absolute bottom-10 left-12 right-12 flex justify-between pointer-events-none">
+        {/* Action Buttons row integrated into flex layout */}
+        <div className="flex justify-between items-center mt-10 w-full max-w-3xl mx-auto border-t border-border/40 pt-8">
           <Button 
             variant="ghost" 
             size="sm" 
             onClick={handleEndEarly} 
-            className="text-muted-foreground/60 hover:text-red-500 hover:bg-red-500/10 rounded-xl pointer-events-auto transition-all text-[10px] font-bold uppercase tracking-widest px-4"
+            className="text-muted-foreground/40 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all text-[10px] font-black uppercase tracking-[0.2em] px-4"
           >
-            <XCircle className="w-4 h-4 mr-2" /> Exit Session
+            <XCircle className="w-4 h-4 mr-2.5" /> Exit Session
           </Button>
           
           <Button 
@@ -299,13 +299,14 @@ export function InterviewRoom() {
             size="sm" 
             onClick={handleSkipQuestion} 
             disabled={state.isProcessing || state.isRecording}
-            className="text-muted-foreground/60 hover:text-foreground hover:bg-muted rounded-xl pointer-events-auto transition-all text-[10px] font-bold uppercase tracking-widest px-4"
+            className="text-muted-foreground/40 hover:text-foreground hover:bg-muted rounded-xl transition-all text-[10px] font-black uppercase tracking-[0.2em] px-4"
           >
-            Skip Question <SkipForward className="w-4 h-4 ml-2" />
+            Skip Question <SkipForward className="w-4 h-4 ml-2.5" />
           </Button>
         </div>
       </div>
     </div>
+
   )
 }
 
