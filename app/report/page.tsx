@@ -12,6 +12,7 @@ import { RecommendationBadge } from "@/components/report/RecommendationBadge"
 import { DimensionCard } from "@/components/report/DimensionCard"
 import { StrengthsCard } from "@/components/report/StrengthsCard"
 import { TranscriptAccordion } from "@/components/report/TranscriptAccordion"
+import { ThemeToggle } from "@/components/ui/theme-toggle"
 import { formatDuration, formatDate, generatePDF } from "@/lib/utils"
 import { DIMENSION_LABELS, DIMENSION_ICONS } from "@/lib/constants"
 import { AssessmentResult } from "@/lib/types"
@@ -143,9 +144,12 @@ export default function ReportPage() {
           <div className="p-12 border-b border-border bg-muted/30">
             <div className="flex flex-col md:flex-row justify-between items-center md:items-start space-y-8 md:space-y-0 mb-12">
               <Image src="/cuemath-logo.svg" alt="Cuemath" width={200} height={60} className="dark:brightness-0 dark:invert" />
-              <div className="text-center md:text-right">
-                <h1 className="text-4xl font-black text-foreground tracking-tighter uppercase">Coach Result</h1>
-                <p className="text-brand-amber text-xs font-black tracking-[0.3em] uppercase mt-2 opacity-80">PRO Assessment Engine</p>
+              <div className="text-center md:text-right flex flex-col items-center md:items-end space-y-4">
+                <ThemeToggle />
+                <div>
+                  <h1 className="text-4xl font-black text-foreground tracking-tighter uppercase">Coach Result</h1>
+                  <p className="text-brand-amber text-xs font-black tracking-[0.3em] uppercase mt-2 opacity-80">PRO Assessment Engine</p>
+                </div>
               </div>
             </div>
             
