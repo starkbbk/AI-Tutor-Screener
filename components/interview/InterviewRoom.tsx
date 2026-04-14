@@ -41,7 +41,7 @@ export function InterviewRoom() {
     if (isFirstRender.current && state.conversationHistory.length === 0 && !greetingSentRef.current) {
       greetingSentRef.current = true
       isFirstRender.current = false
-      startChatWithGemini()
+      startChatWithAI()
     }
   }, [state.candidate?.name, state.conversationHistory.length])
   
@@ -49,8 +49,13 @@ export function InterviewRoom() {
     preloadVoices()
   }, [])
 
-  const startChatWithGemini = async (userMessage?: string) => {
-    if (state.isProcessing) return; // Prevent double calls
+  const startChatWithAI = async (userMessage?: string) => {
+    if (state.isProcessing && !userMessage?.includes("__RETRY__")) return; 
+    
+    // If it's a retry, we don't want to block ourselves
+    const isRetry = userMessage?.includes("__RETRY__");
+    const actualMessage = isRetry ? userMessage?.replace("__RETRY__", "") : userMessage;
+
     try {
       setProcessing(true)
       
@@ -58,7 +63,7 @@ export function InterviewRoom() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          message: userMessage || "",
+          message: actualMessage || "",
           history: state.conversationHistory,
           candidateName: state.candidate?.name
         }),
@@ -74,9 +79,7 @@ export function InterviewRoom() {
       if (data.questionNumber) {
         if (data.questionNumber === 'DONE') {
           finishInterview();
-          // We still want to display and play the last message
         } else {
-          // Question 1 = Index 0
           setQuestionIndex(Math.min(data.questionNumber - 1, TOTAL_QUESTIONS - 1))
         }
       }
@@ -90,19 +93,18 @@ export function InterviewRoom() {
       playAIResponse(data.response)
       
     } catch (error: any) {
-      console.error('[INTERVIEW ROOM] Exception in startChatWithGemini:', error)
-      setProcessing(false)
+      console.warn('[INTERVIEW ROOM] Chat error. Auto-retrying in 5 seconds...', error.message)
       
-      // Show actual error message to help debugging
-      const errorMsg = `API Error: ${error.message || 'Unknown error'}`
+      // Keep processing state active
+      setProcessing(true)
       
-      addMessage({
-        role: "ai",
-        content: errorMsg,
-        timestamp: new Date().toISOString()
-      })
+      // Temporary "friendly message" in logs/UI if needed
+      // We don't want to permanently add an error message to history if we're retrying
+      // Instead, we wait and try again.
       
-      playAIResponse(errorMsg)
+      setTimeout(() => {
+        startChatWithAI((actualMessage || "") + "__RETRY__")
+      }, 5000)
     }
   }
 
@@ -234,7 +236,7 @@ export function InterviewRoom() {
       timestamp: new Date().toISOString()
     })
     
-    startChatWithGemini(transcript)
+    startChatWithAI(transcript)
   }
 
   const handleTextSubmit = (e: React.FormEvent) => {
@@ -255,7 +257,7 @@ export function InterviewRoom() {
       timestamp: new Date().toISOString()
     })
     
-    startChatWithGemini(text)
+    startChatWithAI(text)
   }
 
   const handleSkipQuestion = () => {
@@ -274,7 +276,7 @@ export function InterviewRoom() {
       content: "[Candidate skipped the question]",
       timestamp: new Date().toISOString()
     })
-    startChatWithGemini("I'd like to skip this question. Please ask the next one.")
+    startChatWithAI("I'd like to skip this question. Please ask the next one.")
   }
 
   const handleEndEarly = () => {
