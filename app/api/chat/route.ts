@@ -3,9 +3,12 @@ import { getChatModel } from '@/lib/gemini';
 import { AI_SYSTEM_PROMPT } from '@/lib/constants';
 import { withRetry } from '@/lib/retry';
 
+let globalRequestCount = 0;
+
 export async function POST(request: NextRequest) {
   let requestData;
-  console.log('[CHAT API] Received a new POST request');
+  globalRequestCount++;
+  console.log(`[CHAT API] Received a new POST request. (Total Server Requests: ${globalRequestCount})`);
   try {
     requestData = await request.json();
     console.log('[CHAT API] Request data successfully parsed:', JSON.stringify({ ...requestData, history: requestData.history?.length + ' items' }));
@@ -17,34 +20,17 @@ export async function POST(request: NextRequest) {
   const { message, history, candidateName } = requestData;
 
   try {
-    if (!process.env.GOOGLE_GEMINI_API_KEY) {
-      console.error('[CHAT API] Critical Error: GOOGLE_GEMINI_API_KEY is definitely missing or undefined!');
-    } else {
-      console.log('[CHAT API] GOOGLE_GEMINI_API_KEY is present.');
-    }
+    console.log("API Key loaded:", process.env.GOOGLE_GEMINI_API_KEY ? "YES" : "NO");
 
     if (!message && history.length === 0) {
-      // Initial greeting
-      console.log('[CHAT API] No prior history, treating this as the Initial Greeting.');
-      const model = getChatModel();
-      console.log('[CHAT API] Chat Model initialized successfully.');
+      // Initial greeting - CACHED TO SAVE API LIMITS!
+      console.log('[CHAT API] No prior history. Returning CACHED Initial Greeting to save API Limits!');
       
-      const response = await withRetry(async () => {
-        console.log('[CHAT API] Attempting to start chat and send initial instruction...');
-        const chat = model.startChat({
-          history: [],
-        });
-
-        const prompt = `The candidate's name is ${candidateName || 'Unknown'}. Start the interview with a warm greeting and ask question 1.`;
-        console.log('[CHAT API] Sending prompt:', prompt);
-        
-        const result = await chat.sendMessage(prompt);
-        console.log('[CHAT API] Received result from Gemini successfully.');
-        return result.response.text();
-      });
-
-      console.log('[CHAT API] Final Greeting resolved to:', response);
-      return NextResponse.json({ response });
+      const safeName = candidateName || 'there';
+      const cachedGreeting = `Hi ${safeName}! Welcome to the Cuemath tutor screening. Before we dive into the math, could you tell me a little bit about yourself and why you want to join our community of coaches?`;
+      
+      console.log('[CHAT API] Final CACHED Greeting resolved to:', cachedGreeting);
+      return NextResponse.json({ response: cachedGreeting });
     }
 
     console.log('[CHAT API] Processing standard turn with', history.length, 'history items.');
@@ -96,18 +82,30 @@ export async function POST(request: NextRequest) {
 
       const result = await chat.sendMessage(finalMessage || "Continue");
       return result.response.text();
-    });
+    }, { maxRetries: 2, initialDelay: 2000, factor: 1 }); // 2 second delay on retries
 
     return NextResponse.json({ response });
   } catch (error: any) {
-    console.error('Chat API error:', error);
+    console.error('------- GEMINI API ERROR -------');
+    console.error('Error Details:', error);
     
-    if (error?.status === 429 || error?.message?.includes('429')) {
+    const status = error?.status || error?.response?.status;
+    const errorMessage = error?.message || '';
+
+    if (status === 404 || errorMessage.includes('404')) {
+      console.error('🚨 404 ERROR: Wrong model name! The requested Gemini model does not exist or is not available for this tier.');
+    } else if (status === 401 || errorMessage.includes('401') || errorMessage.includes('API key not valid')) {
+      console.error('🚨 401 ERROR: Wrong API key! Your GOOGLE_GEMINI_API_KEY is invalid.');
+    } else if (status === 429 || errorMessage.includes('429') || errorMessage.includes('Too Many Requests')) {
+      console.error('🚨 429 ERROR: Rate limit reached! Retries exhausted after multiple 2-second waits.');
       return NextResponse.json(
         { error: 'Too many requests. Please wait a moment and try again.' },
         { status: 429 }
       );
+    } else {
+      console.error('🚨 UNKNOWN ERROR:', errorMessage);
     }
+    console.error('---------------------------------');
 
     return NextResponse.json(
       { error: 'Something went wrong. Please try again.' },

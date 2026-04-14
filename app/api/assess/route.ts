@@ -40,7 +40,7 @@ Generate the assessment JSON now.`;
         contents: [{ role: 'user', parts: [{ text: prompt }] }]
       });
       return result.response.text();
-    });
+    }, { maxRetries: 2, initialDelay: 2000, factor: 1 }); // 2 second delay on retries
 
     // Parse JSON from response (handle potential markdown code blocks)
     let jsonStr = responseText;
@@ -53,14 +53,26 @@ Generate the assessment JSON now.`;
 
     return NextResponse.json({ assessment });
   } catch (error: any) {
-    console.error('Assessment API error:', error);
+    console.error('------- GEMINI ASSESS API ERROR -------');
+    console.error('Error Details:', error);
+    
+    const status = error?.status || error?.response?.status;
+    const errorMessage = error?.message || '';
 
-    if (error?.status === 429 || error?.message?.includes('429')) {
+    if (status === 404 || errorMessage.includes('404')) {
+      console.error('🚨 404 ERROR: Wrong model name! The requested Gemini model does not exist or is not available for this tier.');
+    } else if (status === 401 || errorMessage.includes('401') || errorMessage.includes('API key not valid')) {
+      console.error('🚨 401 ERROR: Wrong API key! Your GOOGLE_GEMINI_API_KEY is invalid.');
+    } else if (status === 429 || errorMessage.includes('429') || errorMessage.includes('Too Many Requests')) {
+      console.error('🚨 429 ERROR: Rate limit reached! Retries exhausted after multiple waits.');
       return NextResponse.json(
         { error: 'Rate limited. Please try again.' },
         { status: 429 }
       );
+    } else {
+      console.error('🚨 UNKNOWN ERROR:', errorMessage);
     }
+    console.error('----------------------------------------');
 
     return NextResponse.json(
       { error: 'Failed to generate assessment. Please try again.' },
