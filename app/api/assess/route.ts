@@ -3,9 +3,16 @@ import { getAssessmentModel } from '@/lib/gemini';
 import { ASSESSMENT_SYSTEM_PROMPT } from '@/lib/constants';
 
 export async function POST(request: NextRequest) {
+  let requestData;
   try {
-    const { transcript, candidateName, duration } = await request.json();
+    requestData = await request.json();
+  } catch (e) {
+    return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
+  }
 
+  const { transcript, candidateName, duration } = requestData;
+
+  try {
     const model = getAssessmentModel();
 
     // Format transcript for assessment
@@ -51,7 +58,6 @@ Generate the assessment JSON now.`;
     if (error instanceof Error && 'status' in error && (error as { status: number }).status === 429) {
       await new Promise(resolve => setTimeout(resolve, 2000));
       try {
-        const { transcript, candidateName, duration } = await request.json();
         const model = getAssessmentModel();
         const formattedTranscript = transcript
           .map((msg: { role: string; content: string }) =>
