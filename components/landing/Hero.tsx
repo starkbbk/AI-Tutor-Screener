@@ -19,7 +19,7 @@ export function Hero() {
         Shape the <span className="text-brand-amber">Future</span> of Math
       </h1>
       <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto font-light leading-relaxed">
-        Join our elite community of Math coaches. Complete your AI-powered screening in <span className="font-semibold text-brand-navy dark:text-white">10 minutes</span>.
+        Join our elite community of Math coaches. Complete your AI-powered screening in <span className="font-semibold text-green-600 dark:text-green-400">10 minutes</span>.
       </p>
 
     </div>

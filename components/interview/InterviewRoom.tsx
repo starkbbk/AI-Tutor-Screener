@@ -243,7 +243,7 @@ export function InterviewRoom() {
       </div>
 
       {/* Bottom Controls */}
-      <div className="p-10 bg-muted/30 backdrop-blur-2xl border-t border-border relative z-20">
+      <div className="px-10 py-6 bg-muted/30 backdrop-blur-2xl border-t border-border relative z-20">
         
         {state.useFallbackMode ? (
           <form onSubmit={handleTextSubmit} className="flex space-x-4 max-w-3xl mx-auto">
@@ -270,7 +270,7 @@ export function InterviewRoom() {
               disabled={state.isAISpeaking}
               onClick={handleMicToggle}
             />
-            <div className="mt-8 text-[11px] font-black tracking-[0.3em] uppercase text-muted-foreground/60 h-6">
+            <div className="mt-4 text-[11px] font-black tracking-[0.3em] uppercase text-muted-foreground/60 h-6">
               {state.isRecording ? (
                 <span className="text-red-500 flex items-center">
                   <span className="w-2.5 h-2.5 rounded-full bg-red-500 mr-2.5 animate-pulse" />
@@ -284,7 +284,7 @@ export function InterviewRoom() {
         )}
 
         {/* Action Buttons row integrated into flex layout */}
-        <div className="flex justify-between items-center mt-10 w-full max-w-3xl mx-auto border-t border-border/40 pt-8">
+        <div className="flex justify-between items-center mt-6 w-full max-w-3xl mx-auto border-t border-border/40 pt-4">
           <Button 
             variant="ghost" 
             size="sm" 

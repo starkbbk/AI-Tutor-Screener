@@ -21,14 +21,14 @@ export function VoiceAvatar() {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center my-10 h-64">
+    <div className="flex flex-col items-center justify-center my-4 h-40">
       <div className="relative flex items-center justify-center">
         {/* Pulsing rings */}
-        <div className={`absolute w-40 h-40 rounded-full ${pulsingClass} opacity-20 blur-2xl transition-all duration-700`} />
-        <div className={`absolute w-36 h-36 rounded-full border border-border transition-all duration-300`} />
+        <div className={`absolute w-28 h-28 rounded-full ${pulsingClass} opacity-20 blur-xl transition-all duration-700`} />
+        <div className={`absolute w-24 h-24 rounded-full border border-border transition-all duration-300`} />
         
         {/* Core circle */}
-        <div className={`w-40 h-40 rounded-full ${stateClass} flex items-center justify-center relative z-10 transition-all duration-500 shadow-2xl border-4 border-background/20`}>
+        <div className={`w-28 h-28 rounded-full ${stateClass} flex items-center justify-center relative z-10 transition-all duration-500 shadow-2xl border-[3px] border-background/20`}>
           {state.isAISpeaking ? (
             <div className="flex items-center space-x-1.5 px-6 w-full justify-center">
               {[1, 2, 3, 4, 5, 6].map((i) => (
@@ -38,13 +38,13 @@ export function VoiceAvatar() {
           ) : state.isRecording ? (
             <div className="flex items-end justify-center space-x-1.5 h-10 px-4">
               {[1, 2, 3, 4, 5].map(i => (
-                <div key={i} className={`w-5 h-5 rounded-full bg-foreground/80 wave-bar`} style={{ animationDuration: '0.6s' }} />
+                <div key={i} className={`w-4 h-4 rounded-full bg-foreground/80 wave-bar`} style={{ animationDuration: '0.6s' }} />
               ))}
             </div>
           ) : state.isProcessing ? (
-            <Loader2 className="w-14 h-14 text-brand-navy dark:text-brand-black animate-spin" />
+            <Loader2 className="w-10 h-10 text-brand-navy dark:text-brand-black animate-spin" />
           ) : (
-            <div className="w-16 h-16 rounded-full bg-muted border border-border animate-pulse shadow-inner" />
+            <div className="w-12 h-12 rounded-full bg-muted border border-border animate-pulse shadow-inner" />
           )}
         </div>
       </div>

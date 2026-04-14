@@ -16,9 +16,9 @@ export function MicButton({ isRecording, isProcessing, disabled, onClick }: MicB
       <Button 
         size="icon" 
         disabled
-        className="w-28 h-28 rounded-full bg-muted/50 border border-border text-brand-amber shadow-inner"
+        className="w-20 h-20 rounded-full bg-muted/50 border border-border text-brand-amber shadow-inner"
       >
-        <Loader2 className="w-12 h-12 animate-spin" />
+        <Loader2 className="w-8 h-8 animate-spin" />
       </Button>
     )
   }
@@ -29,7 +29,7 @@ export function MicButton({ isRecording, isProcessing, disabled, onClick }: MicB
       disabled={disabled}
       size="icon"
       className={`
-        w-28 h-28 rounded-full shadow-2xl transition-all duration-500 transform active:scale-95
+        w-20 h-20 rounded-full shadow-2xl transition-all duration-500 transform active:scale-95
         ${isRecording 
           ? 'bg-brand-cyan text-brand-navy dark:text-brand-black pulse-blue scale-110 shadow-cyan-500/20' 
           : 'bg-brand-amber text-brand-navy dark:text-brand-black hover:bg-brand-amber/90 hover:scale-105 shadow-brand-amber/20 amber-button'}
@@ -37,9 +37,9 @@ export function MicButton({ isRecording, isProcessing, disabled, onClick }: MicB
       `}
     >
       {isRecording ? (
-        <Square className="w-12 h-12 fill-current" />
+        <Square className="w-8 h-8 fill-current" />
       ) : (
-        <Mic className="w-14 h-14" />
+        <Mic className="w-10 h-10" />
       )}
     </Button>
   )
