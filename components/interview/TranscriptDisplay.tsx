@@ -14,19 +14,19 @@ export function TranscriptDisplay({ messages }: { messages: ConversationMessage[
           key={idx} 
           className={`flex flex-col ${msg.role === 'candidate' ? 'items-end' : 'items-start'} animate-in fade-in slide-in-from-bottom-4 duration-500`}
         >
-          <div className={`flex items-center mb-2 px-2 space-x-2 text-[10px] font-black tracking-[0.15em] uppercase ${msg.role === 'ai' ? 'text-brand-cyan/60' : 'text-brand-amber/60'}`}>
+          <div className={`flex items-center mb-3 px-3 space-x-2 text-[10px] font-black tracking-[0.2em] uppercase ${msg.role === 'ai' ? 'text-brand-cyan' : 'text-brand-amber'}`}>
             {msg.role === 'ai' ? (
-              <><Bot className="w-3.5 h-3.5" /> <span>AI Coach</span></>
+              <><Bot className="w-3.5 h-3.5" /> <span>AI Intelligence</span></>
             ) : (
-              <><span>You</span> <UserCircle className="w-3.5 h-3.5" /></>
+              <><span>Respondent</span> <UserCircle className="w-3.5 h-3.5" /></>
             )}
           </div>
           <div 
             className={`
-              inline-block max-w-[90%] px-6 py-4 rounded-3xl text-[16px] leading-relaxed shadow-2xl backdrop-blur-xl ring-1
+              inline-block max-w-[85%] px-8 py-5 rounded-[2rem] text-[17px] leading-relaxed shadow-xl relative
               ${msg.role === 'ai' 
-                ? 'bg-white/5 border-white/10 text-white rounded-tl-none ring-white/5' 
-                : 'bg-brand-amber text-brand-black font-medium rounded-tr-none ring-brand-amber/20'
+                ? 'bg-card border border-border text-foreground rounded-tl-none' 
+                : 'bg-brand-amber text-brand-navy font-bold rounded-tr-none shadow-brand-amber/10'
               }
             `}
           >
@@ -37,6 +37,7 @@ export function TranscriptDisplay({ messages }: { messages: ConversationMessage[
             )}
           </div>
         </div>
+
       ))}
     </div>
 

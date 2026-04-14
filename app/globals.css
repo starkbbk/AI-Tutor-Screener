@@ -1,10 +1,34 @@
 @import "tailwindcss";
 
 :root {
+  --background: 0 0% 100%;
+  --foreground: 222 47% 11%;
+  
   --brand-amber: #FFB800;
   --brand-navy: #002147;
   --brand-black: #0B0B0F;
   --brand-cyan: #00D1FF;
+  
+  --card: 0 0% 100%;
+  --card-foreground: 222 47% 11%;
+  
+  --border: 214 32% 91%;
+  --grid-color: rgba(0, 33, 71, 0.05); /* Navy grid for light mode */
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(0, 33, 71, 0.1);
+}
+
+.dark {
+  --background: 240 10% 4%;
+  --foreground: 0 0% 100%;
+  
+  --card: 240 10% 4%;
+  --card-foreground: 0 0% 100%;
+  
+  --border: 240 5% 15%;
+  --grid-color: rgba(255, 255, 255, 0.03); /* White grid for dark mode */
+  --glass-bg: rgba(255, 255, 255, 0.03);
+  --glass-border: rgba(255, 255, 255, 0.1);
 }
 
 @theme {
@@ -13,18 +37,13 @@
   --color-brand-black: #0B0B0F;
   --color-brand-cyan: #00D1FF;
   
-  --color-cuemath-primary: #FFB800;
-  --color-cuemath-navy: #002147;
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
   
-  --color-success: #10B981;
-  --color-warning: #F59E0B;
-  --color-error: #EF4444;
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
   
-  --color-bg: #0B0B0F;
-  --color-card: rgba(255, 255, 255, 0.05);
-  --color-text-primary: #FFFFFF;
-  --color-text-secondary: #9CA3AF;
-  --color-border: rgba(255, 255, 255, 0.1);
+  --color-border: hsl(var(--border));
   
   --font-sans: var(--font-lexend), 'Inter', ui-sans-serif, system-ui, sans-serif;
 }
@@ -32,26 +51,26 @@
 @layer utilities {
   .cuemath-grid {
     background-image: 
-      linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+      linear-gradient(var(--grid-color) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
     background-size: 40px 40px;
   }
   
   .glass-card {
-    background: rgba(255, 255, 255, 0.03);
+    background: var(--glass-bg);
     backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--glass-border);
   }
 
   .glass-header {
-    background: rgba(11, 11, 15, 0.8);
+    background: var(--glass-bg);
     backdrop-filter: blur(8px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid var(--glass-border);
   }
 
   .amber-button {
-    background-color: #FFB800;
-    color: #0B0B0F;
+    background-color: var(--brand-amber);
+    color: var(--brand-navy);
     font-weight: 600;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
@@ -59,22 +78,15 @@
   .amber-button:hover {
     background-color: #FFC933;
     transform: translateY(-2px);
-    box-shadow: 0 10px 20px -5px rgba(255, 184, 0, 0.5);
-  }
-
-  .text-glow {
-    text-shadow: 0 0 20px rgba(255, 184, 0, 0.4);
-  }
-
-  .text-glow-cyan {
-    text-shadow: 0 0 20px rgba(0, 209, 255, 0.4);
+    box-shadow: 0 10px 20px -5px rgba(255, 184, 0, 0.3);
   }
 }
 
 @layer base {
   html, body {
-    background-color: #0B0B0F !important;
-    color: #FFFFFF !important;
+    background-color: hsl(var(--background)) !important;
+    color: hsl(var(--foreground)) !important;
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
   
   body {
@@ -84,12 +96,9 @@
   }
 }
 
-
-
-/* Pulsing animation for voice avatar */
 @keyframes pulse-blue {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.4); }
-  50% { box-shadow: 0 0 0 20px rgba(37, 99, 235, 0); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(0, 209, 255, 0.4); }
+  50% { box-shadow: 0 0 0 20px rgba(0, 209, 255, 0); }
 }
 
 @keyframes pulse-red {
@@ -98,23 +107,14 @@
 }
 
 @keyframes pulse-gentle {
-  0%, 100% { transform: scale(1); opacity: 0.6; }
-  50% { transform: scale(1.05); opacity: 1; }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 184, 0, 0.3); }
+  50% { box-shadow: 0 0 0 15px rgba(255, 184, 0, 0); }
 }
 
-.pulse-blue {
-  animation: pulse-blue 1.5s ease-in-out infinite;
-}
+.pulse-blue { animation: pulse-blue 1.5s ease-in-out infinite; }
+.pulse-red { animation: pulse-red 1.2s ease-in-out infinite; }
+.pulse-gentle { animation: pulse-gentle 2s ease-in-out infinite; }
 
-.pulse-red {
-  animation: pulse-red 1.2s ease-in-out infinite;
-}
-
-.pulse-gentle {
-  animation: pulse-gentle 2s ease-in-out infinite;
-}
-
-/* Wave animation for recording */
 @keyframes wave {
   0%, 100% { height: 8px; }
   50% { height: 24px; }
@@ -129,42 +129,31 @@
 .wave-bar:nth-child(4) { animation-delay: 0.3s; }
 .wave-bar:nth-child(5) { animation-delay: 0.15s; }
 
-/* Typewriter animation */
-@keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
-}
-
 .typewriter-cursor::after {
   content: '|';
   animation: blink 0.7s infinite;
-  color: var(--color-cuemath-primary);
+  color: var(--brand-amber);
   font-weight: 200;
 }
 
-/* Score ring animation */
-@keyframes score-fill {
-  from { stroke-dashoffset: 283; }
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
 }
 
 .score-ring-animated {
   animation: score-fill 1.5s ease-out forwards;
 }
 
-/* Smooth scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
+@keyframes score-fill {
+  from { stroke-dashoffset: 283; }
 }
 
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
   background: #D1D5DB;
   border-radius: 3px;
 }
+::-webkit-scrollbar-thumb:hover { background: #9CA3AF; }
 
-::-webkit-scrollbar-thumb:hover {
-  background: #9CA3AF;
-}

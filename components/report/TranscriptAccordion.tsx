@@ -5,33 +5,35 @@ export function TranscriptAccordion({ history }: { history: ConversationMessage[
   if (!history || history.length === 0) return null
 
   return (
-    <Accordion className="w-full bg-white rounded-xl border border-gray-200">
+    <Accordion className="w-full bg-card/60 backdrop-blur-xl rounded-[2.5rem] border border-border shadow-lg overflow-hidden">
       <AccordionItem value="transcript" className="border-none">
-        <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-gray-50 rounded-xl transition-colors">
-          <span className="font-semibold text-lg text-gray-900">Full Interview Transcript</span>
+        <AccordionTrigger className="px-10 py-6 hover:no-underline hover:bg-muted/50 transition-all group">
+          <span className="font-extrabold text-xl text-foreground tracking-tight group-hover:text-brand-amber transition-colors">
+            Full Interview Transcript
+          </span>
         </AccordionTrigger>
-        <AccordionContent className="px-6 pb-6 pt-2">
-          <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+        <AccordionContent className="px-10 pb-10 pt-4">
+          <div className="space-y-6 max-h-[600px] overflow-y-auto pr-4 custom-scrollbar">
             {history.map((msg, idx) => (
               <div 
                 key={idx}
-                className={`p-4 rounded-xl ${
+                className={`p-6 rounded-[2rem] transition-all duration-300 hover:shadow-md ${
                   msg.role === 'ai' 
-                    ? 'bg-blue-50 border border-blue-100 ml-0 mr-12' 
-                    : 'bg-gray-50 border border-gray-100 mr-0 ml-12'
+                    ? 'bg-brand-cyan/[0.03] border border-brand-cyan/20 ml-0 mr-12' 
+                    : 'bg-muted/50 border border-border mr-0 ml-12'
                 }`}
               >
-                <div className="flex items-center justify-between mb-1">
-                  <span className={`text-xs font-bold uppercase tracking-wider ${
-                    msg.role === 'ai' ? 'text-blue-700' : 'text-gray-700'
+                <div className="flex items-center justify-between mb-3">
+                  <span className={`text-[10px] font-black uppercase tracking-[0.2em] ${
+                    msg.role === 'ai' ? 'text-brand-cyan' : 'text-muted-foreground'
                   }`}>
-                    {msg.role === 'ai' ? 'AI Interviewer' : 'Candidate'}
+                    {msg.role === 'ai' ? 'AI Intelligence' : 'Candidate'}
                   </span>
-                  <span className="text-xs text-gray-400">
-                    {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                  <span className="text-[10px] text-muted-foreground opacity-60 font-black">
+                    {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </span>
                 </div>
-                <p className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
+                <p className="text-[16px] text-foreground/80 whitespace-pre-wrap leading-relaxed font-light">
                   {msg.content}
                 </p>
               </div>
@@ -40,5 +42,6 @@ export function TranscriptAccordion({ history }: { history: ConversationMessage[
         </AccordionContent>
       </AccordionItem>
     </Accordion>
+
   )
 }

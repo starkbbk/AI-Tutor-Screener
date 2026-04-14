@@ -24,24 +24,25 @@ export function InfoCards() {
 
   return (
     <div className="mt-16 w-full max-w-5xl mx-auto space-y-6">
-      <h3 className="text-center text-gray-500 font-semibold tracking-[0.2em] uppercase text-xs mb-8">
+      <h3 className="text-center text-muted-foreground font-black tracking-[0.25em] uppercase text-[10px] mb-8 opacity-60">
         Selection Journey
       </h3>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {steps.map((step, i) => (
           <div 
             key={i} 
-            className="group glass-card p-6 rounded-[2rem] transition-all duration-500 hover:bg-white/10 hover:border-white/20 hover:-translate-y-1"
+            className="group glass-card p-8 rounded-[2rem] transition-all duration-500 hover:bg-white/5 hover:-translate-y-1"
           >
-            <div className={`mb-4 w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center ${step.accent} transition-transform duration-500 group-hover:scale-110`}>
+            <div className={`mb-6 w-14 h-14 rounded-2xl bg-brand-navy/5 dark:bg-white/5 flex items-center justify-center ${step.accent.split(' ')[0]} transition-transform duration-500 group-hover:scale-110`}>
               {step.icon}
             </div>
-            <h4 className="text-xl font-bold text-white mb-2">{step.title}</h4>
-            <p className="text-sm text-gray-400 leading-relaxed">{step.description}</p>
+            <h4 className="text-2xl font-extrabold text-foreground mb-3 tracking-tight">{step.title}</h4>
+            <p className="text-base text-muted-foreground leading-relaxed font-light">{step.description}</p>
           </div>
         ))}
       </div>
     </div>
+
   )
 }
 

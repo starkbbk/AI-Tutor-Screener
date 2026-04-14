@@ -15,12 +15,13 @@ export function Hero() {
         />
       </div>
 
-      <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight text-white mb-6 leading-[1.1]">
-        Shape the <span className="text-brand-amber text-glow">Future</span> of Math
+      <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-6 leading-[1.1]">
+        Shape the <span className="text-brand-amber">Future</span> of Math
       </h1>
-      <p className="text-xl md:text-2xl text-gray-400 max-w-2xl mx-auto font-light leading-relaxed">
-        Join our elite community of Math coaches. Complete your AI-powered screening in <span className="text-white font-medium">10 minutes</span>.
+      <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto font-light leading-relaxed">
+        Join our elite community of Math coaches. Complete your AI-powered screening in <span className="font-semibold text-brand-navy dark:text-white">10 minutes</span>.
       </p>
+
     </div>
   )
 }

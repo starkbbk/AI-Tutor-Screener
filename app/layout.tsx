@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { Lexend } from "next/font/google";
-import "./globals.css";
-import { InterviewProvider } from "@/context/InterviewContext";
+import { ThemeProvider } from "@/components/theme-provider";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
+
 
 const lexend = Lexend({
   subsets: ["latin"],
@@ -20,13 +21,22 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${lexend.variable} font-sans antialiased bg-brand-black text-white`}>
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${lexend.variable} font-sans antialiased`}>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="light"
+          enableSystem={false}
+          storageKey="cuemath-theme"
+        >
+          <InterviewProvider>
+            {children}
+            <ThemeToggle />
+          </InterviewProvider>
 
-        <InterviewProvider>
-          {children}
-        </InterviewProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
 }
+

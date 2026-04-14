@@ -213,17 +213,17 @@ export function InterviewRoom() {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-120px)] max-w-5xl mx-auto glass-card rounded-[2.5rem] shadow-2xl overflow-hidden relative border-white/10 ring-1 ring-white/5">
+    <div className="flex flex-col h-[calc(100vh-140px)] max-w-5xl mx-auto glass-card rounded-[3rem] shadow-2xl overflow-hidden relative ring-1 ring-border mt-4">
       
       {/* Top Header */}
-      <div className="flex items-center justify-between p-6 glass-header z-20">
-        <Image src="/cuemath-logo.svg" alt="Cuemath" width={140} height={40} className="brightness-0 invert opacity-90" />
+      <div className="flex items-center justify-between p-8 glass-header z-20">
+        <Image src="/cuemath-logo.svg" alt="Cuemath" width={140} height={40} className="opacity-90 dark:brightness-0 dark:invert" />
         
         <div className="flex items-center space-x-6">
-          <div className="text-sm font-bold text-brand-amber bg-brand-amber/10 px-4 py-1.5 rounded-full border border-brand-amber/20">
-            Assessment • {Math.min(state.currentQuestionIndex + 1, TOTAL_QUESTIONS)} / {TOTAL_QUESTIONS}
+          <div className="text-xs font-black text-brand-amber bg-brand-amber/10 px-4 py-2 rounded-full border border-brand-amber/20 uppercase tracking-widest">
+            Session • {Math.min(state.currentQuestionIndex + 1, TOTAL_QUESTIONS)} / {TOTAL_QUESTIONS}
           </div>
-          <div className="flex items-center text-gray-300 font-mono text-sm tracking-widest bg-white/5 px-4 py-1.5 rounded-xl border border-white/10">
+          <div className="flex items-center text-muted-foreground font-mono text-sm tracking-widest bg-muted/50 px-4 py-2 rounded-xl border border-border">
             <Clock className="w-4 h-4 mr-2 text-brand-cyan" />
             {formatTime(timer)}
           </div>
@@ -231,35 +231,35 @@ export function InterviewRoom() {
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col overflow-y-auto overflow-x-hidden p-8 relative scrollbar-hide">
-        {/* Decorative glows inside room */}
-        <div className="absolute top-0 left-1/4 w-1/2 h-1/2 bg-brand-blue/5 rounded-full blur-[100px] pointer-events-none" />
+      <div className="flex-1 flex flex-col overflow-y-auto overflow-x-hidden p-10 relative scrollbar-hide">
+        {/* Decorative theme-aware glows */}
+        <div className="absolute top-0 left-1/4 w-1/2 h-1/2 bg-brand-cyan/5 dark:bg-brand-cyan/10 rounded-full blur-[120px] pointer-events-none" />
         
         <VoiceAvatar />
         <TranscriptDisplay messages={state.conversationHistory} />
         
         {/* Scroll anchor */}
-        <div className="h-4" />
+        <div className="h-6" />
       </div>
 
       {/* Bottom Controls */}
-      <div className="p-8 bg-white/5 backdrop-blur-xl border-t border-white/10 relative z-20">
+      <div className="p-10 bg-muted/30 backdrop-blur-2xl border-t border-border relative z-20">
         
         {state.useFallbackMode ? (
           <form onSubmit={handleTextSubmit} className="flex space-x-4 max-w-3xl mx-auto">
             <Input 
               value={textInput}
               onChange={(e) => setTextInput(e.target.value)}
-              placeholder="Share your thoughts..."
-              className="flex-1 bg-white/5 border-white/10 h-16 rounded-2xl text-lg focus:border-brand-amber/50"
+              placeholder="Type your response here..."
+              className="flex-1 bg-background border-border h-16 rounded-[1.5rem] text-lg px-8 focus:ring-2 focus:ring-brand-amber/30 transition-all font-light"
               disabled={state.isProcessing || state.isAISpeaking}
             />
             <Button 
               type="submit" 
               disabled={!textInput.trim() || state.isProcessing || state.isAISpeaking} 
-              className="h-16 px-8 rounded-2xl font-bold"
+              className="h-16 px-10 rounded-[1.5rem] font-bold amber-button shadow-xl shadow-brand-amber/10 transition-all active:scale-95"
             >
-              <Send className="w-5 h-5 mr-2" /> Submit
+              <Send className="w-5 h-5 mr-3" /> Submit
             </Button>
           </form>
         ) : (
@@ -270,10 +270,10 @@ export function InterviewRoom() {
               disabled={state.isAISpeaking}
               onClick={handleMicToggle}
             />
-            <div className="mt-6 text-sm font-bold tracking-widest uppercase text-gray-500 h-5">
+            <div className="mt-8 text-[11px] font-black tracking-[0.3em] uppercase text-muted-foreground/60 h-6">
               {state.isRecording ? (
-                <span className="text-red-400 flex items-center">
-                  <span className="w-2 h-2 rounded-full bg-red-500 mr-2 animate-pulse" />
+                <span className="text-red-500 flex items-center">
+                  <span className="w-2.5 h-2.5 rounded-full bg-red-500 mr-2.5 animate-pulse" />
                   Recording...
                 </span>
               ) : (
@@ -284,14 +284,14 @@ export function InterviewRoom() {
         )}
 
         {/* Action Buttons overlay */}
-        <div className="absolute bottom-8 left-10 right-10 flex justify-between pointer-events-none">
+        <div className="absolute bottom-10 left-12 right-12 flex justify-between pointer-events-none">
           <Button 
             variant="ghost" 
             size="sm" 
             onClick={handleEndEarly} 
-            className="text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded-xl pointer-events-auto transition-colors"
+            className="text-muted-foreground/60 hover:text-red-500 hover:bg-red-500/10 rounded-xl pointer-events-auto transition-all text-[10px] font-bold uppercase tracking-widest px-4"
           >
-            <XCircle className="w-4 h-4 mr-2" /> Exit
+            <XCircle className="w-4 h-4 mr-2" /> Exit Session
           </Button>
           
           <Button 
@@ -299,7 +299,7 @@ export function InterviewRoom() {
             size="sm" 
             onClick={handleSkipQuestion} 
             disabled={state.isProcessing || state.isRecording}
-            className="text-gray-500 hover:text-white hover:bg-white/5 rounded-xl pointer-events-auto transition-colors"
+            className="text-muted-foreground/60 hover:text-foreground hover:bg-muted rounded-xl pointer-events-auto transition-all text-[10px] font-bold uppercase tracking-widest px-4"
           >
             Skip Question <SkipForward className="w-4 h-4 ml-2" />
           </Button>
