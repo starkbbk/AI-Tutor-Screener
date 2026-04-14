@@ -87,6 +87,13 @@
     transform: translateY(-2px);
     box-shadow: 0 10px 20px -5px rgba(255, 184, 0, 0.3);
   }
+
+  .no-select {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
 }
 
 @layer base {
