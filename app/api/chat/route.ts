@@ -9,10 +9,7 @@ export async function POST(request: NextRequest) {
   let requestData;
   globalRequestCount++;
   
-  console.log("=== API CHAT CALLED ===");
-  console.log(`Total Server Requests: ${globalRequestCount}`);
-  console.log("GROQ_API_KEY exists:", !!process.env.GROQ_API_KEY);
-  console.log("GROQ_API_KEY starts with:", process.env.GROQ_API_KEY?.substring(0, 10));
+  // Debug logs removed for production. Error handling retains critical info.
   
   try {
     requestData = await request.json();
@@ -42,7 +39,6 @@ export async function POST(request: NextRequest) {
     ];
 
     const response = await withRetry(async () => {
-      console.log('[CHAT API] Calling Groq REST API...');
       return await groqChat(messages, {
         model: "llama-3.3-70b-versatile",
         temperature: 0.7,
@@ -50,7 +46,7 @@ export async function POST(request: NextRequest) {
       });
     }, { maxRetries: 2, initialDelay: 1000, factor: 1.5 });
 
-    console.log('[CHAT API] Success');
+
     return NextResponse.json({ response });
 
   } catch (error: any) {

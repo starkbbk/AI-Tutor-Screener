@@ -14,9 +14,7 @@ export async function POST(request: NextRequest) {
   const { transcript, candidateName, duration } = requestData;
 
   try {
-    console.log("=== API ASSESS CALLED ===");
-    console.log("GROQ_API_KEY exists:", !!process.env.GROQ_API_KEY);
-    console.log("GROQ_API_KEY starts with:", process.env.GROQ_API_KEY?.substring(0, 10));
+    // Debug logs removed for production. Error handling retains critical info.
 
     // Format transcript for assessment
     const formattedTranscript = transcript
@@ -38,7 +36,6 @@ ${formattedTranscript}
 Generate the assessment JSON now.`;
 
     const responseText = await withRetry(async () => {
-      console.log('[ASSESS API] Calling Groq REST API...');
       return await groqChat([
         { role: 'system', content: ASSESSMENT_SYSTEM_PROMPT },
         { role: 'user', content: prompt }
@@ -57,7 +54,6 @@ Generate the assessment JSON now.`;
     }
 
     const assessment = JSON.parse(jsonStr);
-    console.log('[ASSESS API] Success');
     return NextResponse.json({ assessment });
 
   } catch (error: any) {
