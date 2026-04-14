@@ -18,7 +18,7 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen flex flex-col bg-background cuemath-grid selection:bg-brand-amber selection:text-foreground">
       <header className="w-full max-w-7xl mx-auto px-6 sm:px-10 py-8 flex items-center justify-between relative z-20">
-        <img src="/cuemath-logo.svg" alt="Cuemath" className="h-8 opacity-90 dark:brightness-0 dark:invert" />
+        <img src="/cuemath-logo.svg" alt="Cuemath" className="h-8 opacity-90" />
         <ThemeToggle />
       </header>
 

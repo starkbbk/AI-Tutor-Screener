@@ -133,6 +133,21 @@ export function InterviewRoom() {
   const finishInterview = () => {
     setStatus('completing')
     completeInterview()
+    
+    // Save full transcript and session data to localStorage before redirect
+    try {
+      localStorage.setItem(`cuemath_session_backup_${state.candidate?.name?.replace(/\s+/g, '_')}`, JSON.stringify({
+        candidate: state.candidate,
+        transcript: state.conversationHistory,
+        startTime: state.interviewStartTime,
+        endTime: Date.now(),
+        isCompleted: true
+      }));
+      console.log("[INTERVIEW ROOM] Session data backed up to localStorage.");
+    } catch (e) {
+      console.error("[INTERVIEW ROOM] Failed to save to localStorage:", e);
+    }
+
     setTimeout(() => {
       router.push("/report")
     }, 3000)
@@ -231,7 +246,7 @@ export function InterviewRoom() {
       
       {/* Top Header */}
       <div className="flex items-center justify-between p-8 glass-header z-20">
-        <Image src="/cuemath-logo.svg" alt="Cuemath" width={140} height={40} className="opacity-90 dark:brightness-0 dark:invert" />
+        <Image src="/cuemath-logo.svg" alt="Cuemath" width={140} height={40} className="opacity-90 transition-opacity hover:opacity-100" />
         
         <div className="flex items-center space-x-4">
           <VoiceAvatar />

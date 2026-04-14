@@ -112,7 +112,7 @@ export default function ReportPage() {
       <div className="min-h-screen bg-background cuemath-grid flex flex-col items-center justify-center p-6">
         <div className="glass-card p-12 rounded-[3rem] shadow-2xl flex flex-col items-center max-w-lg w-full text-center">
           <Loader2 className="w-16 h-16 text-brand-amber animate-spin mb-10" />
-          <h2 className="text-4xl font-extrabold text-foreground mb-4 tracking-tight">EVALUATING PERFORMANCE</h2>
+          <h2 className="text-4xl font-extrabold text-foreground mb-4 tracking-tight">ANALYZING YOUR INTERVIEW...</h2>
           <p className="text-muted-foreground mb-10 text-lg font-light leading-relaxed">
             Please wait while we review <span className="text-brand-navy dark:text-white font-bold">{state.candidate.name}</span>'s assessment across all teaching dimensions.
           </p>
@@ -143,7 +143,7 @@ export default function ReportPage() {
           {/* Header */}
           <div className="p-12 border-b border-border bg-muted/30">
             <div className="flex flex-col md:flex-row justify-between items-center md:items-start space-y-8 md:space-y-0 mb-12">
-              <Image src="/cuemath-logo.svg" alt="Cuemath" width={200} height={60} className="dark:brightness-0 dark:invert" />
+              <Image src="/cuemath-logo.svg" alt="Cuemath" width={200} height={60} />
               <div className="text-center md:text-right flex flex-col items-center md:items-end space-y-4">
                 <ThemeToggle />
                 <div>
