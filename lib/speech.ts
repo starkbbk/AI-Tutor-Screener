@@ -78,19 +78,23 @@ export function startListening(
   const SILENCE_TIMEOUT = 5000;
   const MAX_RECORDING_TIME = 3600000; // 1 hour (Increased from 2 mins to handle long silences)
 
+  let watchdogTimer: NodeJS.Timeout | null = null;
+  const WATCHDOG_TIMEOUT = 6000; // 6 seconds of absolute silence (no results) forces restart
+
   const initRecognition = () => {
     const SpeechRecognitionConstructor = window.SpeechRecognition || window.webkitSpeechRecognition;
     const newRecognition = new SpeechRecognitionConstructor();
     
-    // Critical for mobile: sometimes 'true' causes issues on some browsers, 
-    // but the user explicitly requested it for mobile Chrome/Safari.
-    newRecognition.continuous = true; 
+    // THE FIX: Disable native continuous mode in favor of our more robust manual restart loop.
+    // Safari and mobile browsers deliver data much more reliably in non-continuous mode.
+    newRecognition.continuous = false; 
     newRecognition.interimResults = true;
-    newRecognition.lang = 'en-US'; // Changed from en-IN for broader mobile engine support
+    newRecognition.lang = 'en-US';
 
     newRecognition.onstart = () => {
       console.log("Speech recognition session started");
       resetSilenceTimeout();
+      resetWatchdogTimer();
       
       if (!maxDurationTimeout) {
         maxDurationTimeout = setTimeout(() => {
@@ -108,13 +112,30 @@ export function startListening(
       }, SILENCE_TIMEOUT);
     };
 
+    const resetWatchdogTimer = () => {
+      if (watchdogTimer) clearTimeout(watchdogTimer);
+      watchdogTimer = setTimeout(() => {
+        if (!isManualStop && !isSilenceTimeoutReached) {
+          console.warn("Watchdog: No results detected for 6s. Reconnecting mic...");
+          newRecognition.stop(); // This will trigger onend and our manual auto-restart
+        }
+      }, WATCHDOG_TIMEOUT);
+    };
+
+    newRecognition.onsoundstart = () => {
+       console.log("Sound detected by hardware");
+       resetWatchdogTimer(); // Mic is definitely hearing something
+    };
+
     newRecognition.onresult = (event: SpeechRecognitionEvent) => {
       resetSilenceTimeout();
+      resetWatchdogTimer();
       lastProgressTime = Date.now();
 
       let interimTranscript = '';
       let currentFinalTranscript = '';
 
+      // Standard result extraction
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const result = event.results[i];
         if (result.isFinal) {
@@ -124,15 +145,11 @@ export function startListening(
         }
       }
 
-      // Join accumulated with current
-      // We need to be careful not to duplicate if we are restarting
       const fullFinal = (accumulatedTranscript + " " + currentFinalTranscript).trim();
       const fullInterim = (fullFinal + " " + interimTranscript).trim();
 
       if (currentFinalTranscript) {
-        // Only update the actual accumulated transcript when we get final results
-        // Use a space to join if there's already content
-        accumulatedTranscript = (accumulatedTranscript + " " + currentFinalTranscript).trim();
+        accumulatedTranscript = fullFinal;
         onResult({ transcript: accumulatedTranscript, isFinal: true });
       } else if (interimTranscript) {
         onResult({ transcript: fullInterim, isFinal: false });
@@ -140,51 +157,40 @@ export function startListening(
     };
 
     newRecognition.onerror = (event: any) => {
-      if (event.error === 'aborted') {
-        console.log('Speech Recognition aborted cleanly.');
-        return;
-      }
+      if (event.error === 'aborted') return;
 
-      // If it's a transient error on mobile, we might want to restart instead of failing
       if (event.error === 'no-speech' && !isManualStop && !isSilenceTimeoutReached) {
-        console.log('No speech detected, but not stopping yet...');
-        return;
+        // no-speech on non-continuous mode is normal, it just means the browser timed out
+        return; 
       }
 
-      const errorMap: Record<string, string> = {
-        'no-speech': "I didn't catch that. Could you try again?",
-        'audio-capture': 'No microphone found. Please check your audio settings.',
-        'not-allowed': 'Microphone access denied. Please allow permissions.',
-        'network': 'Network error! This often happens due to a slow connection.',
-      };
-      
       console.error('Speech Recognition Error:', event.error);
-      
-      // Only fire error if we're not planning to auto-restart
       if (isManualStop || isSilenceTimeoutReached) {
+        const errorMap: Record<string, string> = {
+          'audio-capture': 'No microphone found. Please check your audio settings.',
+          'not-allowed': 'Microphone access denied. Please allow permissions.',
+          'network': 'Network error! This often happens due to a slow connection.',
+        };
         onError(errorMap[event.error] || `Mic Error (${event.error}). Please try again.`);
       }
     };
 
     newRecognition.onend = () => {
-      console.log("Speech recognition session ended. Manual stop:", isManualStop, "Silence:", isSilenceTimeoutReached);
+      console.log("Speech session ended. Restarting if needed...");
+      if (watchdogTimer) clearTimeout(watchdogTimer);
       
-      // THE FIX FOR MOBILE: Auto-restart if it wasn't a manual stop and not a silence timeout
       if (!isManualStop && !isSilenceTimeoutReached) {
-        console.log("Unexpected end on mobile. Restarting...");
-        try {
-          // Brief delay to allow the browser to clean up the previous session
-          setTimeout(() => {
-            if (!isManualStop && !isSilenceTimeoutReached) {
-              const instance = initRecognition();
-              recognition = instance;
+        setTimeout(() => {
+          if (!isManualStop && !isSilenceTimeoutReached) {
+            const instance = initRecognition();
+            recognition = instance;
+            try {
               instance.start();
+            } catch (e) {
+              console.error("Failed to start mic instance:", e);
             }
-          }, 100);
-        } catch (e) {
-          console.error("Failed to restart recognition:", e);
-          onEnd(accumulatedTranscript);
-        }
+          }
+        }, 100);
       } else {
         clearTimeouts();
         onEnd(accumulatedTranscript);
