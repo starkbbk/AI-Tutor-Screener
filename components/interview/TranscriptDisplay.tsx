@@ -8,36 +8,37 @@ export function TranscriptDisplay({ messages }: { messages: ConversationMessage[
   const recentMessages = messages.slice(-2)
 
   return (
-    <div className="w-full max-w-2xl mx-auto space-y-6 flex-1 flex flex-col justify-end min-h-48 mb-8 mt-2 px-4">
+    <div className="w-full max-w-2xl mx-auto space-y-8 flex-1 flex flex-col justify-end min-h-[16rem] mb-12 mt-4 px-4 relative">
       {recentMessages.map((msg, idx) => (
         <div 
           key={idx} 
-          className={`flex flex-col ${msg.role === 'candidate' ? 'items-end' : 'items-start'} animate-in fade-in slide-in-from-bottom-2 duration-300`}
+          className={`flex flex-col ${msg.role === 'candidate' ? 'items-end' : 'items-start'} animate-in fade-in slide-in-from-bottom-4 duration-500`}
         >
-          <div className="flex items-center mb-1.5 px-1 space-x-1.5 text-xs font-semibold text-gray-400">
+          <div className={`flex items-center mb-2 px-2 space-x-2 text-[10px] font-black tracking-[0.15em] uppercase ${msg.role === 'ai' ? 'text-brand-cyan/60' : 'text-brand-amber/60'}`}>
             {msg.role === 'ai' ? (
-              <><Bot className="w-3.5 h-3.5" /> <span>AI INTERVIEWER</span></>
+              <><Bot className="w-3.5 h-3.5" /> <span>AI Coach</span></>
             ) : (
-              <><span>YOU</span> <UserCircle className="w-3.5 h-3.5" /></>
+              <><span>You</span> <UserCircle className="w-3.5 h-3.5" /></>
             )}
           </div>
           <div 
             className={`
-              inline-block max-w-[85%] px-5 py-3.5 rounded-2xl text-[15px] leading-relaxed shadow-sm
+              inline-block max-w-[90%] px-6 py-4 rounded-3xl text-[16px] leading-relaxed shadow-2xl backdrop-blur-xl ring-1
               ${msg.role === 'ai' 
-                ? 'bg-white border border-gray-100 text-gray-800 rounded-tl-sm' 
-                : 'bg-blue-600 text-white rounded-tr-sm'
+                ? 'bg-white/5 border-white/10 text-white rounded-tl-none ring-white/5' 
+                : 'bg-brand-amber text-brand-black font-medium rounded-tr-none ring-brand-amber/20'
               }
             `}
           >
             {msg.content}
-            {/* Show typewriter cursor for the latest AI message if it's the very last one */}
+            {/* Show typewriter cursor for the latest AI message */}
             {msg.role === 'ai' && idx === recentMessages.length - 1 && (
-              <span className="typewriter-cursor inline-block ml-0.5"></span>
+              <span className="typewriter-cursor inline-block ml-1 opacity-60"></span>
             )}
           </div>
         </div>
       ))}
     </div>
+
   )
 }

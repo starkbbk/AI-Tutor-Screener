@@ -16,9 +16,9 @@ export function MicButton({ isRecording, isProcessing, disabled, onClick }: MicB
       <Button 
         size="icon" 
         disabled
-        className="w-20 h-20 rounded-full bg-amber-100 text-amber-600 border border-amber-200"
+        className="w-24 h-24 rounded-full bg-brand-amber/10 border border-brand-amber/30 text-brand-amber shadow-[0_0_20px_rgba(255,184,0,0.1)]"
       >
-        <Loader2 className="w-8 h-8 animate-spin" />
+        <Loader2 className="w-10 h-10 animate-spin" />
       </Button>
     )
   }
@@ -27,19 +27,21 @@ export function MicButton({ isRecording, isProcessing, disabled, onClick }: MicB
     <Button
       onClick={onClick}
       disabled={disabled}
-      variant={isRecording ? "destructive" : "default"}
       size="icon"
       className={`
-        w-20 h-20 rounded-full shadow-lg transition-all duration-300 transform hover:scale-105 active:scale-95
-        ${isRecording ? 'pulse-red scale-105' : 'bg-blue-600 hover:bg-blue-700'}
-        ${disabled && !isRecording ? 'opacity-50 cursor-not-allowed bg-gray-300' : ''}
+        w-24 h-24 rounded-full shadow-2xl transition-all duration-500 transform active:scale-95
+        ${isRecording 
+          ? 'bg-brand-cyan text-brand-black pulse-blue scale-110 shadow-[0_0_40px_rgba(0,209,255,0.4)] hover:bg-brand-cyan/90' 
+          : 'bg-brand-amber text-brand-black hover:bg-brand-amber/90 hover:scale-105 shadow-[0_0_30px_rgba(255,184,0,0.25)]'}
+        ${disabled && !isRecording ? 'opacity-30 cursor-not-allowed grayscale' : ''}
       `}
     >
       {isRecording ? (
-        <Square className="w-8 h-8 fill-current" />
+        <Square className="w-10 h-10 fill-current" />
       ) : (
-        <Mic className="w-9 h-9" />
+        <Mic className="w-11 h-11" />
       )}
     </Button>
   )
 }
+
