@@ -85,13 +85,18 @@ export default function ReportPage() {
     }
   }
 
+  const [isDownloading, setIsDownloading] = useState(false)
+
   const handleDownloadPdf = async () => {
+    setIsDownloading(true)
     try {
       // Small delay just to ensure the UI is fully rendered without loading states
-      await generatePDF('report-container', `Cuemath_Assessment_${state.candidate?.name.replace(/\\s+/g, '_')}.pdf`)
+      await generatePDF('report-container', `Cuemath_Assessment_${state.candidate?.name.replace(/\s+/g, '_')}.pdf`)
     } catch (err) {
       console.error('PDF Generation failed', err)
       alert('Failed to generate PDF. Please try printing the page instead.')
+    } finally {
+      setIsDownloading(false)
     }
   }
 
@@ -231,22 +236,29 @@ export default function ReportPage() {
 
         {/* Global Action Buttons (Not printed to PDF) */}
         <div className="flex flex-col md:flex-row gap-6 justify-between items-center glass-card p-8 rounded-[2.5rem] border-border shadow-xl">
-          <Button variant="outline" className="w-full md:w-auto text-muted-foreground hover:text-foreground border-border hover:bg-muted rounded-2xl h-14 px-8 font-bold" onClick={handleStartNew}>
+          <Button variant="outline" className="w-full md:w-auto text-muted-foreground hover:text-foreground border-border hover:bg-muted rounded-2xl h-14 px-8 font-bold" onClick={handleStartNew} disabled={isDownloading}>
             <RefreshCw className="w-4 h-4 mr-3" /> New Assessment
           </Button>
           
           <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
-            <Button variant="secondary" className="w-full sm:w-auto rounded-2xl h-14 px-10 font-bold" onClick={handleShare}>
+            <Button variant="secondary" className="w-full sm:w-auto rounded-2xl h-14 px-10 font-bold" onClick={handleShare} disabled={isDownloading}>
               <Share2 className="w-4 h-4 mr-3" /> Share Path
             </Button>
-            <Button className="w-full sm:w-auto rounded-2xl h-14 px-12 font-black amber-button shadow-xl shadow-brand-amber/10" onClick={handleDownloadPdf}>
-              <Download className="w-4 h-4 mr-3" /> Export PDF
+            <Button className="w-full sm:w-auto rounded-2xl h-14 px-12 font-black amber-button shadow-xl shadow-brand-amber/10" onClick={handleDownloadPdf} disabled={isDownloading}>
+              {isDownloading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-3 animate-spin" /> Generating...
+                </>
+              ) : (
+                <>
+                  <Download className="w-4 h-4 mr-3" /> Export PDF
+                </>
+              )}
             </Button>
           </div>
         </div>
 
       </div>
     </div>
-
   )
 }
