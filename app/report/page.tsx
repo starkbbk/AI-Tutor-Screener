@@ -23,6 +23,7 @@ export default function ReportPage() {
   const [mounted, setMounted] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [isDownloaded, setIsDownloaded] = useState(false)
 
   useEffect(() => {
     setMounted(true)
@@ -89,12 +90,28 @@ export default function ReportPage() {
 
   const handleDownloadPdf = async () => {
     setIsDownloading(true)
+    setIsDownloaded(false)
+    const filename = `Cuemath_Assessment_${state.candidate?.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`
+    
     try {
-      // Small delay just to ensure the UI is fully rendered without loading states
-      await generatePDF('report-container', `Cuemath_Assessment_${state.candidate?.name.replace(/\s+/g, '_')}.pdf`)
+      // 1. Try Direct PDF Generation via html2canvas-pro + jsPDF
+      await generatePDF('report-content', filename)
+      setIsDownloaded(true)
+      setTimeout(() => setIsDownloaded(false), 3000)
     } catch (err) {
-      console.error('PDF Generation failed', err)
-      alert('Failed to generate PDF. Please try printing the page instead.')
+      console.error('Direct PDF Generation failed, falling back to window.print():', err)
+      
+      // 2. Fallback to Browser Print-to-PDF
+      // Hide buttons manually just in case media queries are slow
+      const noPrintElements = document.querySelectorAll('.no-print');
+      noPrintElements.forEach(el => (el as HTMLElement).style.display = 'none');
+      
+      window.print();
+      
+      // Restore elements
+      setTimeout(() => {
+        noPrintElements.forEach(el => (el as HTMLElement).style.display = '');
+      }, 1000);
     } finally {
       setIsDownloading(false)
     }
@@ -142,15 +159,17 @@ export default function ReportPage() {
 
       <div className="max-w-5xl mx-auto space-y-8 sm:space-y-12 animate-in fade-in slide-in-from-bottom-10 duration-1000 relative z-10">
         
-        {/* Main Report Container (Target for PDF) */}
-        <div id="report-container" className="glass-card rounded-[2.5rem] sm:rounded-[3.5rem] shadow-2xl overflow-hidden border-border bg-card/40 backdrop-blur-3xl ring-1 ring-border">
+        {/* Main Report Container */}
+        <div id="report-content" className="glass-card rounded-[2.5rem] sm:rounded-[3.5rem] shadow-2xl overflow-hidden border-border bg-card/40 backdrop-blur-3xl ring-1 ring-border">
           
           {/* Header */}
           <div className="p-6 sm:p-12 border-b border-border bg-muted/30">
             <div className="flex flex-col md:flex-row justify-between items-center md:items-start space-y-6 md:space-y-0 mb-8 sm:mb-12 text-center md:text-left">
               <Image src="/cuemath-logo.svg" alt="Cuemath" width={160} height={40} className="sm:w-[200px] sm:h-[60px]" />
               <div className="text-center md:text-right flex flex-col items-center md:items-end space-y-4">
-                <ThemeToggle />
+                <div className="no-print">
+                  <ThemeToggle />
+                </div>
                 <div>
                   <h1 className="text-2xl sm:text-4xl font-black text-foreground tracking-tighter uppercase">Coach Result</h1>
                   <p className="text-brand-amber text-[9px] sm:text-xs font-black tracking-[0.3em] uppercase mt-1 sm:mt-2 opacity-80">PRO Assessment Engine</p>
@@ -235,7 +254,7 @@ export default function ReportPage() {
         </div>
 
         {/* Global Action Buttons (Not printed to PDF) */}
-        <div className="flex flex-col md:flex-row gap-4 sm:gap-6 justify-between items-center glass-card p-6 sm:p-8 rounded-2xl sm:rounded-[2.5rem] border-border shadow-xl">
+        <div className="flex flex-col md:flex-row gap-4 sm:gap-6 justify-between items-center glass-card p-6 sm:p-8 rounded-2xl sm:rounded-[2.5rem] border-border shadow-xl no-print">
           <Button variant="outline" className="w-full md:w-auto text-muted-foreground hover:text-foreground border-border hover:bg-muted rounded-xl sm:rounded-2xl h-12 sm:h-14 px-8 font-bold text-sm sm:text-base" onClick={handleStartNew} disabled={isDownloading}>
             <RefreshCw className="w-4 h-4 mr-3" /> New Assessment
           </Button>
@@ -244,10 +263,14 @@ export default function ReportPage() {
             <Button variant="secondary" className="w-full sm:w-auto rounded-xl sm:rounded-2xl h-12 sm:h-14 px-8 sm:px-10 font-bold text-sm sm:text-base" onClick={handleShare} disabled={isDownloading}>
               <Share2 className="w-4 h-4 mr-3" /> <span className="hidden xs:inline">Share Path</span> <span className="xs:hidden">Share</span>
             </Button>
-            <Button className="w-full sm:w-auto rounded-xl sm:rounded-2xl h-12 sm:h-14 px-10 sm:px-12 font-black amber-button shadow-xl shadow-brand-amber/10 text-sm sm:text-base" onClick={handleDownloadPdf} disabled={isDownloading}>
+            <Button className="w-full sm:w-auto rounded-xl sm:rounded-2xl h-12 sm:h-14 px-10 sm:px-12 font-black amber-button shadow-xl shadow-brand-amber/10 text-sm sm:text-base min-w-[200px]" onClick={handleDownloadPdf} disabled={isDownloading}>
               {isDownloading ? (
                 <>
-                  <Loader2 className="w-4 h-4 mr-3 animate-spin" /> <span className="hidden xs:inline">Generating...</span> <span className="xs:hidden">Wait...</span>
+                  <Loader2 className="w-4 h-4 mr-3 animate-spin" /> <span className="hidden xs:inline">Generating PDF...</span> <span className="xs:hidden">Wait...</span>
+                </>
+              ) : isDownloaded ? (
+                <>
+                  <Download className="w-4 h-4 mr-3" /> PDF Downloaded!
                 </>
               ) : (
                 <>

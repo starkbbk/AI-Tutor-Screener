@@ -28,13 +28,13 @@ export function formatDate(date: Date): string {
 }
 
 export async function generatePDF(elementId: string, filename: string): Promise<void> {
-  const { default: html2canvas } = await import('html2canvas');
+  const { default: html2canvas } = await import('html2canvas-pro');
   const { default: jsPDF } = await import('jspdf');
 
   const element = document.getElementById(elementId);
   if (!element) throw new Error("Target element not found");
 
-  // Wait for all images to be loaded
+  // Wait for images to be loaded (pre-caution)
   const images = Array.from(element.getElementsByTagName('img'));
   await Promise.all(images.map(img => {
     if (img.complete) return Promise.resolve();
@@ -45,39 +45,20 @@ export async function generatePDF(elementId: string, filename: string): Promise<
   }));
 
   const canvas = await html2canvas(element, {
-    scale: 2, // Higher resolution
+    scale: 2,
     useCORS: true,
     allowTaint: true,
-    scrollY: -window.scrollY, // Fix offset issues if page is scrolled
-    backgroundColor: '#FFFFFF',
-    onclone: (clonedDoc) => {
-      // You can hide/modify elements in the clone specifically for the PDF
-      const clonedElement = clonedDoc.getElementById(elementId);
-      if (clonedElement) {
-        clonedElement.style.padding = '40px'; // Add some margin to the PDF
-      }
-    }
+    logging: false,
+    backgroundColor: '#ffffff',
+    windowWidth: element.scrollWidth,
+    windowHeight: element.scrollHeight,
   });
 
-  const imgWidth = 210; // A4 width in mm
-  const pageHeight = 297; // A4 height in mm
-  const imgHeight = (canvas.height * imgWidth) / canvas.width;
-  let heightLeft = imgHeight;
-
-  const doc = new jsPDF('p', 'mm', 'a4');
-  let position = 0;
-
   const imgData = canvas.toDataURL('image/png', 1.0);
-  
-  doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
-  heightLeft -= pageHeight;
+  const pdf = new jsPDF('p', 'mm', 'a4');
+  const pdfWidth = pdf.internal.pageSize.getWidth();
+  const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
 
-  while (heightLeft >= 0) {
-    position = heightLeft - imgHeight;
-    doc.addPage();
-    doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
-    heightLeft -= pageHeight;
-  }
-
-  doc.save(filename);
+  pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+  pdf.save(filename);
 }
