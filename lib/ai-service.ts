@@ -23,6 +23,7 @@ const GROQ_KEYS = [
   process.env.GROQ_API_KEY_1,
   process.env.GROQ_API_KEY_2,
   process.env.GROQ_API_KEY_3,
+  process.env.GROQ_API_KEY_4,
 ].filter(Boolean) as string[];
 
 const GEMINI_KEY = process.env.GEMINI_API_KEY;
