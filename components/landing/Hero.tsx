@@ -2,22 +2,26 @@ import Image from "next/image"
 
 export function Hero() {
   return (
-    <div className="text-center mb-10 mt-8">
-      <div className="flex justify-center mb-8">
+    <div className="text-center mb-12 mt-4 relative z-10">
+      <div className="flex justify-center mb-10 transition-transform duration-500 hover:scale-105">
         <Image 
           src="/cuemath-logo.svg" 
           alt="Cuemath Logo" 
           width={180} 
-          height={48} 
+          height={60} 
+
+          className="opacity-100" // Removed the filters that turned it into a white blob
           priority
         />
       </div>
-      <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-gray-900 mb-4">
-        Cuemath Tutor Screening
+
+      <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight text-white mb-6 leading-[1.1]">
+        Shape the <span className="text-brand-amber text-glow">Future</span> of Math
       </h1>
-      <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto">
-        Complete your interview in under 10 minutes. Just talk naturally — our AI interviewer will guide you through.
+      <p className="text-xl md:text-2xl text-gray-400 max-w-2xl mx-auto font-light leading-relaxed">
+        Join our elite community of Math coaches. Complete your AI-powered screening in <span className="text-white font-medium">10 minutes</span>.
       </p>
     </div>
   )
 }
+

@@ -4,21 +4,22 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center whitespace-nowrap rounded-xl text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-600 disabled:pointer-events-none disabled:opacity-50",
+  "inline-flex items-center justify-center whitespace-nowrap rounded-xl text-sm font-medium transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-amber focus-visible:ring-offset-2 ring-offset-black disabled:pointer-events-none disabled:opacity-50 active:scale-95",
   {
     variants: {
       variant: {
-        default: "bg-blue-600 text-white hover:bg-blue-700 shadow-sm",
-        destructive: "bg-red-500 text-white hover:bg-red-600 shadow-sm",
-        outline: "border border-gray-300 bg-transparent hover:bg-gray-100 text-gray-900",
-        secondary: "bg-gray-100 text-gray-900 hover:bg-gray-200",
-        ghost: "hover:bg-gray-100 hover:text-gray-900 text-gray-600",
-        link: "text-blue-600 underline-offset-4 hover:underline",
+        default: "bg-brand-amber text-brand-black hover:bg-[#FFC933] shadow-[0_0_20px_rgba(255,184,0,0.3)]",
+
+        destructive: "bg-red-500/10 text-red-500 border border-red-500/20 hover:bg-red-500/20",
+        outline: "border border-white/20 bg-transparent hover:bg-white/5 text-white",
+        secondary: "bg-white/10 text-white hover:bg-white/20",
+        ghost: "hover:bg-white/5 text-gray-400 hover:text-white",
+        link: "text-brand-amber underline-offset-4 hover:underline",
       },
       size: {
-        default: "h-10 px-4 py-2",
-        sm: "h-8 rounded-lg px-3 text-xs",
-        lg: "h-12 rounded-xl px-8 text-base",
+        default: "h-11 px-6 py-2.5",
+        sm: "h-9 rounded-lg px-4 text-xs",
+        lg: "h-14 rounded-xl px-10 text-lg",
         icon: "h-10 w-10",
       },
     },
@@ -28,6 +29,7 @@ const buttonVariants = cva(
     },
   }
 )
+
 
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,

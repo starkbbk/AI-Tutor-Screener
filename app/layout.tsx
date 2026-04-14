@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Lexend } from "next/font/google";
 import "./globals.css";
 import { InterviewProvider } from "@/context/InterviewContext";
 
-const inter = Inter({
+const lexend = Lexend({
   subsets: ["latin"],
-  variable: "--font-sans",
+  variable: "--font-lexend",
 });
 
 export const metadata: Metadata = {
@@ -21,7 +21,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} font-sans antialiased`}>
+      <body className={`${lexend.variable} font-sans antialiased bg-brand-black text-white`}>
+
         <InterviewProvider>
           {children}
         </InterviewProvider>

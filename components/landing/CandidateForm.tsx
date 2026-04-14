@@ -30,17 +30,17 @@ export function CandidateForm() {
   }
 
   return (
-    <Card className="w-full max-w-md mx-auto shadow-lg border-blue-100">
-      <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl font-bold">Start Assessment</CardTitle>
+    <Card className="w-full max-w-lg mx-auto border-white/5">
+      <CardHeader className="text-center">
+        <CardTitle className="text-3xl font-extrabold mb-2">Get Started</CardTitle>
         <CardDescription>
-          Enter your details to begin the AI interview
+          Enter your details to begin your MathFit coaching journey
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <label htmlFor="name" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+        <form onSubmit={handleSubmit} className="space-y-6 p-2">
+          <div className="space-y-3">
+            <label htmlFor="name" className="text-sm font-semibold text-gray-300 ml-1">
               Full Name
             </label>
             <Input
@@ -48,11 +48,11 @@ export function CandidateForm() {
               placeholder="e.g. John Doe"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="h-12"
+              className="bg-white/5"
             />
           </div>
-          <div className="space-y-2">
-            <label htmlFor="email" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+          <div className="space-y-3">
+            <label htmlFor="email" className="text-sm font-semibold text-gray-300 ml-1">
               Email Address
             </label>
             <Input
@@ -61,17 +61,22 @@ export function CandidateForm() {
               placeholder="e.g. john@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="h-12"
+              className="bg-white/5"
             />
           </div>
           
-          {error && <p className="text-sm text-red-500 font-medium">{error}</p>}
+          {error && (
+            <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3">
+              <p className="text-sm text-red-500 font-semibold text-center">{error}</p>
+            </div>
+          )}
           
-          <Button type="submit" size="lg" className="w-full text-lg h-12 mt-2">
-            Start Interview
+          <Button type="submit" size="lg" className="w-full mt-4 font-bold tracking-wide">
+            Begin Assessment
           </Button>
         </form>
       </CardContent>
     </Card>
   )
 }
+

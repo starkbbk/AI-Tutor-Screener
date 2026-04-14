@@ -205,33 +205,36 @@ export function InterviewRoom() {
   if (state.interviewStatus === 'completing') {
     return (
       <div className="flex-1 flex flex-col items-center justify-center min-h-[60vh] animate-in fade-in zoom-in duration-500">
-        <Loader2 className="w-16 h-16 text-blue-600 animate-spin mb-6" />
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Analyzing Responses</h2>
-        <p className="text-gray-500">Generating your assessment report...</p>
+        <Loader2 className="w-16 h-16 text-brand-amber animate-spin mb-6" />
+        <h2 className="text-3xl font-bold text-white mb-2">Analyzing Responses</h2>
+        <p className="text-gray-400">Crafting your professional coach assessment...</p>
       </div>
     )
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-80px)] max-w-4xl mx-auto bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden relative">
+    <div className="flex flex-col h-[calc(100vh-120px)] max-w-5xl mx-auto glass-card rounded-[2.5rem] shadow-2xl overflow-hidden relative border-white/10 ring-1 ring-white/5">
       
       {/* Top Header */}
-      <div className="flex items-center justify-between p-5 border-b border-gray-100 bg-white/80 backdrop-blur-sm z-10">
-        <Image src="/cuemath-logo.svg" alt="Cuemath" width={110} height={30} />
+      <div className="flex items-center justify-between p-6 glass-header z-20">
+        <Image src="/cuemath-logo.svg" alt="Cuemath" width={140} height={40} className="brightness-0 invert opacity-90" />
         
         <div className="flex items-center space-x-6">
-          <div className="text-sm font-semibold text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
-            Question {Math.min(state.currentQuestionIndex + 1, TOTAL_QUESTIONS)} of {TOTAL_QUESTIONS}
+          <div className="text-sm font-bold text-brand-amber bg-brand-amber/10 px-4 py-1.5 rounded-full border border-brand-amber/20">
+            Assessment • {Math.min(state.currentQuestionIndex + 1, TOTAL_QUESTIONS)} / {TOTAL_QUESTIONS}
           </div>
-          <div className="flex items-center text-gray-500 font-mono text-sm tracking-wide bg-gray-50 px-3 py-1 rounded-md border border-gray-100">
-            <Clock className="w-4 h-4 mr-1.5" />
+          <div className="flex items-center text-gray-300 font-mono text-sm tracking-widest bg-white/5 px-4 py-1.5 rounded-xl border border-white/10">
+            <Clock className="w-4 h-4 mr-2 text-brand-cyan" />
             {formatTime(timer)}
           </div>
         </div>
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col overflow-y-auto overflow-x-hidden p-6 relative">
+      <div className="flex-1 flex flex-col overflow-y-auto overflow-x-hidden p-8 relative scrollbar-hide">
+        {/* Decorative glows inside room */}
+        <div className="absolute top-0 left-1/4 w-1/2 h-1/2 bg-brand-blue/5 rounded-full blur-[100px] pointer-events-none" />
+        
         <VoiceAvatar />
         <TranscriptDisplay messages={state.conversationHistory} />
         
@@ -240,23 +243,23 @@ export function InterviewRoom() {
       </div>
 
       {/* Bottom Controls */}
-      <div className="p-6 bg-gray-50 border-t border-gray-100 relative z-10">
+      <div className="p-8 bg-white/5 backdrop-blur-xl border-t border-white/10 relative z-20">
         
         {state.useFallbackMode ? (
-          <form onSubmit={handleTextSubmit} className="flex space-x-3 max-w-2xl mx-auto">
+          <form onSubmit={handleTextSubmit} className="flex space-x-4 max-w-3xl mx-auto">
             <Input 
               value={textInput}
               onChange={(e) => setTextInput(e.target.value)}
-              placeholder="Type your answer here..."
-              className="flex-1 bg-white border-gray-300 h-14 rounded-xl text-base"
+              placeholder="Share your thoughts..."
+              className="flex-1 bg-white/5 border-white/10 h-16 rounded-2xl text-lg focus:border-brand-amber/50"
               disabled={state.isProcessing || state.isAISpeaking}
             />
             <Button 
               type="submit" 
               disabled={!textInput.trim() || state.isProcessing || state.isAISpeaking} 
-              className="h-14 px-6 rounded-xl"
+              className="h-16 px-8 rounded-2xl font-bold"
             >
-              <Send className="w-5 h-5 mr-2" /> Send
+              <Send className="w-5 h-5 mr-2" /> Submit
             </Button>
           </form>
         ) : (
@@ -267,20 +270,28 @@ export function InterviewRoom() {
               disabled={state.isAISpeaking}
               onClick={handleMicToggle}
             />
-            <div className="mt-4 text-sm font-medium text-gray-500 h-5">
-              {state.isRecording ? 'Click to stop recording' : 'Click to speak'}
+            <div className="mt-6 text-sm font-bold tracking-widest uppercase text-gray-500 h-5">
+              {state.isRecording ? (
+                <span className="text-red-400 flex items-center">
+                  <span className="w-2 h-2 rounded-full bg-red-500 mr-2 animate-pulse" />
+                  Recording...
+                </span>
+              ) : (
+                'Tap to speak'
+              )}
             </div>
           </div>
         )}
 
-        <div className="absolute bottom-6 left-6 right-6 flex justify-between px-2 pt-2 pointer-events-none">
+        {/* Action Buttons overlay */}
+        <div className="absolute bottom-8 left-10 right-10 flex justify-between pointer-events-none">
           <Button 
             variant="ghost" 
             size="sm" 
             onClick={handleEndEarly} 
-            className="text-gray-400 hover:text-red-600 hover:bg-red-50 pointer-events-auto"
+            className="text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded-xl pointer-events-auto transition-colors"
           >
-            <XCircle className="w-4 h-4 mr-2" /> End Early
+            <XCircle className="w-4 h-4 mr-2" /> Exit
           </Button>
           
           <Button 
@@ -288,12 +299,13 @@ export function InterviewRoom() {
             size="sm" 
             onClick={handleSkipQuestion} 
             disabled={state.isProcessing || state.isRecording}
-            className="text-gray-400 hover:text-gray-800 hover:bg-gray-200 pointer-events-auto"
+            className="text-gray-500 hover:text-white hover:bg-white/5 rounded-xl pointer-events-auto transition-colors"
           >
-            Skip <SkipForward className="w-4 h-4 ml-2" />
+            Skip Question <SkipForward className="w-4 h-4 ml-2" />
           </Button>
         </div>
       </div>
     </div>
   )
 }
+
