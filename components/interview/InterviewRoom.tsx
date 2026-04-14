@@ -78,16 +78,16 @@ export function InterviewRoom() {
       console.error('[INTERVIEW ROOM] Exception in startChatWithGemini:', error)
       setProcessing(false)
       
-      // Inject a synthetic fallback message so the UI doesn't soft-lock
-      const fallbackMsg = "I'm experiencing a high volume of requests right now. Could you please try answering again, or we can skip this question."
+      // Show actual error message to help debugging
+      const errorMsg = `API Error: ${error.message || 'Unknown error'}`
       
       addMessage({
         role: "ai",
-        content: fallbackMsg,
+        content: errorMsg,
         timestamp: new Date().toISOString()
       })
       
-      playAIResponse(fallbackMsg)
+      playAIResponse(errorMsg)
     }
   }
 

@@ -14,7 +14,9 @@ export async function POST(request: NextRequest) {
   const { transcript, candidateName, duration } = requestData;
 
   try {
-    console.log("Groq API Key loaded (Assess):", process.env.GROQ_API_KEY ? "YES" : "NO");
+    console.log("=== API ASSESS CALLED ===");
+    console.log("GROQ_API_KEY exists:", !!process.env.GROQ_API_KEY);
+    console.log("GROQ_API_KEY starts with:", process.env.GROQ_API_KEY?.substring(0, 10));
 
     // Format transcript for assessment
     const formattedTranscript = transcript
@@ -36,6 +38,7 @@ ${formattedTranscript}
 Generate the assessment JSON now.`;
 
     const responseText = await withRetry(async () => {
+      console.log('[ASSESS API] Calling Groq REST API...');
       return await groqChat([
         { role: 'system', content: ASSESSMENT_SYSTEM_PROMPT },
         { role: 'user', content: prompt }
@@ -54,12 +57,14 @@ Generate the assessment JSON now.`;
     }
 
     const assessment = JSON.parse(jsonStr);
-
+    console.log('[ASSESS API] Success');
     return NextResponse.json({ assessment });
 
   } catch (error: any) {
     console.error('------- GROQ ASSESS API ERROR -------');
-    console.error('Error Details:', error);
+    console.error('FULL ERROR:', error);
+    console.error('Error message:', error.message);
+    console.error('Error status:', error.status);
     
     const status = error?.status;
     const errorMessage = error?.message || '';
@@ -80,7 +85,7 @@ Generate the assessment JSON now.`;
     console.error('-------------------------------------');
 
     return NextResponse.json(
-      { error: 'Failed to generate assessment. Please try again later.' },
+      { error: `Assessment Failed: ${error.message}` },
       { status: 500 }
     );
   }
