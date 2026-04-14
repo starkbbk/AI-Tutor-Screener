@@ -75,97 +75,129 @@ export default function MicTestPage() {
   if (!state.candidate) return null // Will redirect
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 bg-gray-50">
-      <Card className="w-full max-w-lg shadow-lg">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">Test Your Microphone</CardTitle>
-          <CardDescription>
+    <div className="min-h-screen flex items-center justify-center p-6 bg-brand-black cuemath-grid relative selection:bg-brand-amber selection:text-brand-black">
+      {/* Background depth glows */}
+      <div className="absolute top-[10%] left-[10%] w-[35%] h-[35%] bg-brand-amber/5 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-[20%] right-[10%] w-[25%] h-[25%] bg-brand-cyan/5 rounded-full blur-[100px] pointer-events-none" />
+
+      <Card className="w-full max-w-lg glass-card border-white/10 shadow-2xl relative z-10 animate-in fade-in zoom-in-95 duration-700">
+        <CardHeader className="text-center pb-2">
+          <CardTitle className="text-3xl font-extrabold text-white tracking-tight mb-2">Test Your Microphone</CardTitle>
+          <CardDescription className="text-gray-400 text-lg font-light">
             Let's make sure we can hear you clearly before starting.
           </CardDescription>
         </CardHeader>
         
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-8 pt-6">
           {!supported ? (
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-amber-800 flex items-start space-x-3">
-              <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+            <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-5 text-red-200 flex items-start space-x-4">
+              <AlertCircle className="w-6 h-6 flex-shrink-0 mt-0.5" />
               <div>
-                <h4 className="font-semibold">Voice Not Supported</h4>
-                <p className="text-sm mt-1">
+                <h4 className="font-bold text-lg">Voice Not Supported</h4>
+                <p className="text-sm mt-1 opacity-80 leading-relaxed">
                   Your browser doesn't support the voice features needed for this interview. 
                   You can continue using the text-based fallback mode, or switch to Chrome/Edge for the best experience.
                 </p>
               </div>
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center py-6">
-              <div className="relative mb-6">
+            <div className="flex flex-col items-center justify-center py-4">
+              <div className="relative mb-8">
                 {isTesting ? (
-                  <div className="absolute inset-0 rounded-full pulse-red" />
+                  <div className="absolute -inset-4 rounded-full pulse-blue bg-brand-cyan/20 blur-xl" />
                 ) : null}
                 <Button
                   onClick={isTesting ? handleStopTest : handleStartTest}
                   variant={isTesting ? "destructive" : "default"}
                   size="icon"
-                  className="w-24 h-24 rounded-full relative z-10 shadow-md"
+                  className={`w-28 h-28 rounded-full relative z-10 shadow-2xl transition-all duration-500 ${isTesting ? 'scale-110 active:scale-100' : 'hover:scale-105 active:scale-95'}`}
                 >
                   {isTesting ? (
-                    <Mic className="w-10 h-10 animate-pulse text-white" />
+                    <Mic className="w-12 h-12 text-white animate-pulse" />
                   ) : (
-                    <Mic className="w-10 h-10 text-white" />
+                    <Mic className="w-12 h-12 text-brand-black" />
                   )}
                 </Button>
               </div>
               
-              <p className="font-medium text-gray-700 text-center mb-2">
-                {isTesting 
-                  ? "Listening... Say something like 'Hello, testing my microphone.'"
-                  : "Click the microphone and say a test sentence."}
-              </p>
+              <div className="text-center space-y-2 mb-8">
+                <p className={`text-lg transition-colors duration-300 ${isTesting ? 'text-brand-cyan font-bold' : 'text-white font-medium'}`}>
+                  {isTesting 
+                    ? "Recording..." 
+                    : "Click to start mic test"}
+                </p>
+                <p className="text-sm text-gray-400 font-light">
+                  {isTesting ? "Say something like 'Ready to teach!'" : "Check your audio levels"}
+                </p>
+              </div>
               
-              <div className={`w-full p-4 rounded-xl border min-h-24 ${isTesting ? 'border-red-200 bg-red-50/50' : 'border-gray-200 bg-gray-50'} transition-colors`}>
+              <div className={`w-full p-6 rounded-[2rem] border min-h-28 transition-all duration-500 flex items-center justify-center ${isTesting ? 'border-brand-cyan/30 bg-brand-cyan/5 shadow-[0_0_30px_rgba(0,163,255,0.1)]' : 'border-white/5 bg-black/40'}`}>
                 {testResult ? (
-                  <p className="text-gray-900">{testResult}</p>
-                ) : (
-                  <p className="text-gray-400 italic text-center text-sm pt-4">
-                    {isTesting ? "Waiting for speech..." : "Your speech will appear here..."}
+                  <p className="text-white text-xl font-medium text-center tracking-tight leading-relaxed animate-in fade-in duration-300 italic">
+                    "{testResult}"
                   </p>
+                ) : (
+                  <div className="flex flex-col items-center space-y-3 opacity-40">
+                    <p className="text-gray-400 italic text-center">
+                      {isTesting ? "Waiting for speech..." : "Your speech will appear here..."}
+                    </p>
+                    {isTesting && (
+                      <div className="flex gap-1 h-4 items-end">
+                        <div className="w-1 bg-brand-cyan wave-bar" />
+                        <div className="w-1 bg-brand-cyan wave-bar" />
+                        <div className="w-1 bg-brand-cyan wave-bar" />
+                        <div className="w-1 bg-brand-cyan wave-bar" />
+                        <div className="w-1 bg-brand-cyan wave-bar" />
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
               
               {error && (
-                <div className="mt-4 text-sm text-red-600 flex items-center w-full bg-red-50 p-3 rounded-lg border border-red-100">
-                  <MicOff className="w-4 h-4 mr-2 flex-shrink-0" />
+                <div className="mt-6 text-sm text-red-400 flex items-center w-full bg-red-500/10 p-4 rounded-2xl border border-red-500/20 animate-in shake duration-500">
+                  <MicOff className="w-5 h-5 mr-3 flex-shrink-0" />
                   {error}
                 </div>
               )}
             </div>
           )}
           
-          <div className="bg-blue-50/50 border border-blue-100 rounded-lg p-4 text-sm text-blue-800">
-            <h4 className="font-semibold mb-1 flex items-center">
-              <AlertCircle className="w-4 h-4 mr-1.5" /> Troubleshooting Tips
+          <div className="bg-white/5 border border-white/5 rounded-[2rem] p-6 text-sm">
+            <h4 className="font-bold text-white mb-3 flex items-center tracking-wide uppercase text-[11px] opacity-60">
+              <AlertCircle className="w-4 h-4 mr-2" /> Troubleshooting Tips
             </h4>
-            <ul className="list-disc pl-5 space-y-1 mt-2 text-blue-700/80">
-              <li>Ensure you've clicked "Allow" when the browser asked for microphone permissions.</li>
-              <li>Use a quiet environment for the best recognition.</li>
-              <li>Use Google Chrome or Microsoft Edge for optimal voice support.</li>
+            <ul className="space-y-2 text-gray-400 font-light leading-relaxed">
+              <li className="flex items-start">
+                <span className="w-1 h-1 rounded-full bg-brand-cyan mt-1.5 mr-3 flex-shrink-0" />
+                Click "Allow" if your browser asks for microphone access
+              </li>
+              <li className="flex items-start">
+                <span className="w-1 h-1 rounded-full bg-brand-cyan mt-1.5 mr-3 flex-shrink-0" />
+                Find a quiet spot for the best AI screening results
+              </li>
+              <li className="flex items-start">
+                <span className="w-1 h-1 rounded-full bg-brand-cyan mt-1.5 mr-3 flex-shrink-0" />
+                Chrome or Edge are recommended for voice reliability
+              </li>
             </ul>
           </div>
         </CardContent>
         
-        <CardFooter className="flex-col gap-3">
+        <CardFooter className="flex-col gap-4 pb-10">
           <Button 
-            className="w-full text-lg h-12" 
+            size="lg"
+            className="w-full text-lg h-14 rounded-2xl font-extrabold tracking-tight" 
             onClick={handleContinue}
             disabled={!supported ? false : (!hasTested && !error)}
           >
             {hasTested ? (
-              <span className="flex items-center"><CheckCircle2 className="mr-2" /> My mic works — Start Interview</span>
+              <span className="flex items-center"><CheckCircle2 className="mr-2 w-5 h-5 text-brand-black" /> Begin Assessment</span>
             ) : "Start Interview"}
           </Button>
           
           {(!hasTested || error) && supported && (
-             <Button variant="ghost" className="w-full text-sm text-gray-500" onClick={handleContinueWithoutMic}>
+             <Button variant="ghost" className="w-full text-xs text-gray-500 hover:text-white transition-colors" onClick={handleContinueWithoutMic}>
                Having trouble? Continue with text mode instead
              </Button>
           )}
@@ -174,3 +206,4 @@ export default function MicTestPage() {
     </div>
   )
 }
+
