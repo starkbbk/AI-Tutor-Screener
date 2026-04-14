@@ -119,8 +119,8 @@ export function InterviewRoom() {
     // For now we rely on the state keeping track of question index.
     // The prompt says "After all 6 questions are answered, wrap up warmly."
     const isEnding = state.currentQuestionIndex >= TOTAL_QUESTIONS || 
-                     text.toLowerCase().includes("that concludes our interview") ||
-                     text.toLowerCase().includes("thank you for your time today");
+                     text.toLowerCase().includes("wraps up our interview") ||
+                     text.toLowerCase().includes("have a great day");
                      
     if (isEnding && state.currentQuestionIndex >= TOTAL_QUESTIONS - 1) {
       finishInterview()
@@ -131,10 +131,20 @@ export function InterviewRoom() {
   }
 
   const finishInterview = () => {
+    // 1. Set flag and prevent any further interactions
+    if (state.interviewStatus === 'completing') return;
+    
+    console.log('[INTERVIEW ROOM] finishInterview called. Initiating final sequence...');
     setStatus('completing')
     completeInterview()
     
-    // Save full transcript and session data to localStorage before redirect
+    // 2. Clear any active speech/listening
+    stopListening()
+    stopSpeaking()
+    setRecording(false)
+    setAISpeaking(false)
+    
+    // 3. Save full transcript and session data to localStorage
     try {
       localStorage.setItem(`cuemath_session_backup_${state.candidate?.name?.replace(/\s+/g, '_')}`, JSON.stringify({
         candidate: state.candidate,
@@ -143,17 +153,25 @@ export function InterviewRoom() {
         endTime: Date.now(),
         isCompleted: true
       }));
-      console.log("[INTERVIEW ROOM] Session data backed up to localStorage.");
+      console.log("[INTERVIEW ROOM] Final session backup saved.");
     } catch (e) {
-      console.error("[INTERVIEW ROOM] Failed to save to localStorage:", e);
+      console.error("[INTERVIEW ROOM] Backup failed:", e);
     }
 
+    // 4. Auto-redirect after 3 seconds
     setTimeout(() => {
+      console.log('[INTERVIEW ROOM] Redirecting to report...');
       router.push("/report")
     }, 3000)
   }
 
   const handleMicToggle = () => {
+    // Prevent mic usage if interview is ending
+    if (state.interviewStatus === 'completing') {
+      router.push("/report");
+      return;
+    }
+
     if (state.isRecording) {
       stopListening()
       setRecording(false)
@@ -163,13 +181,11 @@ export function InterviewRoom() {
       setRecording(true)
       startListening(
         (result: SpeechRecognitionResult) => {
-          // Just waiting for the final result
           if (result.isFinal) {
             handleCandidateSpeakingFinished(result.transcript)
           }
         },
         () => {
-          // Fallback if stopped manually or timeout
           if (state.isRecording) setRecording(false)
         },
         (err: string) => {
@@ -182,6 +198,11 @@ export function InterviewRoom() {
 
   const handleCandidateSpeakingFinished = (transcript: string) => {
     if (!transcript.trim()) return
+    // Prevent API calls if interview is ending
+    if (state.interviewStatus === 'completing') {
+      router.push("/report");
+      return;
+    }
     
     setRecording(false)
     addMessage({
@@ -197,6 +218,11 @@ export function InterviewRoom() {
   const handleTextSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!textInput.trim()) return
+    // Prevent API calls if interview is ending
+    if (state.interviewStatus === 'completing') {
+      router.push("/report");
+      return;
+    }
     
     const text = textInput
     setTextInput("")
@@ -212,6 +238,12 @@ export function InterviewRoom() {
   }
 
   const handleSkipQuestion = () => {
+    // Prevent skip if interview is ending
+    if (state.interviewStatus === 'completing') {
+      router.push("/report");
+      return;
+    }
+
     stopListening()
     stopSpeaking()
     setRecording(false)
@@ -233,10 +265,12 @@ export function InterviewRoom() {
 
   if (state.interviewStatus === 'completing') {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center min-h-[60vh] animate-in fade-in zoom-in duration-500">
-        <Loader2 className="w-16 h-16 text-brand-amber animate-spin mb-6" />
-        <h2 className="text-3xl font-bold text-foreground mb-2">Analyzing Responses</h2>
-        <p className="text-gray-400">Crafting your professional coach assessment...</p>
+      <div className="flex-1 flex flex-col items-center justify-center min-h-[60vh] animate-in fade-in zoom-in duration-500 bg-background/80 backdrop-blur-md rounded-[3rem] p-10 text-center">
+        <Loader2 className="w-16 h-16 text-brand-amber animate-spin mb-8" />
+        <h2 className="text-4xl font-extrabold text-foreground mb-4 tracking-tight">INTERVIEW COMPLETE</h2>
+        <p className="text-xl text-muted-foreground font-light max-w-md">
+          Generating your assessment report... <br/> Please stay on this page.
+        </p>
       </div>
     )
   }
