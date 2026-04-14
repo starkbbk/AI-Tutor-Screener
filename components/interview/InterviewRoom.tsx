@@ -170,11 +170,11 @@ export function InterviewRoom() {
       console.error("[INTERVIEW ROOM] Backup failed:", e);
     }
 
-    // 4. Auto-redirect after 3 seconds
+    // 4. Auto-redirect after 4 seconds
     setTimeout(() => {
       console.log('[INTERVIEW ROOM] Redirecting to report...');
       router.push("/report")
-    }, 3000)
+    }, 4000)
   }
 
   const handleMicToggle = () => {
@@ -282,17 +282,7 @@ export function InterviewRoom() {
     finishInterview()
   }
 
-  if (state.interviewStatus === 'completing') {
-    return (
-      <div className="flex-1 flex flex-col items-center justify-center min-h-[60vh] animate-in fade-in zoom-in duration-500 bg-background/80 backdrop-blur-md rounded-[3rem] p-10 text-center">
-        <Loader2 className="w-16 h-16 text-brand-amber animate-spin mb-8" />
-        <h2 className="text-4xl font-extrabold text-foreground mb-4 tracking-tight">INTERVIEW COMPLETE</h2>
-        <p className="text-xl text-muted-foreground font-light max-w-md">
-          Generating your assessment report... <br/> Please stay on this page.
-        </p>
-      </div>
-    )
-  }
+
 
   return (
     <div className="flex flex-col h-[calc(100vh-140px)] max-w-5xl mx-auto glass-card rounded-[2rem] sm:rounded-[3rem] shadow-2xl overflow-hidden relative ring-1 ring-border mt-2 sm:mt-4">
@@ -331,68 +321,77 @@ export function InterviewRoom() {
 
       {/* Bottom Controls */}
       <div className="px-4 sm:px-10 py-4 sm:py-6 bg-muted/30 backdrop-blur-2xl border-t border-border relative z-20 flex flex-col items-center">
-        
-        {state.useFallbackMode && (
-          <form onSubmit={handleTextSubmit} className="flex space-x-2 sm:space-x-4 max-w-3xl w-full mx-auto mb-4 sm:mb-6">
-            <Input 
-              value={textInput}
-              onChange={(e) => setTextInput(e.target.value)}
-              placeholder="Type your response..."
-              className="flex-1 bg-background border-border h-12 sm:h-16 rounded-xl sm:rounded-[1.5rem] text-sm sm:text-lg px-4 sm:px-8 focus:ring-2 focus:ring-brand-amber/30 transition-all font-light"
-              disabled={state.isProcessing || state.isAISpeaking}
-            />
-            <Button 
-              type="submit" 
-              disabled={!textInput.trim() || state.isProcessing || state.isAISpeaking} 
-              className="h-12 sm:h-16 px-4 sm:px-10 rounded-xl sm:rounded-[1.5rem] font-bold amber-button shadow-xl shadow-brand-amber/10 transition-all active:scale-95"
-            >
-              <Send className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-3" /> <span className="hidden xs:inline">Submit</span>
-            </Button>
-          </form>
-        )}
+        {state.interviewStatus === 'completing' ? (
+          <div className="w-full py-4 flex flex-col items-center justify-center animate-in fade-in zoom-in duration-500">
+            <Loader2 className="w-8 h-8 text-brand-amber animate-spin mb-4" />
+            <h3 className="text-xl sm:text-2xl font-black text-foreground tracking-tight mb-2">Interview Complete!</h3>
+            <p className="text-sm text-muted-foreground font-medium">Redirecting to your assessment...</p>
+          </div>
+        ) : (
+          <>
+            {state.useFallbackMode && (
+              <form onSubmit={handleTextSubmit} className="flex space-x-2 sm:space-x-4 max-w-3xl w-full mx-auto mb-4 sm:mb-6">
+                <Input 
+                  value={textInput}
+                  onChange={(e) => setTextInput(e.target.value)}
+                  placeholder="Type your response..."
+                  className="flex-1 bg-background border-border h-12 sm:h-16 rounded-xl sm:rounded-[1.5rem] text-sm sm:text-lg px-4 sm:px-8 focus:ring-2 focus:ring-brand-amber/30 transition-all font-light"
+                  disabled={state.isProcessing || state.isAISpeaking}
+                />
+                <Button 
+                  type="submit" 
+                  disabled={!textInput.trim() || state.isProcessing || state.isAISpeaking} 
+                  className="h-12 sm:h-16 px-4 sm:px-10 rounded-xl sm:rounded-[1.5rem] font-bold amber-button shadow-xl shadow-brand-amber/10 transition-all active:scale-95"
+                >
+                  <Send className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-3" /> <span className="hidden xs:inline">Submit</span>
+                </Button>
+              </form>
+            )}
 
-        {/* Action Buttons row integrated into flex layout */}
-        <div className={`flex justify-between items-center w-full max-w-4xl mx-auto ${state.useFallbackMode ? 'border-t border-border/40 pt-3 sm:pt-4' : ''}`}>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={handleEndEarly} 
-            className="text-muted-foreground/50 hover:text-red-500 hover:bg-red-500/10 rounded-lg sm:rounded-xl transition-all text-[8px] sm:text-[10px] font-black uppercase tracking-[0.1em] sm:tracking-[0.2em] px-2 sm:px-4 flex-1 sm:flex-none justify-start sm:justify-center"
-          >
-            <XCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" /> <span className="hidden sm:inline">Exit Session</span> <span className="sm:hidden">Exit</span>
-          </Button>
+            {/* Action Buttons row integrated into flex layout */}
+            <div className={`flex justify-between items-center w-full max-w-4xl mx-auto ${state.useFallbackMode ? 'border-t border-border/40 pt-3 sm:pt-4' : ''}`}>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={handleEndEarly} 
+                className="text-muted-foreground/50 hover:text-red-500 hover:bg-red-500/10 rounded-lg sm:rounded-xl transition-all text-[8px] sm:text-[10px] font-black uppercase tracking-[0.1em] sm:tracking-[0.2em] px-2 sm:px-4 flex-1 sm:flex-none justify-start sm:justify-center"
+              >
+                <XCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" /> <span className="hidden sm:inline">Exit Session</span> <span className="sm:hidden">Exit</span>
+              </Button>
 
-          {!state.useFallbackMode && (
-            <div className="flex flex-col items-center justify-center flex-1">
-              <MicButton 
-                isRecording={state.isRecording}
-                isProcessing={state.isProcessing}
-                disabled={state.isAISpeaking}
-                onClick={handleMicToggle}
-              />
-              <div className="mt-2 text-[8px] sm:text-[11px] font-black tracking-[0.1em] sm:tracking-[0.3em] uppercase text-muted-foreground/60 h-4 sm:h-6">
-                {state.isRecording ? (
-                  <span className="text-red-500 flex items-center">
-                    <span className="w-1.5 h-1.5 sm:w-2.5 sm:h-2.5 rounded-full bg-red-500 mr-1.5 sm:mr-2 animate-pulse" />
-                    Rec...
-                  </span>
-                ) : (
-                  'Tap to speak'
-                )}
-              </div>
+              {!state.useFallbackMode && (
+                <div className="flex flex-col items-center justify-center flex-1">
+                  <MicButton 
+                    isRecording={state.isRecording}
+                    isProcessing={state.isProcessing}
+                    disabled={state.isAISpeaking}
+                    onClick={handleMicToggle}
+                  />
+                  <div className="mt-2 text-[8px] sm:text-[11px] font-black tracking-[0.1em] sm:tracking-[0.3em] uppercase text-muted-foreground/60 h-4 sm:h-6">
+                    {state.isRecording ? (
+                      <span className="text-red-500 flex items-center">
+                        <span className="w-1.5 h-1.5 sm:w-2.5 sm:h-2.5 rounded-full bg-red-500 mr-1.5 sm:mr-2 animate-pulse" />
+                        Rec...
+                      </span>
+                    ) : (
+                      'Tap to speak'
+                    )}
+                  </div>
+                </div>
+              )}
+
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={handleSkipQuestion} 
+                disabled={state.isProcessing || state.isRecording}
+                className="text-muted-foreground/50 hover:text-foreground hover:bg-muted rounded-lg sm:rounded-xl transition-all text-[8px] sm:text-[10px] font-black uppercase tracking-[0.1em] sm:tracking-[0.2em] px-2 sm:px-4 flex-1 sm:flex-none justify-end sm:justify-center"
+              >
+                <span className="hidden sm:inline">Skip Question</span> <span className="sm:hidden">Skip</span> <SkipForward className="w-3.5 h-3.5 sm:w-4 sm:h-4 ml-1.5 sm:ml-2" />
+              </Button>
             </div>
-          )}
-
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={handleSkipQuestion} 
-            disabled={state.isProcessing || state.isRecording}
-            className="text-muted-foreground/50 hover:text-foreground hover:bg-muted rounded-lg sm:rounded-xl transition-all text-[8px] sm:text-[10px] font-black uppercase tracking-[0.1em] sm:tracking-[0.2em] px-2 sm:px-4 flex-1 sm:flex-none justify-end sm:justify-center"
-          >
-            <span className="hidden sm:inline">Skip Question</span> <span className="sm:hidden">Skip</span> <SkipForward className="w-3.5 h-3.5 sm:w-4 sm:h-4 ml-1.5 sm:ml-2" />
-          </Button>
-        </div>
+          </>
+        )}
       </div>
     </div>
 

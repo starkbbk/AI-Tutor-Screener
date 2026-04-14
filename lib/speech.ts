@@ -49,12 +49,28 @@ export function startListening(
   newRecognition.interimResults = true;
   newRecognition.lang = 'en-IN';
 
-  let lastSpeechTime = Date.now();
-  let hasReceivedSpeech = false;
+  const SILENCE_TIMEOUT = 5000;
+  const MAX_RECORDING_TIME = 120000;
+
+  newRecognition.onstart = () => {
+    console.log("Speech recognition started");
+    clearTimeouts();
+    
+    silenceTimeout = setTimeout(() => {
+      stopListening();
+    }, SILENCE_TIMEOUT);
+
+    maxDurationTimeout = setTimeout(() => {
+      stopListening();
+    }, MAX_RECORDING_TIME);
+  };
 
   newRecognition.onresult = (event: SpeechRecognitionEvent) => {
-    hasReceivedSpeech = true;
-    lastSpeechTime = Date.now();
+    if (silenceTimeout) clearTimeout(silenceTimeout);
+    
+    silenceTimeout = setTimeout(() => {
+      stopListening();
+    }, SILENCE_TIMEOUT);
 
     let interimTranscript = '';
     let finalTranscript = '';
@@ -76,8 +92,6 @@ export function startListening(
   };
 
   newRecognition.onerror = (event: any) => {
-    // Softly ignore 'aborted' errors as they are often benign 
-    // (e.g., stopping programmatically, navigating away, fast tapping)
     if (event.error === 'aborted') {
       console.log('Speech Recognition aborted cleanly.');
       return;
@@ -90,12 +104,9 @@ export function startListening(
       'network': 'Network error! This often happens due to a slow connection.',
     };
     
-    // Log for debugging
     console.error('Speech Recognition Error:', event.error);
-    
     onError(errorMap[event.error] || `Mic Error (${event.error}). Please try again.`);
   };
-
 
   newRecognition.onend = () => {
     clearTimeouts();
@@ -104,18 +115,6 @@ export function startListening(
 
   recognition = newRecognition;
   newRecognition.start();
-
-  // Auto-stop after 3 seconds of silence
-  silenceTimeout = setInterval(() => {
-    if (hasReceivedSpeech && Date.now() - lastSpeechTime > 3000) {
-      stopListening();
-    }
-  }, 500);
-
-  // Max duration: 120 seconds
-  maxDurationTimeout = setTimeout(() => {
-    stopListening();
-  }, 120000);
 }
 
 export function stopListening(): void {
