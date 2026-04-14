@@ -21,9 +21,9 @@ export function VoiceAvatar() {
   }
 
   return (
-    <div className="flex items-center space-x-3 bg-muted/20 px-4 py-2 rounded-full border border-border">
+    <div className="flex items-center space-x-2 sm:space-x-3 bg-muted/20 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border border-border">
       {/* Core circle */}
-      <div className={`w-10 h-10 rounded-full ${stateClass} flex items-center justify-center relative z-10 transition-all duration-500 shadow-md border-2 border-background/20`}>
+      <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full ${stateClass} flex items-center justify-center relative z-10 transition-all duration-500 shadow-md border-2 border-background/20`}>
         {state.isAISpeaking ? (
           <div className="flex items-center space-x-0.5 px-2 w-full justify-center">
             {[1, 2, 3, 4].map((i) => (
@@ -39,11 +39,11 @@ export function VoiceAvatar() {
         ) : state.isProcessing ? (
           <Loader2 className="w-5 h-5 text-brand-navy dark:text-brand-black animate-spin" />
         ) : (
-          <div className="w-4 h-4 rounded-full bg-muted border border-border animate-pulse shadow-inner" />
+          <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-muted border border-border animate-pulse shadow-inner" />
         )}
       </div>
       
-      <div className={`text-[10px] font-bold tracking-widest uppercase transition-colors duration-300 ${state.isAISpeaking ? 'text-brand-cyan' : state.isRecording ? 'text-red-500' : 'text-muted-foreground/80'}`}>
+      <div className={`text-[10px] font-bold tracking-widest uppercase transition-colors duration-300 hidden sm:block ${state.isAISpeaking ? 'text-brand-cyan' : state.isRecording ? 'text-red-500' : 'text-muted-foreground/80'}`}>
         {state.isAISpeaking ? "AI Speaking" : state.isRecording ? "Listening" : state.isProcessing ? "Processing" : "Idle"}
       </div>
     </div>

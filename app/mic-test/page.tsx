@@ -77,7 +77,7 @@ export default function MicTestPage() {
   if (!state.candidate) return null // Will redirect
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 bg-background cuemath-grid relative selection:bg-brand-amber selection:text-brand-navy">
+    <div className="min-h-screen flex items-center justify-center p-3 sm:p-6 bg-background cuemath-grid relative selection:bg-brand-amber selection:text-brand-navy">
       {/* Background depth glows (reduced for light mode) */}
       <div className="absolute top-[10%] left-[10%] w-[35%] h-[35%] bg-brand-amber/[0.03] dark:bg-brand-amber/5 rounded-full blur-[80px] sm:blur-[120px] pointer-events-none" />
       <div className="absolute bottom-[20%] right-[10%] w-[25%] h-[25%] bg-brand-cyan/[0.03] dark:bg-brand-cyan/5 rounded-full blur-[70px] sm:blur-[100px] pointer-events-none" />
@@ -115,9 +115,9 @@ export default function MicTestPage() {
                   className={`w-24 h-24 sm:w-32 sm:h-32 rounded-full relative z-10 shadow-2xl transition-all duration-500 amber-button ${isTesting ? 'scale-110' : 'hover:scale-105'}`}
                 >
                   {isTesting ? (
-                    <Mic className="w-10 h-10 sm:w-14 sm:h-14 text-white animate-pulse" />
+                    <Mic className="w-8 h-8 sm:w-14 sm:h-14 text-white animate-pulse" />
                   ) : (
-                    <Mic className="w-10 h-10 sm:w-14 sm:h-14" />
+                    <Mic className="w-8 h-8 sm:w-14 sm:h-14" />
                   )}
                 </Button>
               </div>

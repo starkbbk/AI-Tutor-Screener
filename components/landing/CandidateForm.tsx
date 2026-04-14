@@ -54,7 +54,7 @@ export function CandidateForm() {
             <label
               htmlFor="name"
               className="absolute left-6 top-3 text-[10px] font-black text-brand-amber uppercase tracking-[0.2em] transition-all transform pointer-events-none
-                peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:text-sm peer-placeholder-shown:text-muted-foreground peer-placeholder-shown:opacity-70
+                peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:text-xs sm:peer-placeholder-shown:text-sm peer-placeholder-shown:text-muted-foreground peer-placeholder-shown:opacity-70
                 peer-focus:top-3 peer-focus:translate-y-0 peer-focus:text-[10px] peer-focus:text-brand-amber peer-focus:opacity-100"
             >
               Full Name
@@ -73,7 +73,7 @@ export function CandidateForm() {
             <label
               htmlFor="email"
               className="absolute left-6 top-3 text-[10px] font-black text-brand-amber uppercase tracking-[0.2em] transition-all transform pointer-events-none
-                peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:text-sm peer-placeholder-shown:text-muted-foreground peer-placeholder-shown:opacity-70
+                peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:text-xs sm:peer-placeholder-shown:text-sm peer-placeholder-shown:text-muted-foreground peer-placeholder-shown:opacity-70
                 peer-focus:top-3 peer-focus:translate-y-0 peer-focus:text-[10px] peer-focus:text-brand-amber peer-focus:opacity-100"
             >
               Email Address
@@ -89,7 +89,7 @@ export function CandidateForm() {
             </div>
           )}
           
-          <Button type="submit" size="lg" className="w-full mt-10 h-16 sm:h-20 rounded-2xl sm:rounded-3xl font-black text-lg sm:text-xl tracking-tighter uppercase amber-button shadow-2xl shadow-brand-amber/20 hover:scale-[1.02] active:scale-95 transition-all">
+          <Button type="submit" size="lg" className="w-full mt-6 sm:mt-10 h-14 sm:h-20 rounded-2xl sm:rounded-3xl font-black text-lg sm:text-xl tracking-tighter uppercase amber-button shadow-2xl shadow-brand-amber/20 hover:scale-[1.02] active:scale-95 transition-all">
             BEGIN AI INTERVIEW
           </Button>
         </form>

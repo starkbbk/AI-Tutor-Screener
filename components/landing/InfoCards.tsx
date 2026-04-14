@@ -66,12 +66,12 @@ export function InfoCards() {
           <motion.div 
             key={i} 
             variants={itemVariants}
-            className="group glass-card p-8 rounded-[2.5rem] transition-all duration-500 hover:scale-[1.03] hover:-translate-y-2 hover:shadow-2xl hover:bg-foreground/[0.04] border border-white/5"
+            className="group glass-card p-6 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] transition-all duration-500 hover:scale-[1.03] hover:-translate-y-2 hover:shadow-2xl hover:bg-foreground/[0.04] border border-white/5"
           >
-            <div className={`mb-8 w-14 h-14 rounded-2xl bg-foreground/5 flex items-center justify-center ${step.accent.split(' ')[0]} transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3`}>
+            <div className={`mb-6 sm:mb-8 w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-foreground/5 flex items-center justify-center ${step.accent.split(' ')[0]} transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3`}>
               {step.icon}
             </div>
-            <h4 className="text-2xl font-black text-foreground mb-4 tracking-tighter uppercase">{step.title}</h4>
+            <h4 className="text-xl sm:text-2xl font-black text-foreground mb-3 sm:mb-4 tracking-tighter uppercase">{step.title}</h4>
             <p className="text-sm sm:text-base text-muted-foreground leading-relaxed font-medium opacity-80 group-hover:opacity-100 transition-opacity">
               {step.description}
             </p>

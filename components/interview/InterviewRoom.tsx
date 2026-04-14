@@ -286,23 +286,23 @@ export function InterviewRoom() {
 
 
   return (
-    <div className="flex flex-col h-[calc(100vh-140px)] max-w-5xl mx-auto glass-card rounded-[2rem] sm:rounded-[3rem] shadow-2xl overflow-hidden relative ring-1 ring-border mt-2 sm:mt-4">
+    <div className="flex flex-col h-[calc(100dvh-120px)] sm:h-[calc(100vh-140px)] max-w-5xl mx-auto glass-card rounded-[1.5rem] sm:rounded-[3rem] shadow-2xl overflow-hidden relative ring-1 ring-border mt-2 sm:mt-4">
       
       {/* Top Header */}
-      <div className="flex items-center justify-between p-4 sm:p-8 glass-header z-20">
-        <div className="flex items-center space-x-3 sm:space-x-4">
-          <Image src="/cuemath-logo.svg" alt="Cuemath" width={100} height={30} className="sm:w-[140px] sm:h-[40px] opacity-90 transition-opacity hover:opacity-100" />
+      <div className="flex items-center justify-between p-3 sm:p-8 glass-header z-20">
+        <div className="flex items-center space-x-2 sm:space-x-4">
+          <Image src="/cuemath-logo.svg" alt="Cuemath" width={80} height={24} className="xs:w-[100px] sm:w-[140px] sm:h-[40px] opacity-90 transition-opacity hover:opacity-100" />
         </div>
         
         <div className="flex items-center space-x-2 sm:space-x-4">
           <div className="hidden xs:flex items-center">
             <VoiceAvatar />
           </div>
-          <div className="text-[9px] sm:text-xs font-black text-brand-amber bg-brand-amber/10 px-2 sm:px-4 py-1.5 sm:py-2 rounded-full border border-brand-amber/20 uppercase tracking-widest">
+          <div className="text-[8px] sm:text-xs font-black text-brand-amber bg-brand-amber/10 px-2 sm:px-4 py-1 sm:py-2 rounded-full border border-brand-amber/20 uppercase tracking-widest whitespace-nowrap">
             {Math.min(state.currentQuestionIndex + 1, TOTAL_QUESTIONS)} / {TOTAL_QUESTIONS}
           </div>
-          <div className="flex items-center text-muted-foreground font-mono text-[10px] sm:text-sm tracking-widest bg-muted/50 px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl border border-border">
-            <Clock className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:2 text-brand-cyan" />
+          <div className="flex items-center text-muted-foreground font-mono text-[9px] sm:text-sm tracking-widest bg-muted/50 px-2 sm:px-4 py-1 sm:py-2 rounded-lg sm:rounded-xl border border-border whitespace-nowrap">
+            <Clock className="hidden xxs:block w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2 text-brand-cyan" />
             {formatTime(timer)}
           </div>
           <ThemeToggle />
@@ -310,7 +310,7 @@ export function InterviewRoom() {
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col overflow-y-auto overflow-x-hidden p-4 sm:p-10 relative scrollbar-hide">
+      <div className="flex-1 flex flex-col overflow-y-auto overflow-x-hidden p-3 sm:p-10 relative scrollbar-hide">
         {/* Decorative theme-aware glows */}
         <div className="absolute top-0 left-1/4 w-1/2 h-1/2 bg-brand-cyan/5 dark:bg-brand-cyan/10 rounded-full blur-[80px] sm:blur-[120px] pointer-events-none" />
         
