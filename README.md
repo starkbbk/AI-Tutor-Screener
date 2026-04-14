@@ -16,6 +16,10 @@ An intelligent, voice-first screening platform built for **Cuemath**. This appli
 
 ## 📸 Core Experience
 
+### 🎨 Premium Landing Page
+The entry point featuring a sleek, minimalist design for tutor registration.
+![Landing Page](public/screenshots/landing.png)
+
 
 ### 🎙️ Pre-Session Mic Test
 Ensuring hardware readiness with a simple, intuitive audio check.
