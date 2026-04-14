@@ -206,7 +206,7 @@ export function InterviewRoom() {
     return (
       <div className="flex-1 flex flex-col items-center justify-center min-h-[60vh] animate-in fade-in zoom-in duration-500">
         <Loader2 className="w-16 h-16 text-brand-amber animate-spin mb-6" />
-        <h2 className="text-3xl font-bold text-white mb-2">Analyzing Responses</h2>
+        <h2 className="text-3xl font-bold text-foreground mb-2">Analyzing Responses</h2>
         <p className="text-gray-400">Crafting your professional coach assessment...</p>
       </div>
     )

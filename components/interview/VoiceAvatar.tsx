@@ -36,10 +36,10 @@ export function VoiceAvatar() {
               ))}
             </div>
           ) : state.isRecording ? (
-            <div className="flex items-center space-x-2 px-6 w-full justify-center">
-               {[1, 2, 3].map((i) => (
-                 <div key={i} className={`w-5 h-5 rounded-full bg-white/80 wave-bar`} style={{ animationDuration: '0.6s' }} />
-               ))}
+            <div className="flex items-end justify-center space-x-1.5 h-10 px-4">
+              {[1, 2, 3, 4, 5].map(i => (
+                <div key={i} className={`w-5 h-5 rounded-full bg-foreground/80 wave-bar`} style={{ animationDuration: '0.6s' }} />
+              ))}
             </div>
           ) : state.isProcessing ? (
             <Loader2 className="w-14 h-14 text-brand-navy dark:text-brand-black animate-spin" />

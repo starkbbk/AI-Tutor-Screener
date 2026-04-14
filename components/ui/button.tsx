@@ -11,9 +11,9 @@ const buttonVariants = cva(
         default: "bg-brand-amber text-brand-black hover:bg-[#FFC933] shadow-[0_0_20px_rgba(255,184,0,0.3)]",
 
         destructive: "bg-red-500/10 text-red-500 border border-red-500/20 hover:bg-red-500/20",
-        outline: "border border-white/20 bg-transparent hover:bg-white/5 text-white",
-        secondary: "bg-white/10 text-white hover:bg-white/20",
-        ghost: "hover:bg-white/5 text-gray-400 hover:text-white",
+        outline: "border border-foreground/20 bg-transparent hover:bg-foreground/5 text-foreground",
+        secondary: "bg-foreground/10 text-foreground hover:bg-foreground/20",
+        ghost: "hover:bg-foreground/5 text-foreground/70 hover:text-foreground",
         link: "text-brand-amber underline-offset-4 hover:underline",
       },
       size: {

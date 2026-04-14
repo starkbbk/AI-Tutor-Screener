@@ -31,9 +31,9 @@ export function InfoCards() {
         {steps.map((step, i) => (
           <div 
             key={i} 
-            className="group glass-card p-8 rounded-[2rem] transition-all duration-500 hover:bg-white/5 hover:-translate-y-1"
+            className="group glass-card p-8 rounded-[2rem] transition-all duration-500 hover:bg-foreground/5 hover:-translate-y-1"
           >
-            <div className={`mb-6 w-14 h-14 rounded-2xl bg-brand-navy/5 dark:bg-white/5 flex items-center justify-center ${step.accent.split(' ')[0]} transition-transform duration-500 group-hover:scale-110`}>
+            <div className={`mb-6 w-14 h-14 rounded-2xl bg-foreground/5 flex items-center justify-center ${step.accent.split(' ')[0]} transition-transform duration-500 group-hover:scale-110`}>
               {step.icon}
             </div>
             <h4 className="text-2xl font-extrabold text-foreground mb-3 tracking-tight">{step.title}</h4>
