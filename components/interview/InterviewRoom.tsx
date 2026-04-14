@@ -26,6 +26,7 @@ export function InterviewRoom() {
   const [timer, setTimer] = useState(0)
   const [textInput, setTextInput] = useState("")
   const isFirstRender = useRef(true)
+  const greetingSentRef = useRef(false)
   
   // Timer effect
   useEffect(() => {
@@ -37,9 +38,8 @@ export function InterviewRoom() {
 
   // Initial greeting
   useEffect(() => {
-    console.log('[INTERVIEW ROOM] Initial greeting useEffect triggered. isFirstRender:', isFirstRender.current, 'candidateName:', state.candidate?.name, 'historyLength:', state.conversationHistory.length);
-    if (isFirstRender.current && state.conversationHistory.length === 0) {
-      console.log('[INTERVIEW ROOM] Firing initial startChatWithGemini...');
+    if (isFirstRender.current && state.conversationHistory.length === 0 && !greetingSentRef.current) {
+      greetingSentRef.current = true
       isFirstRender.current = false
       startChatWithGemini()
     }
@@ -50,8 +50,8 @@ export function InterviewRoom() {
   }, [])
 
   const startChatWithGemini = async (userMessage?: string) => {
+    if (state.isProcessing) return; // Prevent double calls
     try {
-      console.log('[INTERVIEW ROOM] startChatWithGemini called. message:', userMessage);
       setProcessing(true)
       
       const response = await fetch('/api/chat', {
@@ -68,6 +68,14 @@ export function InterviewRoom() {
       
       if (!response.ok) {
         throw new Error(data.error || 'Failed to get response')
+      }
+
+      // Sync counter perfectly with AI state
+      if (data.questionNumber) {
+        if (data.questionNumber !== 'DONE') {
+          // Question 1 = Index 0
+          setQuestionIndex(Math.min(data.questionNumber - 1, TOTAL_QUESTIONS - 1))
+        }
       }
 
       addMessage({
@@ -208,6 +216,16 @@ export function InterviewRoom() {
       return;
     }
     
+    // Noise & accidental sound filtering
+    const wordCount = transcript.trim().split(/\s+/).length;
+    if (transcript.length < 5 || wordCount < 2) {
+      const errorMsg = "I didn't catch that clearly. Could you try speaking again?";
+      addMessage({ role: "ai", content: errorMsg, timestamp: new Date().toISOString() });
+      playAIResponse(errorMsg);
+      setRecording(false);
+      return;
+    }
+    
     setRecording(false)
     addMessage({
       role: "candidate",
@@ -215,7 +233,6 @@ export function InterviewRoom() {
       timestamp: new Date().toISOString()
     })
     
-    setQuestionIndex(Math.min(state.currentQuestionIndex + 1, TOTAL_QUESTIONS))
     startChatWithGemini(transcript)
   }
 
@@ -237,7 +254,6 @@ export function InterviewRoom() {
       timestamp: new Date().toISOString()
     })
     
-    setQuestionIndex(Math.min(state.currentQuestionIndex + 1, TOTAL_QUESTIONS))
     startChatWithGemini(text)
   }
 
@@ -257,7 +273,6 @@ export function InterviewRoom() {
       content: "[Candidate skipped the question]",
       timestamp: new Date().toISOString()
     })
-    setQuestionIndex(Math.min(state.currentQuestionIndex + 1, TOTAL_QUESTIONS))
     startChatWithGemini("I'd like to skip this question. Please ask the next one.")
   }
 

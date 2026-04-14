@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
       { role: 'user', content: message || "Continue" }
     ];
 
-    const response = await withRetry(async () => {
+    const responseText = await withRetry(async () => {
       return await groqChat(messages, {
         model: "llama-3.3-70b-versatile",
         temperature: 0.7,
@@ -46,8 +46,23 @@ export async function POST(request: NextRequest) {
       });
     }, { maxRetries: 2, initialDelay: 1000, factor: 1.5 });
 
+    let questionNumber: number | 'DONE' | null = null;
+    let cleanResponse = responseText;
 
-    return NextResponse.json({ response });
+    // Parse out [Qx] or [DONE] tag
+    // Match something like [Q1], [q1], [Q6], [DONE] at the end of the text or anywhere
+    const tagMatch = responseText.match(/\[Q([1-6])\]|\[DONE\]/i);
+    if (tagMatch) {
+      if (tagMatch[0].toUpperCase() === '[DONE]') {
+        questionNumber = 'DONE';
+      } else if (tagMatch[1]) {
+        questionNumber = parseInt(tagMatch[1], 10);
+      }
+      // Remove the tag from the response so the user doesn't see or hear it
+      cleanResponse = responseText.replace(/\[Q([1-6])\]|\[DONE\]/gi, '').trim();
+    }
+
+    return NextResponse.json({ response: cleanResponse, questionNumber });
 
   } catch (error: any) {
     console.error("------- GROQ API ERROR -------");
