@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { Lexend } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
-
+import { InterviewProvider } from "@/context/InterviewContext";
+import "./globals.css";
 
 const lexend = Lexend({
   subsets: ["latin"],

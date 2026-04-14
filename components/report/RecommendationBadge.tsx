@@ -2,32 +2,32 @@ import { Badge } from "@/components/ui/badge"
 import { getRecommendationColor } from "@/lib/constants"
 
 export function RecommendationBadge({ recommendation }: { recommendation: string }) {
-  const getBadgeVariant = (rec: string) => {
+  const getBadgeStyles = (rec: string) => {
     switch (rec) {
-      case 'Strong Recommend': return 'success'
-      case 'Recommend': return 'default'
-      case 'Maybe': return 'warning'
-      case 'Not Recommended': return 'destructive'
-      default: return 'secondary'
+      case 'Strong Recommend': 
+        return 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400'
+      case 'Recommend': 
+        return 'bg-brand-cyan/10 border-brand-cyan/30 text-brand-cyan'
+      case 'Maybe': 
+        return 'bg-brand-amber/10 border-brand-amber/30 text-brand-amber'
+      case 'Not Recommended': 
+        return 'bg-red-500/10 border-red-500/30 text-red-500'
+      default: 
+        return 'bg-muted border-border text-muted-foreground'
     }
   }
 
-  const colors = getRecommendationColor(recommendation)
+  const styles = getBadgeStyles(recommendation)
 
   return (
-    <div 
-      className="inline-flex flex-col items-center p-4 rounded-xl border-2" 
-      style={{ 
-        backgroundColor: colors.bg, 
-        borderColor: colors.border 
-      }}
-    >
-      <span className="text-xs font-bold uppercase tracking-wider mb-1" style={{ color: colors.text }}>
-        Decision
+    <div className={`inline-flex flex-col items-center p-6 rounded-[2rem] border ${styles} shadow-sm backdrop-blur-sm transition-all hover:scale-105`}>
+      <span className="text-[10px] font-black uppercase tracking-[0.3em] mb-2 opacity-70">
+        AI DECISION
       </span>
-      <Badge variant={getBadgeVariant(recommendation)} className="text-sm px-3 py-1 shadow-sm">
+      <div className="text-lg font-black tracking-tight px-4 py-1.5 rounded-full ring-1 ring-current/20">
         {recommendation}
-      </Badge>
+      </div>
     </div>
   )
 }
+
