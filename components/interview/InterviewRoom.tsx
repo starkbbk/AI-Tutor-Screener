@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input"
 import { ThemeToggle } from "@/components/ui/theme-toggle"
 import { formatTime } from "@/lib/utils"
 import { TOTAL_QUESTIONS } from "@/lib/constants"
-import { speak, startListening, stopListening, stopSpeaking, SpeechRecognitionResult } from "@/lib/speech"
+import { speak, startListening, stopListening, stopSpeaking, SpeechRecognitionResult, preloadVoices } from "@/lib/speech"
 
 export function InterviewRoom() {
   const router = useRouter()
@@ -44,6 +44,10 @@ export function InterviewRoom() {
       startChatWithGemini()
     }
   }, [state.candidate?.name, state.conversationHistory.length])
+  
+  useEffect(() => {
+    preloadVoices()
+  }, [])
 
   const startChatWithGemini = async (userMessage?: string) => {
     try {

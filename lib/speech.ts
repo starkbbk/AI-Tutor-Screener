@@ -141,6 +141,57 @@ function clearTimeouts(): void {
   }
 }
 
+export const getPreferredVoice = (): SpeechSynthesisVoice | null => {
+  if (typeof window === 'undefined') return null;
+  const voices = window.speechSynthesis.getVoices();
+  
+  // Priority order — best natural female English voices
+  const preferredVoices = [
+    'Google UK English Female',
+    'Google US English Female', 
+    'Samantha',                    // macOS/iOS default female
+    'Karen',                       // macOS Australian female
+    'Moira',                       // macOS Irish female
+    'Fiona',                       // macOS Scottish female
+    'Victoria',                    // macOS female
+    'Microsoft Zira',              // Windows female
+    'Microsoft Jenny',             // Windows female (natural)
+    'English Female',              // Generic fallback
+  ];
+  
+  // Try to find the best voice in priority order
+  for (const name of preferredVoices) {
+    const voice = voices.find(v => 
+      v.name.includes(name) || v.name === name
+    );
+    if (voice) return voice;
+  }
+  
+  // Fallback: find ANY English female voice
+  const englishFemaleVoice = voices.find(v => 
+    v.lang.startsWith('en') && 
+    (v.name.toLowerCase().includes('female') || 
+     v.name.toLowerCase().includes('samantha') ||
+     v.name.toLowerCase().includes('karen') ||
+     v.name.toLowerCase().includes('zira'))
+  );
+  if (englishFemaleVoice) return englishFemaleVoice;
+  
+  // Last fallback: any English voice
+  const anyEnglish = voices.find(v => v.lang.startsWith('en'));
+  return anyEnglish || voices[0] || null;
+};
+
+export function preloadVoices(): void {
+  if (!isSpeechSynthesisSupported()) return;
+  const load = () => {
+    const selected = getPreferredVoice();
+    if (selected) console.log("Voice preloaded:", selected.name);
+  };
+  load();
+  window.speechSynthesis.onvoiceschanged = load;
+}
+
 export function speak(
   text: string,
   onStart?: () => void,
@@ -154,29 +205,68 @@ export function speak(
   // Cancel any ongoing speech
   window.speechSynthesis.cancel();
 
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.rate = 0.9;
-  utterance.pitch = 1.0;
+  // Chrome bug fix: break long text into chunks
+  const MAX_LENGTH = 200;
+  // Match sentences or fall back to just splitting at characters if no punctuation
+  const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
+  
+  let chunks: string[] = [];
+  let currentChunk = '';
+  
+  sentences.forEach(sentence => {
+    if ((currentChunk + sentence).length > MAX_LENGTH) {
+      if (currentChunk) chunks.push(currentChunk.trim());
+      currentChunk = sentence;
+    } else {
+      currentChunk += sentence;
+    }
+  });
+  if (currentChunk) chunks.push(currentChunk.trim());
+  
+  // Sequential chunk processing
+  let currentIndex = 0;
+  let hasStarted = false;
 
-  // Try to pick a natural English voice
-  const voices = window.speechSynthesis.getVoices();
-  const preferredVoice = voices.find(v =>
-    v.name.includes('Google') && v.lang.startsWith('en')
-  ) || voices.find(v =>
-    v.lang.startsWith('en') && v.name.includes('Female')
-  ) || voices.find(v =>
-    v.lang.startsWith('en')
-  );
+  const speakNext = () => {
+    if (currentIndex >= chunks.length) {
+      onEnd?.();
+      return;
+    }
 
-  if (preferredVoice) {
-    utterance.voice = preferredVoice;
-  }
+    const utterance = new SpeechSynthesisUtterance(chunks[currentIndex]);
+    const voice = getPreferredVoice();
+    
+    if (voice) {
+      utterance.voice = voice;
+    }
+    
+    utterance.lang = 'en-US';
+    utterance.rate = 0.9;      // Calm and clear
+    utterance.pitch = 1.05;    // Friendly female tone
+    utterance.volume = 1.0;
 
-  utterance.onstart = () => onStart?.();
-  utterance.onend = () => onEnd?.();
-  utterance.onerror = () => onEnd?.();
+    utterance.onstart = () => {
+      if (!hasStarted) {
+        onStart?.();
+        hasStarted = true;
+      }
+    };
 
-  window.speechSynthesis.speak(utterance);
+    utterance.onend = () => {
+      currentIndex++;
+      speakNext();
+    };
+
+    utterance.onerror = (e) => {
+      console.error("Speech error:", e);
+      currentIndex++;
+      speakNext();
+    };
+
+    window.speechSynthesis.speak(utterance);
+  };
+
+  speakNext();
 }
 
 export function stopSpeaking(): void {

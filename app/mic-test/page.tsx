@@ -6,7 +6,7 @@ import { Mic, AlertCircle, CheckCircle2, MicOff, RefreshCw } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { useInterview } from "@/context/InterviewContext"
-import { isSpeechRecognitionSupported, startListening, stopListening, SpeechRecognitionResult } from "@/lib/speech"
+import { isSpeechRecognitionSupported, startListening, stopListening, SpeechRecognitionResult, preloadVoices } from "@/lib/speech"
 
 export default function MicTestPage() {
   const router = useRouter()
@@ -28,6 +28,8 @@ export default function MicTestPage() {
       setSupported(false)
       setFallbackMode(true)
     }
+    
+    preloadVoices()
     
     return () => stopListening()
   }, [state.candidate, router, setFallbackMode])

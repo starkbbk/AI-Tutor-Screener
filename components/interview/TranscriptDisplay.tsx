@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react"
-import { UserCircle, Bot } from "lucide-react"
+import { Volume2, UserCircle, Bot } from "lucide-react"
 import { ConversationMessage } from "@/lib/types"
+import { speak } from "@/lib/speech"
 
 export function TranscriptDisplay({ messages }: { messages: ConversationMessage[] }) {
   const bottomRef = useRef<HTMLDivElement>(null)
@@ -11,6 +12,10 @@ export function TranscriptDisplay({ messages }: { messages: ConversationMessage[
       bottomRef.current.scrollIntoView({ behavior: "smooth" })
     }
   }, [messages])
+
+  const handleReplay = (text: string) => {
+    speak(text);
+  }
 
   if (messages.length === 0) return null
   
@@ -23,7 +28,17 @@ export function TranscriptDisplay({ messages }: { messages: ConversationMessage[
         >
           <div className={`flex items-center mb-3 px-3 space-x-2 text-[10px] font-black tracking-[0.2em] uppercase ${msg.role === 'ai' ? 'text-brand-cyan' : 'text-brand-amber'}`}>
             {msg.role === 'ai' ? (
-              <><Bot className="w-3.5 h-3.5" /> <span>AI Intelligence</span></>
+              <>
+                <Bot className="w-3.5 h-3.5" /> 
+                <span>AI Intelligence</span>
+                <button 
+                  onClick={() => handleReplay(msg.content)}
+                  className="ml-2 hover:bg-brand-cyan/20 p-1 rounded-full transition-colors cursor-pointer"
+                  title="Replay message"
+                >
+                  <Volume2 className="w-3.5 h-3.5" />
+                </button>
+              </>
             ) : (
               <><span>Respondent</span> <UserCircle className="w-3.5 h-3.5" /></>
             )}
