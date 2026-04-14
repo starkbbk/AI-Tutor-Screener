@@ -361,24 +361,14 @@ export function InterviewRoom() {
               </Button>
 
               {!state.useFallbackMode && (
-                <div className="flex flex-col items-center justify-center flex-1">
-                  <MicButton 
-                    isRecording={state.isRecording}
-                    isProcessing={state.isProcessing}
-                    disabled={state.isAISpeaking}
-                    onClick={handleMicToggle}
-                  />
-                  <div className="mt-2 text-[8px] sm:text-[11px] font-black tracking-[0.1em] sm:tracking-[0.3em] uppercase text-muted-foreground/60 h-4 sm:h-6">
-                    {state.isRecording ? (
-                      <span className="text-red-500 flex items-center">
-                        <span className="w-1.5 h-1.5 sm:w-2.5 sm:h-2.5 rounded-full bg-red-500 mr-1.5 sm:mr-2 animate-pulse" />
-                        Rec...
-                      </span>
-                    ) : (
-                      'Tap to speak'
-                    )}
+                  <div className="flex-1 flex justify-center items-center">
+                    <MicButton 
+                      isRecording={state.isRecording}
+                      isProcessing={state.isProcessing}
+                      disabled={false} // Removed isAISpeaking to prevent lockup on mobile
+                      onClick={handleMicToggle}
+                    />
                   </div>
-                </div>
               )}
 
               <Button 

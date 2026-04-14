@@ -258,11 +258,20 @@ export function speak(
 
     utterance.onerror = (e) => {
       console.error("Speech error:", e);
+      // Ensure we don't get stuck if there's an error
       currentIndex++;
-      speakNext();
+      if (currentIndex >= chunks.length) {
+        onEnd?.();
+      } else {
+        speakNext();
+      }
     };
 
     window.speechSynthesis.speak(utterance);
+    
+    // Safety fallback: If speech doesn't start or get blocked on mobile without gesture, 
+    // we need to make sure we don't stay in a 'speaking' state forever.
+    // Most browsers will trigger onerror immediately if blocked.
   };
 
   speakNext();

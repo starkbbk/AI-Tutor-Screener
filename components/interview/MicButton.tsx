@@ -11,27 +11,46 @@ interface MicButtonProps {
 }
 
 export function MicButton({ isRecording, isProcessing, disabled, onClick }: MicButtonProps) {
-
-
   return (
-    <Button
-      onClick={onClick}
-      disabled={disabled || isProcessing}
-      size="icon"
-      className={`
-        w-16 h-16 sm:w-20 sm:h-20 rounded-full shadow-2xl transition-all duration-500 transform active:scale-95
-        ${isRecording 
-          ? 'bg-brand-cyan text-brand-navy dark:text-brand-black pulse-blue scale-110 shadow-cyan-500/20' 
-          : 'bg-brand-amber text-brand-navy dark:text-brand-black hover:bg-brand-amber/90 hover:scale-105 shadow-brand-amber/20 amber-button'}
-        ${(disabled || isProcessing) && !isRecording ? 'opacity-20 cursor-not-allowed' : ''}
-      `}
-    >
-      {isRecording ? (
-        <Square className="w-6 h-6 sm:w-8 sm:h-8 fill-current" />
-      ) : (
-        <Mic className="w-8 h-8 sm:w-10 sm:h-10" />
-      )}
-    </Button>
+    <div className="flex flex-col items-center justify-center">
+      <Button
+        onClick={onClick}
+        disabled={disabled || isProcessing}
+        size="icon"
+        className={`
+          w-16 h-16 sm:w-20 sm:h-20 rounded-full shadow-2xl transition-all duration-500 transform active:scale-95 touch-manipulation
+          ${isRecording 
+            ? 'bg-brand-cyan text-brand-navy dark:text-brand-black pulse-blue scale-110 shadow-cyan-500/20' 
+            : 'bg-brand-amber text-brand-navy dark:text-brand-black hover:bg-brand-amber/90 hover:scale-105 shadow-brand-amber/20 amber-button'}
+          ${(disabled || isProcessing) && !isRecording ? 'opacity-20 cursor-not-allowed' : ''}
+        `}
+      >
+        {isRecording ? (
+          <Square className="w-6 h-6 sm:w-8 sm:h-8 fill-current" />
+        ) : (
+          <Mic className="w-8 h-8 sm:w-10 sm:h-10" />
+        )}
+      </Button>
+      
+      {/* Label wrapped in a clickable area that triggers the same onClick */}
+      <div 
+        onClick={!(disabled || isProcessing) ? onClick : undefined}
+        className={`
+          mt-3 text-[9px] sm:text-[11px] font-black tracking-[0.2em] sm:tracking-[0.3em] uppercase cursor-pointer select-none transition-colors
+          ${isRecording ? 'text-red-500' : 'text-muted-foreground/60 hover:text-foreground'}
+          ${(disabled || isProcessing) ? 'opacity-40 cursor-not-allowed' : ''}
+        `}
+      >
+        {isRecording ? (
+          <span className="flex items-center">
+            <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-red-500 mr-2 animate-pulse" />
+            Recording...
+          </span>
+        ) : (
+          'Tap to speak'
+        )}
+      </div>
+    </div>
   )
 }
 
