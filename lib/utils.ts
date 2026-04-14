@@ -48,7 +48,6 @@ export async function generatePDF(elementId: string, filename: string): Promise<
     scale: 2, // Higher resolution
     useCORS: true,
     allowTaint: true,
-    letterRendering: true,
     scrollY: -window.scrollY, // Fix offset issues if page is scrolled
     backgroundColor: '#FFFFFF',
     onclone: (clonedDoc) => {
