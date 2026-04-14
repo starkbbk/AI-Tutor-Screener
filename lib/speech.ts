@@ -80,7 +80,64 @@ export function startListening(
   const MAX_RECORDING_TIME = 3600000; // 1 hour
 
   let watchdogTimer: NodeJS.Timeout | null = null;
-  const WATCHDOG_TIMEOUT = 6000; // 6 seconds of absolute silence (no results) forces restart
+  const WATCHDOG_TIMEOUT = 6000; 
+
+  // HARDWARE HEARTBEAT: Monitor actual volume levels via Web Audio API
+  let audioContext: AudioContext | null = null;
+  let audioStream: MediaStream | null = null;
+  let volumeWatchdog: NodeJS.Timeout | null = null;
+
+  const stopHardwareMonitor = () => {
+    if (volumeWatchdog) clearInterval(volumeWatchdog);
+    if (audioStream) {
+      audioStream.getTracks().forEach(track => track.stop());
+      audioStream = null;
+    }
+  };
+
+  const startHardwareMonitor = async () => {
+    try {
+      if (!audioContext) audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      if (audioContext.state === 'suspended') await audioContext.resume();
+
+      audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const source = audioContext.createMediaStreamSource(audioStream);
+      const analyser = audioContext.createAnalyser();
+      analyser.fftSize = 256;
+      source.connect(analyser);
+
+      const bufferLength = analyser.frequencyBinCount;
+      const dataArray = new Uint8Array(bufferLength);
+
+      let silentCheckCount = 0;
+      if (volumeWatchdog) clearInterval(volumeWatchdog);
+      
+      volumeWatchdog = setInterval(() => {
+        analyser.getByteFrequencyData(dataArray);
+        const average = dataArray.reduce((a, b) => a + b) / bufferLength;
+
+        if (average < 1) { // Threshold for "absolute silence/stall"
+          silentCheckCount++;
+        } else {
+          silentCheckCount = 0;
+        }
+
+        // If hardware has been reporting zero volume for 5 seconds while we are in Listening mode
+        if (silentCheckCount > 50 && !isManualStop && !isSilenceTimeoutReached && recognition) {
+          console.warn("Hardware Heartbeat: Flatline detected for 5s. Hard Reseting...");
+          silentCheckCount = 0;
+          try {
+             // Abort is faster than stop for hard resets
+             recognition.abort(); 
+          } catch (e) {
+             // Already stopped
+          }
+        }
+      }, 100); // Check every 100ms
+    } catch (e) {
+      console.warn("Failed to start hardware heartbeat monitor:", e);
+    }
+  };
 
   const initRecognition = () => {
     const SpeechRecognitionConstructor = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -94,6 +151,7 @@ export function startListening(
       console.log("Speech recognition session started");
       resetSilenceTimeout();
       resetWatchdogTimer();
+      startHardwareMonitor();
       
       if (!maxDurationTimeout) {
         maxDurationTimeout = setTimeout(() => {
@@ -105,14 +163,11 @@ export function startListening(
     const resetSilenceTimeout = () => {
       if (silenceTimeout) clearTimeout(silenceTimeout);
       
-      // THE FIX: Switch between a short timeout (finished talking) 
-      // and a long timeout (just thinking)
       const timeoutDuration = accumulatedTranscript.trim().length > 0 
         ? SPEAKING_SILENCE_TIMEOUT 
         : IDLE_SILENCE_TIMEOUT;
 
       silenceTimeout = setTimeout(() => {
-        console.log("Silence timeout reached. Transcript empty:", !accumulatedTranscript.trim());
         isSilenceTimeoutReached = true;
         stopListening();
       }, timeoutDuration);
@@ -122,8 +177,10 @@ export function startListening(
       if (watchdogTimer) clearTimeout(watchdogTimer);
       watchdogTimer = setTimeout(() => {
         if (!isManualStop && !isSilenceTimeoutReached) {
-          console.warn("Watchdog: Reconnecting mic...");
-          newRecognition.stop(); 
+          console.warn("Recognition Watchdog: Reconnecting mic...");
+          try {
+            newRecognition.abort(); 
+          } catch (e) {}
         }
       }, WATCHDOG_TIMEOUT);
     };
@@ -152,7 +209,6 @@ export function startListening(
       const fullInterim = (fullFinal + " " + interimTranscript).trim();
 
       if (currentFinalTranscript || interimTranscript) {
-        // We received actual words, so we can now use the shorter 5s finished-talking timeout
         resetSilenceTimeout();
       }
 
@@ -181,16 +237,13 @@ export function startListening(
 
     newRecognition.onend = () => {
       if (watchdogTimer) clearTimeout(watchdogTimer);
+      stopHardwareMonitor();
       
       const hasContent = accumulatedTranscript.trim().length > 0;
       
-      // IMPROVED RESTART LOGIC:
-      // If it wasn't a manual stop AND (it wasn't a silence timeout OR we have no words yet)
-      // we should keep the loop going.
       if (!isManualStop && (!isSilenceTimeoutReached || !hasContent)) {
         setTimeout(() => {
           if (!isManualStop && (!isSilenceTimeoutReached || !hasContent)) {
-            // Reset silence timeout flag if we are auto-restarting due to empty silence
             if (!hasContent) isSilenceTimeoutReached = false;
             
             const instance = initRecognition();
