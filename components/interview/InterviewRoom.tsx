@@ -36,14 +36,17 @@ export function InterviewRoom() {
 
   // Initial greeting
   useEffect(() => {
-    if (isFirstRender.current && state.candidate && state.conversationHistory.length === 0) {
+    console.log('[INTERVIEW ROOM] Initial greeting useEffect triggered. isFirstRender:', isFirstRender.current, 'candidateName:', state.candidate?.name, 'historyLength:', state.conversationHistory.length);
+    if (isFirstRender.current && state.conversationHistory.length === 0) {
+      console.log('[INTERVIEW ROOM] Firing initial startChatWithGemini...');
       isFirstRender.current = false
       startChatWithGemini()
     }
-  }, [state.candidate, state.conversationHistory.length])
+  }, [state.candidate?.name, state.conversationHistory.length])
 
   const startChatWithGemini = async (userMessage?: string) => {
     try {
+      console.log('[INTERVIEW ROOM] startChatWithGemini called. message:', userMessage);
       setProcessing(true)
       
       const response = await fetch('/api/chat', {
@@ -70,10 +73,20 @@ export function InterviewRoom() {
 
       playAIResponse(data.response)
       
-    } catch (error) {
-      console.error(error)
-      // Fallback or retry logic
+    } catch (error: any) {
+      console.error('[INTERVIEW ROOM] Exception in startChatWithGemini:', error)
       setProcessing(false)
+      
+      // Inject a synthetic fallback message so the UI doesn't soft-lock
+      const fallbackMsg = "I'm experiencing a high volume of requests right now. Could you please try answering again, or we can skip this question."
+      
+      addMessage({
+        role: "ai",
+        content: fallbackMsg,
+        timestamp: new Date().toISOString()
+      })
+      
+      playAIResponse(fallbackMsg)
     }
   }
 
