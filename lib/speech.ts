@@ -131,7 +131,7 @@ export function stopListening(): void {
 
 function clearTimeouts(): void {
   if (silenceTimeout) {
-    clearInterval(silenceTimeout);
+    clearTimeout(silenceTimeout);
     silenceTimeout = null;
   }
   if (maxDurationTimeout) {

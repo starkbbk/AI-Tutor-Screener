@@ -90,7 +90,7 @@ export function CandidateForm() {
           )}
           
           <Button type="submit" size="lg" className="w-full mt-10 h-16 sm:h-20 rounded-2xl sm:rounded-3xl font-black text-lg sm:text-xl tracking-tighter uppercase amber-button shadow-2xl shadow-brand-amber/20 hover:scale-[1.02] active:scale-95 transition-all">
-            Begin Assessment
+            BEGIN AI INTERVIEW
           </Button>
         </form>
       </CardContent>

@@ -72,7 +72,10 @@ export function InterviewRoom() {
 
       // Sync counter perfectly with AI state
       if (data.questionNumber) {
-        if (data.questionNumber !== 'DONE') {
+        if (data.questionNumber === 'DONE') {
+          finishInterview();
+          // We still want to display and play the last message
+        } else {
           // Question 1 = Index 0
           setQuestionIndex(Math.min(data.questionNumber - 1, TOTAL_QUESTIONS - 1))
         }
@@ -126,19 +129,17 @@ export function InterviewRoom() {
   }
 
   const checkIfInterviewComplete = (text: string) => {
-    // A somewhat hacky but effective way: if we are past total questions, 
-    // or the AI is giving a concluding remark (e.g., "thank you", "that's all")
-    // For now we rely on the state keeping track of question index.
-    // The prompt says "After all 6 questions are answered, wrap up warmly."
-    const isEnding = state.currentQuestionIndex >= TOTAL_QUESTIONS || 
-                     text.toLowerCase().includes("wraps up our interview") ||
-                     text.toLowerCase().includes("have a great day");
+    const lowerText = text.toLowerCase();
+    const isEnding = state.currentQuestionIndex >= TOTAL_QUESTIONS - 1 && (
+                     lowerText.includes("wraps up") ||
+                     lowerText.includes("assessment shortly") ||
+                     lowerText.includes("have a great day") ||
+                     lowerText.includes("thank you") ||
+                     lowerText.includes("goodbye")
+    );
                      
-    if (isEnding && state.currentQuestionIndex >= TOTAL_QUESTIONS - 1) {
+    if (isEnding || state.interviewStatus === 'completing') {
       finishInterview()
-    } else if (state.currentQuestionIndex < TOTAL_QUESTIONS) {
-      // Just step increment for UI tracking. Gemini actually asks the questions.
-      // We'll increment every time candidate answers.
     }
   }
 
