@@ -86,7 +86,7 @@ export function startListening(
     // but the user explicitly requested it for mobile Chrome/Safari.
     newRecognition.continuous = true; 
     newRecognition.interimResults = true;
-    newRecognition.lang = 'en-IN';
+    newRecognition.lang = 'en-US'; // Changed from en-IN for broader mobile engine support
 
     newRecognition.onstart = () => {
       console.log("Speech recognition session started");
