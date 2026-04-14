@@ -2,7 +2,7 @@ import Image from "next/image"
 
 export function Hero() {
   return (
-    <div className="text-center mb-12 mt-4 relative z-10">
+    <div className="text-center mb-4 sm:mb-6 mt-0 relative z-10">
 
 
       <h1 className="text-4xl sm:text-5xl md:text-7xl font-extrabold tracking-tight mb-6 leading-[1.1]">
