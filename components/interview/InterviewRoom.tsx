@@ -219,8 +219,9 @@ export function InterviewRoom() {
       <div className="flex items-center justify-between p-8 glass-header z-20">
         <Image src="/cuemath-logo.svg" alt="Cuemath" width={140} height={40} className="opacity-90 dark:brightness-0 dark:invert" />
         
-        <div className="flex items-center space-x-6">
-          <div className="text-xs font-black text-brand-amber bg-brand-amber/10 px-4 py-2 rounded-full border border-brand-amber/20 uppercase tracking-widest">
+        <div className="flex items-center space-x-4">
+          <VoiceAvatar />
+          <div className="text-xs font-black text-brand-amber bg-brand-amber/10 px-4 py-2 rounded-full border border-brand-amber/20 uppercase tracking-widest hidden sm:block">
             Session • {Math.min(state.currentQuestionIndex + 1, TOTAL_QUESTIONS)} / {TOTAL_QUESTIONS}
           </div>
           <div className="flex items-center text-muted-foreground font-mono text-sm tracking-widest bg-muted/50 px-4 py-2 rounded-xl border border-border">
@@ -235,7 +236,6 @@ export function InterviewRoom() {
         {/* Decorative theme-aware glows */}
         <div className="absolute top-0 left-1/4 w-1/2 h-1/2 bg-brand-cyan/5 dark:bg-brand-cyan/10 rounded-full blur-[120px] pointer-events-none" />
         
-        <VoiceAvatar />
         <TranscriptDisplay messages={state.conversationHistory} />
         
         {/* Scroll anchor */}
@@ -243,10 +243,10 @@ export function InterviewRoom() {
       </div>
 
       {/* Bottom Controls */}
-      <div className="px-10 py-6 bg-muted/30 backdrop-blur-2xl border-t border-border relative z-20">
+      <div className="px-6 sm:px-10 py-6 bg-muted/30 backdrop-blur-2xl border-t border-border relative z-20 flex flex-col items-center">
         
-        {state.useFallbackMode ? (
-          <form onSubmit={handleTextSubmit} className="flex space-x-4 max-w-3xl mx-auto">
+        {state.useFallbackMode && (
+          <form onSubmit={handleTextSubmit} className="flex space-x-4 max-w-3xl w-full mx-auto mb-6">
             <Input 
               value={textInput}
               onChange={(e) => setTextInput(e.target.value)}
@@ -262,46 +262,48 @@ export function InterviewRoom() {
               <Send className="w-5 h-5 mr-3" /> Submit
             </Button>
           </form>
-        ) : (
-          <div className="flex flex-col items-center">
-            <MicButton 
-              isRecording={state.isRecording}
-              isProcessing={state.isProcessing}
-              disabled={state.isAISpeaking}
-              onClick={handleMicToggle}
-            />
-            <div className="mt-4 text-[11px] font-black tracking-[0.3em] uppercase text-muted-foreground/60 h-6">
-              {state.isRecording ? (
-                <span className="text-red-500 flex items-center">
-                  <span className="w-2.5 h-2.5 rounded-full bg-red-500 mr-2.5 animate-pulse" />
-                  Recording...
-                </span>
-              ) : (
-                'Tap to speak'
-              )}
-            </div>
-          </div>
         )}
 
         {/* Action Buttons row integrated into flex layout */}
-        <div className="flex justify-between items-center mt-6 w-full max-w-3xl mx-auto border-t border-border/40 pt-4">
+        <div className={`flex justify-between items-center w-full max-w-4xl mx-auto ${state.useFallbackMode ? 'border-t border-border/40 pt-4' : ''}`}>
           <Button 
             variant="ghost" 
             size="sm" 
             onClick={handleEndEarly} 
-            className="text-muted-foreground/40 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all text-[10px] font-black uppercase tracking-[0.2em] px-4"
+            className="text-muted-foreground/50 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all text-[10px] font-black uppercase tracking-[0.2em] px-3 sm:px-4 flex-1 sm:flex-none justify-start sm:justify-center"
           >
-            <XCircle className="w-4 h-4 mr-2.5" /> Exit Session
+            <XCircle className="w-4 h-4 mr-2" /> <span className="hidden sm:inline">Exit Session</span>
           </Button>
-          
+
+          {!state.useFallbackMode && (
+            <div className="flex flex-col items-center justify-center flex-1">
+              <MicButton 
+                isRecording={state.isRecording}
+                isProcessing={state.isProcessing}
+                disabled={state.isAISpeaking}
+                onClick={handleMicToggle}
+              />
+              <div className="mt-3 text-[10px] sm:text-[11px] font-black tracking-[0.2em] sm:tracking-[0.3em] uppercase text-muted-foreground/60 h-6">
+                {state.isRecording ? (
+                  <span className="text-red-500 flex items-center">
+                    <span className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-red-500 mr-2 animate-pulse" />
+                    Recording...
+                  </span>
+                ) : (
+                  'Tap to speak'
+                )}
+              </div>
+            </div>
+          )}
+
           <Button 
             variant="ghost" 
             size="sm" 
             onClick={handleSkipQuestion} 
             disabled={state.isProcessing || state.isRecording}
-            className="text-muted-foreground/40 hover:text-foreground hover:bg-muted rounded-xl transition-all text-[10px] font-black uppercase tracking-[0.2em] px-4"
+            className="text-muted-foreground/50 hover:text-foreground hover:bg-muted rounded-xl transition-all text-[10px] font-black uppercase tracking-[0.2em] px-3 sm:px-4 flex-1 sm:flex-none justify-end sm:justify-center"
           >
-            Skip Question <SkipForward className="w-4 h-4 ml-2.5" />
+            <span className="hidden sm:inline">Skip Question</span> <SkipForward className="w-4 h-4 ml-2" />
           </Button>
         </div>
       </div>
