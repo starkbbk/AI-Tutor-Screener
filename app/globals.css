@@ -128,6 +128,7 @@
 .pulse-blue { animation: pulse-blue 1.5s ease-in-out infinite; }
 .pulse-red { animation: pulse-red 1.2s ease-in-out infinite; }
 .pulse-gentle { animation: pulse-gentle 2s ease-in-out infinite; }
+.pulse-live { animation: pulse-red 0.5s ease-in-out infinite alternate; }
 
 @keyframes wave {
   0%, 100% { height: 8px; }

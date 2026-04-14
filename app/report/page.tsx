@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
-import { Download, RefreshCw, Share2, Loader2, AlertCircle } from "lucide-react"
+import { Download, RefreshCw, Share2, Loader2, AlertCircle, LayoutDashboard, XCircle } from "lucide-react"
 
 import { useInterview } from "@/context/InterviewContext"
 import { Button } from "@/components/ui/button"
@@ -167,7 +167,16 @@ export default function ReportPage() {
             <div className="flex flex-col md:flex-row justify-between items-center md:items-start space-y-6 md:space-y-0 mb-8 sm:mb-12 text-center md:text-left">
               <Image src="/cuemath-logo.svg" alt="Cuemath" width={160} height={40} className="sm:w-[200px] sm:h-[60px]" />
               <div className="text-center md:text-right flex flex-col items-center md:items-end space-y-4">
-                <div className="no-print">
+                <div className="no-print flex items-center space-x-3 sm:space-x-4">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="text-[10px] sm:text-xs font-black text-muted-foreground hover:text-brand-amber hover:bg-brand-amber/5 px-2 sm:px-4 h-8 sm:h-10 rounded-lg sm:rounded-xl border border-border/50 flex items-center uppercase tracking-widest transition-all"
+                    onClick={handleStartNew}
+                  >
+                    <XCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" /> 
+                    <span className="hidden xs:inline">Exit</span>
+                  </Button>
                   <ThemeToggle />
                 </div>
                 <div>
@@ -255,13 +264,16 @@ export default function ReportPage() {
 
         {/* Global Action Buttons (Not printed to PDF) */}
         <div className="flex flex-col md:flex-row gap-4 sm:gap-6 justify-between items-center glass-card p-6 sm:p-8 rounded-2xl sm:rounded-[2.5rem] border-border shadow-xl no-print">
-          <Button variant="outline" className="w-full md:w-auto text-muted-foreground hover:text-foreground border-border hover:bg-muted rounded-xl sm:rounded-2xl h-12 sm:h-14 px-8 font-bold text-sm sm:text-base" onClick={handleStartNew} disabled={isDownloading}>
+          <Button variant="outline" className="hidden sm:flex w-full md:w-auto text-muted-foreground hover:text-foreground border-border hover:bg-muted rounded-xl sm:rounded-2xl h-12 sm:h-14 px-8 font-bold text-sm sm:text-base" onClick={handleStartNew} disabled={isDownloading}>
             <RefreshCw className="w-4 h-4 mr-3" /> New Assessment
           </Button>
           
           <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
             <Button variant="secondary" className="w-full sm:w-auto rounded-xl sm:rounded-2xl h-12 sm:h-14 px-8 sm:px-10 font-bold text-sm sm:text-base" onClick={handleShare} disabled={isDownloading}>
               <Share2 className="w-4 h-4 mr-3" /> <span className="hidden xs:inline">Share Path</span> <span className="xs:hidden">Share</span>
+            </Button>
+            <Button variant="outline" className="w-full sm:w-auto border-border hover:bg-muted rounded-xl sm:rounded-2xl h-12 sm:h-14 px-8 sm:px-10 font-bold text-sm sm:text-base" onClick={handleStartNew} disabled={isDownloading}>
+              <XCircle className="w-4 h-4 mr-3" /> Exit
             </Button>
             <Button className="w-full sm:w-auto rounded-xl sm:rounded-2xl h-12 sm:h-14 px-10 sm:px-12 font-black amber-button shadow-xl shadow-brand-amber/10 text-sm sm:text-base min-w-[200px]" onClick={handleDownloadPdf} disabled={isDownloading}>
               {isDownloading ? (

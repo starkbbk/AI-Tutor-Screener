@@ -34,7 +34,7 @@ export async function generatePDF(elementId: string, filename: string): Promise<
   const element = document.getElementById(elementId);
   if (!element) throw new Error("Target element not found");
 
-  // Wait for images to be loaded (pre-caution)
+  // Wait for images to be loaded
   const images = Array.from(element.getElementsByTagName('img'));
   await Promise.all(images.map(img => {
     if (img.complete) return Promise.resolve();
@@ -44,21 +44,41 @@ export async function generatePDF(elementId: string, filename: string): Promise<
     });
   }));
 
-  const canvas = await html2canvas(element, {
-    scale: 2,
-    useCORS: true,
-    allowTaint: true,
-    logging: false,
-    backgroundColor: '#ffffff',
-    windowWidth: element.scrollWidth,
-    windowHeight: element.scrollHeight,
-  });
+  // THE FIX: Temporarily force light mode for clean capture
+  const root = document.documentElement;
+  const isDark = root.classList.contains('dark');
+  
+  if (isDark) {
+    root.classList.remove('dark');
+    root.classList.add('light');
+  }
 
-  const imgData = canvas.toDataURL('image/png', 1.0);
-  const pdf = new jsPDF('p', 'mm', 'a4');
-  const pdfWidth = pdf.internal.pageSize.getWidth();
-  const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+  // Brief delay to allow CSS variables and tailwind classes to re-paint
+  await new Promise(resolve => setTimeout(resolve, 150));
 
-  pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-  pdf.save(filename);
+  try {
+    const canvas = await html2canvas(element, {
+      scale: 2,
+      useCORS: true,
+      allowTaint: true,
+      logging: false,
+      backgroundColor: '#ffffff',
+      windowWidth: element.scrollWidth,
+      windowHeight: element.scrollHeight,
+    });
+
+    const imgData = canvas.toDataURL('image/png', 1.0);
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+    pdf.save(filename);
+  } finally {
+    // Restore original theme context
+    if (isDark) {
+      root.classList.add('dark');
+      root.classList.remove('light');
+    }
+  }
 }

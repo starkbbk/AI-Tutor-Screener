@@ -326,6 +326,14 @@ export function InterviewRoom() {
   return (
     <div className="flex flex-col h-[calc(100dvh-120px)] sm:h-[calc(100vh-140px)] max-w-5xl mx-auto glass-card rounded-[1.5rem] sm:rounded-[3rem] shadow-2xl overflow-hidden relative ring-1 ring-border mt-2 sm:mt-4">
       
+      {/* Live Indicator (Mobile focus) */}
+      {hasStarted && state.interviewStatus === 'in_progress' && (
+        <div className="bg-red-500/5 border-b border-red-500/10 py-1 sm:py-1.5 flex items-center justify-center space-x-2 animate-in fade-in duration-700">
+          <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-red-500 pulse-live" />
+          <span className="text-[8px] sm:text-[10px] font-black tracking-[0.2em] text-red-500/80 uppercase">Interview is Live</span>
+        </div>
+      )}
+      
       {/* Top Header */}
       <div className="flex items-center justify-between p-3 sm:p-8 glass-header z-20">
         <div className="flex items-center space-x-2 sm:space-x-4">

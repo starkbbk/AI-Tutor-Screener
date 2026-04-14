@@ -57,7 +57,7 @@ export function startListening(
   lastProgressTime = Date.now();
 
   const SILENCE_TIMEOUT = 5000;
-  const MAX_RECORDING_TIME = 120000;
+  const MAX_RECORDING_TIME = 3600000; // 1 hour (Increased from 2 mins to handle long silences)
 
   const initRecognition = () => {
     const SpeechRecognitionConstructor = window.SpeechRecognition || window.webkitSpeechRecognition;
