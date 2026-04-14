@@ -4,6 +4,7 @@ import { useEffect } from "react"
 import { Hero } from "@/components/landing/Hero"
 import { CandidateForm } from "@/components/landing/CandidateForm"
 import { InfoCards } from "@/components/landing/InfoCards"
+import { ThemeToggle } from "@/components/ui/theme-toggle"
 import { useInterview } from "@/context/InterviewContext"
 
 export default function LandingPage() {
@@ -15,7 +16,11 @@ export default function LandingPage() {
   }, [reset])
 
   return (
-    <div className="min-h-screen flex flex-col bg-background cuemath-grid selection:bg-brand-amber selection:text-foreground">
+      <header className="w-full max-w-7xl mx-auto px-6 sm:px-10 py-8 flex items-center justify-between relative z-20">
+        <img src="/cuemath-logo.svg" alt="Cuemath" className="h-8 opacity-90 dark:brightness-0 dark:invert" />
+        <ThemeToggle />
+      </header>
+
       <main className="flex-1 flex flex-col items-center justify-center p-6 sm:p-10 w-full max-w-7xl mx-auto py-20 relative">
         {/* Abstract background glows */}
         <div className="absolute top-[10%] left-[10%] w-[30%] h-[30%] bg-brand-amber/5 rounded-full blur-[120px] pointer-events-none" />

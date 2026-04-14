@@ -32,7 +32,6 @@ export default function RootLayout({
         >
           <InterviewProvider>
             {children}
-            <ThemeToggle />
           </InterviewProvider>
 
         </ThemeProvider>

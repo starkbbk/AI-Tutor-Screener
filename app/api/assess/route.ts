@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAssessmentModel } from '@/lib/gemini';
+import { groqChat } from '@/lib/groq';
 import { ASSESSMENT_SYSTEM_PROMPT } from '@/lib/constants';
 import { withRetry } from '@/lib/retry';
 
@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
   const { transcript, candidateName, duration } = requestData;
 
   try {
-    const model = getAssessmentModel();
+    console.log("Groq API Key loaded (Assess):", process.env.GROQ_API_KEY ? "YES" : "NO");
 
     // Format transcript for assessment
     const formattedTranscript = transcript
@@ -36,11 +36,15 @@ ${formattedTranscript}
 Generate the assessment JSON now.`;
 
     const responseText = await withRetry(async () => {
-      const result = await model.generateContent({
-        contents: [{ role: 'user', parts: [{ text: prompt }] }]
+      return await groqChat([
+        { role: 'system', content: ASSESSMENT_SYSTEM_PROMPT },
+        { role: 'user', content: prompt }
+      ], {
+        model: "llama-3.3-70b-versatile",
+        temperature: 0.1, // Low temperature for consistent JSON
+        max_tokens: 3000
       });
-      return result.response.text();
-    }, { maxRetries: 2, initialDelay: 2000, factor: 1 }); // 2 second delay on retries
+    }, { maxRetries: 2, initialDelay: 2000, factor: 1.5 });
 
     // Parse JSON from response (handle potential markdown code blocks)
     let jsonStr = responseText;
@@ -52,19 +56,20 @@ Generate the assessment JSON now.`;
     const assessment = JSON.parse(jsonStr);
 
     return NextResponse.json({ assessment });
+
   } catch (error: any) {
-    console.error('------- GEMINI ASSESS API ERROR -------');
+    console.error('------- GROQ ASSESS API ERROR -------');
     console.error('Error Details:', error);
     
-    const status = error?.status || error?.response?.status;
+    const status = error?.status;
     const errorMessage = error?.message || '';
 
     if (status === 404 || errorMessage.includes('404')) {
-      console.error('🚨 404 ERROR: Wrong model name! The requested Gemini model does not exist or is not available for this tier.');
-    } else if (status === 401 || errorMessage.includes('401') || errorMessage.includes('API key not valid')) {
-      console.error('🚨 401 ERROR: Wrong API key! Your GOOGLE_GEMINI_API_KEY is invalid.');
-    } else if (status === 429 || errorMessage.includes('429') || errorMessage.includes('Too Many Requests')) {
-      console.error('🚨 429 ERROR: Rate limit reached! Retries exhausted after multiple waits.');
+      console.error('🚨 404 ERROR: Wrong model name or endpoint for Groq!');
+    } else if (status === 401 || errorMessage.includes('401')) {
+      console.error('🚨 401 ERROR: Wrong Groq API key!');
+    } else if (status === 429 || errorMessage.includes('429')) {
+      console.error('🚨 429 ERROR: Groq Rate limit reached!');
       return NextResponse.json(
         { error: 'Rate limited. Please try again.' },
         { status: 429 }
@@ -72,12 +77,13 @@ Generate the assessment JSON now.`;
     } else {
       console.error('🚨 UNKNOWN ERROR:', errorMessage);
     }
-    console.error('----------------------------------------');
+    console.error('-------------------------------------');
 
     return NextResponse.json(
-      { error: 'Failed to generate assessment. Please try again.' },
+      { error: 'Failed to generate assessment. Please try again later.' },
       { status: 500 }
     );
   }
 }
+
 

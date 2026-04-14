@@ -11,6 +11,7 @@ import { MicButton } from "./MicButton"
 import { TranscriptDisplay } from "./TranscriptDisplay"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { ThemeToggle } from "@/components/ui/theme-toggle"
 import { formatTime } from "@/lib/utils"
 import { TOTAL_QUESTIONS } from "@/lib/constants"
 import { speak, startListening, stopListening, stopSpeaking, SpeechRecognitionResult } from "@/lib/speech"
@@ -241,6 +242,7 @@ export function InterviewRoom() {
             <Clock className="w-4 h-4 mr-2 text-brand-cyan" />
             {formatTime(timer)}
           </div>
+          <ThemeToggle />
         </div>
       </div>
 
