@@ -35,8 +35,7 @@ ${formattedTranscript}
 Generate the assessment JSON now.`;
 
     const result = await model.generateContent({
-      contents: [{ role: 'user', parts: [{ text: prompt }] }],
-      systemInstruction: ASSESSMENT_SYSTEM_PROMPT,
+      contents: [{ role: 'user', parts: [{ text: prompt }] }]
     });
 
     const responseText = result.response.text();
@@ -65,8 +64,7 @@ Generate the assessment JSON now.`;
           )
           .join('\n\n');
         const result = await model.generateContent({
-          contents: [{ role: 'user', parts: [{ text: `Candidate: ${candidateName}\nDuration: ${duration}\n\n${formattedTranscript}\n\nGenerate the assessment JSON now.` }] }],
-          systemInstruction: ASSESSMENT_SYSTEM_PROMPT,
+          contents: [{ role: 'user', parts: [{ text: `Candidate: ${candidateName}\nDuration: ${duration}\n\n${formattedTranscript}\n\nGenerate the assessment JSON now.` }] }]
         });
         let jsonStr = result.response.text();
         const jsonMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/);

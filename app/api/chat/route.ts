@@ -72,7 +72,6 @@ export async function POST(request: NextRequest) {
 
     const chat = model.startChat({
       history: geminiHistory,
-      systemInstruction: AI_SYSTEM_PROMPT,
     });
 
     const result = await chat.sendMessage(finalMessage || "Continue");
@@ -111,13 +110,12 @@ export async function POST(request: NextRequest) {
 
         let finalMessageRetry = message || `The candidate's name is ${candidateName}. Start the interview.`;
         if (geminiHistoryRetry.length > 0 && geminiHistoryRetry[geminiHistoryRetry.length - 1].role === 'user') {
-           const lastUserMsg = geminiHistoryRetry.pop();
+           const lastUserMsg = geminiHistoryRetry.pop()!;
            finalMessageRetry = lastUserMsg.parts[0].text + "\n\n" + finalMessageRetry;
         }
 
         const chat = model.startChat({
           history: geminiHistoryRetry,
-          systemInstruction: AI_SYSTEM_PROMPT,
         });
         const result = await chat.sendMessage(finalMessageRetry);
         return NextResponse.json({ response: result.response.text() });
