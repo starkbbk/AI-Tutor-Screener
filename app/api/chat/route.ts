@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getChatModel } from '@/lib/gemini';
 import { AI_SYSTEM_PROMPT } from '@/lib/constants';
+import { withRetry } from '@/lib/retry';
 
 export async function POST(request: NextRequest) {
   let requestData;
@@ -70,61 +71,24 @@ export async function POST(request: NextRequest) {
        }
     }
 
-    const chat = model.startChat({
-      history: geminiHistory,
+    const response = await withRetry(async () => {
+      const chat = model.startChat({
+        history: geminiHistory,
+      });
+
+      const result = await chat.sendMessage(finalMessage || "Continue");
+      return result.response.text();
     });
 
-    const result = await chat.sendMessage(finalMessage || "Continue");
-    const response = result.response.text();
-
     return NextResponse.json({ response });
-  } catch (error: unknown) {
+  } catch (error: any) {
     console.error('Chat API error:', error);
-
-    // Handle rate limiting
-    if (error instanceof Error && 'status' in error && (error as { status: number }).status === 429) {
-      // Wait 2 seconds and retry once
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      try {
-        const model = getChatModel();
-        const initialPrompt = {
-          role: 'user',
-          parts: [{ text: `The candidate's name is ${candidateName}. Start the interview.` }]
-        };
-        const rawGeminiHistoryRetry = [
-          initialPrompt,
-          ...history.map((msg: { role: string; content: string }) => ({
-            role: msg.role === 'ai' ? 'model' : 'user',
-            parts: [{ text: msg.content }],
-          }))
-        ];
-        
-        const geminiHistoryRetry = [];
-        for (const msg of rawGeminiHistoryRetry) {
-          if (geminiHistoryRetry.length > 0 && geminiHistoryRetry[geminiHistoryRetry.length - 1].role === msg.role) {
-            geminiHistoryRetry[geminiHistoryRetry.length - 1].parts[0].text += "\n\n" + msg.parts[0].text;
-          } else {
-            geminiHistoryRetry.push({ role: msg.role, parts: [{ text: msg.parts[0].text }] });
-          }
-        }
-
-        let finalMessageRetry = message || `The candidate's name is ${candidateName}. Start the interview.`;
-        if (geminiHistoryRetry.length > 0 && geminiHistoryRetry[geminiHistoryRetry.length - 1].role === 'user') {
-           const lastUserMsg = geminiHistoryRetry.pop()!;
-           finalMessageRetry = lastUserMsg.parts[0].text + "\n\n" + finalMessageRetry;
-        }
-
-        const chat = model.startChat({
-          history: geminiHistoryRetry,
-        });
-        const result = await chat.sendMessage(finalMessageRetry);
-        return NextResponse.json({ response: result.response.text() });
-      } catch {
-        return NextResponse.json(
-          { error: 'Too many requests. Please wait a moment and try again.' },
-          { status: 429 }
-        );
-      }
+    
+    if (error?.status === 429 || error?.message?.includes('429')) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please wait a moment and try again.' },
+        { status: 429 }
+      );
     }
 
     return NextResponse.json(
@@ -133,3 +97,4 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
