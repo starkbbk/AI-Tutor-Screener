@@ -31,14 +31,14 @@ export function CandidateForm() {
 
   return (
     <Card className="w-full max-w-lg mx-auto border-border bg-card/50 backdrop-blur-xl">
-      <CardHeader className="text-center">
-        <CardTitle className="text-3xl font-extrabold mb-2 text-foreground">Get Started</CardTitle>
-        <CardDescription className="text-muted-foreground">
+      <CardHeader className="text-center px-4 sm:px-6">
+        <CardTitle className="text-2xl sm:text-3xl font-extrabold mb-1 text-foreground">Get Started</CardTitle>
+        <CardDescription className="text-muted-foreground text-xs sm:text-sm">
           Enter your details to begin your Cuemath coaching journey
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6 pt-4">
+      <CardContent className="px-4 sm:px-6">
+        <form onSubmit={handleSubmit} className="space-y-5 pt-2 sm:pt-4">
           <div className="space-y-3">
             <label htmlFor="name" className="text-sm font-bold text-foreground/70 ml-1 uppercase tracking-wider">
               Full Name

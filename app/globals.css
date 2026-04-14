@@ -57,6 +57,12 @@
     background-size: 40px 40px;
   }
   
+  @media (max-width: 640px) {
+    .cuemath-grid {
+      background-size: 25px 25px;
+    }
+  }
+  
   .glass-card {
     background: var(--glass-bg);
     backdrop-filter: blur(12px);

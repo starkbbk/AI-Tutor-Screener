@@ -135,45 +135,45 @@ export default function ReportPage() {
   const assessment = state.assessment
 
   return (
-    <div className="min-h-screen bg-background cuemath-grid py-20 px-4 sm:px-6 relative selection:bg-brand-amber selection:text-brand-navy">
+    <div className="min-h-screen bg-background cuemath-grid py-10 sm:py-20 px-4 sm:px-6 relative selection:bg-brand-amber selection:text-brand-navy">
       {/* Background depth glows (reduced for light mode) */}
-      <div className="absolute top-[5%] left-[10%] w-[40%] h-[40%] bg-brand-amber/[0.03] dark:bg-brand-amber/5 rounded-full blur-[150px] pointer-events-none" />
-      <div className="absolute bottom-[10%] right-[10%] w-[30%] h-[30%] bg-brand-cyan/[0.03] dark:bg-brand-cyan/5 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute top-[5%] left-[10%] w-[40%] h-[40%] bg-brand-amber/[0.03] dark:bg-brand-amber/5 rounded-full blur-[100px] sm:blur-[150px] pointer-events-none" />
+      <div className="absolute bottom-[10%] right-[10%] w-[30%] h-[30%] bg-brand-cyan/[0.03] dark:bg-brand-cyan/5 rounded-full blur-[80px] sm:blur-[120px] pointer-events-none" />
 
-      <div className="max-w-5xl mx-auto space-y-12 animate-in fade-in slide-in-from-bottom-10 duration-1000 relative z-10">
+      <div className="max-w-5xl mx-auto space-y-8 sm:space-y-12 animate-in fade-in slide-in-from-bottom-10 duration-1000 relative z-10">
         
         {/* Main Report Container (Target for PDF) */}
-        <div id="report-container" className="glass-card rounded-[3.5rem] shadow-2xl overflow-hidden border-border bg-card/40 backdrop-blur-3xl ring-1 ring-border">
+        <div id="report-container" className="glass-card rounded-[2.5rem] sm:rounded-[3.5rem] shadow-2xl overflow-hidden border-border bg-card/40 backdrop-blur-3xl ring-1 ring-border">
           
           {/* Header */}
-          <div className="p-12 border-b border-border bg-muted/30">
-            <div className="flex flex-col md:flex-row justify-between items-center md:items-start space-y-8 md:space-y-0 mb-12">
-              <Image src="/cuemath-logo.svg" alt="Cuemath" width={200} height={60} />
+          <div className="p-6 sm:p-12 border-b border-border bg-muted/30">
+            <div className="flex flex-col md:flex-row justify-between items-center md:items-start space-y-6 md:space-y-0 mb-8 sm:mb-12 text-center md:text-left">
+              <Image src="/cuemath-logo.svg" alt="Cuemath" width={160} height={40} className="sm:w-[200px] sm:h-[60px]" />
               <div className="text-center md:text-right flex flex-col items-center md:items-end space-y-4">
                 <ThemeToggle />
                 <div>
-                  <h1 className="text-4xl font-black text-foreground tracking-tighter uppercase">Coach Result</h1>
-                  <p className="text-brand-amber text-xs font-black tracking-[0.3em] uppercase mt-2 opacity-80">PRO Assessment Engine</p>
+                  <h1 className="text-2xl sm:text-4xl font-black text-foreground tracking-tighter uppercase">Coach Result</h1>
+                  <p className="text-brand-amber text-[9px] sm:text-xs font-black tracking-[0.3em] uppercase mt-1 sm:mt-2 opacity-80">PRO Assessment Engine</p>
                 </div>
               </div>
             </div>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 p-8 bg-background/50 rounded-[2rem] border border-border text-sm shadow-inner">
-              <div className="space-y-1.5">
-                <p className="text-muted-foreground uppercase tracking-widest text-[9px] font-black opacity-60">Candidate</p>
-                <p className="font-extrabold text-foreground text-lg tracking-tight">{state.candidate.name}</p>
+            <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-8 p-4 sm:p-8 bg-background/50 rounded-2xl sm:rounded-[2rem] border border-border text-xs sm:text-sm shadow-inner">
+              <div className="space-y-1">
+                <p className="text-muted-foreground uppercase tracking-widest text-[8px] sm:text-[9px] font-black opacity-60">Candidate</p>
+                <p className="font-extrabold text-foreground text-base sm:text-lg tracking-tight">{state.candidate.name}</p>
               </div>
-              <div className="space-y-1.5">
-                <p className="text-muted-foreground uppercase tracking-widest text-[9px] font-black opacity-60">Authentication</p>
-                <p className="font-extrabold text-foreground text-sm truncate opacity-80">{state.candidate.email}</p>
+              <div className="space-y-1">
+                <p className="text-muted-foreground uppercase tracking-widest text-[8px] sm:text-[9px] font-black opacity-60">Authentication</p>
+                <p className="font-extrabold text-foreground text-xs sm:text-sm truncate opacity-80">{state.candidate.email}</p>
               </div>
-              <div className="space-y-1.5">
-                <p className="text-muted-foreground uppercase tracking-widest text-[9px] font-black opacity-60">Evaluation Date</p>
-                <p className="font-extrabold text-foreground text-lg tracking-tight">{formatDate(new Date())}</p>
+              <div className="space-y-1">
+                <p className="text-muted-foreground uppercase tracking-widest text-[8px] sm:text-[9px] font-black opacity-60">Evaluation Date</p>
+                <p className="font-extrabold text-foreground text-base sm:text-lg tracking-tight">{formatDate(new Date())}</p>
               </div>
-              <div className="space-y-1.5">
-                <p className="text-muted-foreground uppercase tracking-widest text-[9px] font-black opacity-60">Interaction</p>
-                <p className="font-extrabold text-brand-cyan text-lg tracking-tight">
+              <div className="space-y-1">
+                <p className="text-muted-foreground uppercase tracking-widest text-[8px] sm:text-[9px] font-black opacity-60">Interaction</p>
+                <p className="font-extrabold text-brand-cyan text-base sm:text-lg tracking-tight">
                   {state.interviewStartTime && state.interviewEndTime 
                     ? formatDuration(state.interviewStartTime, state.interviewEndTime)
                     : "~10:00"}
@@ -182,20 +182,20 @@ export default function ReportPage() {
             </div>
           </div>
 
-          <div className="p-12 space-y-20">
+          <div className="p-6 sm:p-12 space-y-12 sm:space-y-20">
             {/* Top row: Score + Recommendation + Summary */}
-            <div className="flex flex-col lg:flex-row gap-16 items-center lg:items-stretch">
-              <div className="flex flex-col space-y-8 items-center lg:min-w-72">
+            <div className="flex flex-col lg:flex-row gap-8 sm:gap-16 items-center lg:items-stretch">
+              <div className="flex flex-col space-y-6 sm:space-y-8 items-center lg:min-w-72">
                 <ScoreRing score={assessment.overall_score} />
                 <RecommendationBadge recommendation={assessment.recommendation} />
               </div>
               
-              <div className="flex-1 space-y-8 bg-muted/30 p-10 rounded-[2.5rem] border border-border shadow-sm">
-                <h3 className="text-xs font-black text-foreground/40 tracking-[0.3em] uppercase border-b border-border pb-6 flex items-center">
-                  <span className="w-3 h-3 rounded-full bg-brand-amber mr-4 shadow-lg shadow-brand-amber/20" />
+              <div className="flex-1 space-y-4 sm:space-y-8 bg-muted/30 p-6 sm:p-10 rounded-2xl sm:rounded-[2.5rem] border border-border shadow-sm">
+                <h3 className="text-[10px] sm:text-xs font-black text-foreground/40 tracking-[0.2em] sm:tracking-[0.3em] uppercase border-b border-border pb-4 sm:pb-6 flex items-center">
+                  <span className="w-2.5 h-2.5 sm:w-3 h-3 rounded-full bg-brand-amber mr-3 sm:mr-4 shadow-lg shadow-brand-amber/20" />
                   Cognitive Summary
                 </h3>
-                <p className="text-foreground leading-relaxed text-xl font-light italic">
+                <p className="text-foreground leading-relaxed text-lg sm:text-xl font-light italic">
                   "{assessment.summary}"
                 </p>
               </div>
@@ -210,12 +210,12 @@ export default function ReportPage() {
             </div>
 
             {/* Dimension Breakdown */}
-            <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300">
-              <h3 className="text-xs font-black text-foreground/40 tracking-[0.3em] uppercase border-b border-border pb-6 flex items-center">
-                <span className="w-3 h-3 rounded-full bg-brand-cyan mr-4 shadow-lg shadow-brand-cyan/20" />
+            <div className="space-y-6 sm:space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300">
+              <h3 className="text-[10px] sm:text-xs font-black text-foreground/40 tracking-[0.2em] sm:tracking-[0.3em] uppercase border-b border-border pb-4 sm:pb-6 flex items-center">
+                <span className="w-2.5 h-2.5 sm:w-3 h-3 rounded-full bg-brand-cyan mr-3 sm:mr-4 shadow-lg shadow-brand-cyan/20" />
                 Dimensional Analytics
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-10">
                 {(Object.entries(assessment.dimensions) as [string, any][]).map(([key, data]) => (
                   <DimensionCard 
                     key={key} 
@@ -228,30 +228,30 @@ export default function ReportPage() {
             </div>
 
             {/* Transcript Accordion */}
-            <div className="html2canvas-ignore pt-12 border-t border-border mt-10">
+            <div className="html2canvas-ignore pt-8 sm:pt-12 border-t border-border mt-6 sm:mt-10">
                <TranscriptAccordion history={state.conversationHistory} />
             </div>
           </div>
         </div>
 
         {/* Global Action Buttons (Not printed to PDF) */}
-        <div className="flex flex-col md:flex-row gap-6 justify-between items-center glass-card p-8 rounded-[2.5rem] border-border shadow-xl">
-          <Button variant="outline" className="w-full md:w-auto text-muted-foreground hover:text-foreground border-border hover:bg-muted rounded-2xl h-14 px-8 font-bold" onClick={handleStartNew} disabled={isDownloading}>
+        <div className="flex flex-col md:flex-row gap-4 sm:gap-6 justify-between items-center glass-card p-6 sm:p-8 rounded-2xl sm:rounded-[2.5rem] border-border shadow-xl">
+          <Button variant="outline" className="w-full md:w-auto text-muted-foreground hover:text-foreground border-border hover:bg-muted rounded-xl sm:rounded-2xl h-12 sm:h-14 px-8 font-bold text-sm sm:text-base" onClick={handleStartNew} disabled={isDownloading}>
             <RefreshCw className="w-4 h-4 mr-3" /> New Assessment
           </Button>
           
           <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
-            <Button variant="secondary" className="w-full sm:w-auto rounded-2xl h-14 px-10 font-bold" onClick={handleShare} disabled={isDownloading}>
-              <Share2 className="w-4 h-4 mr-3" /> Share Path
+            <Button variant="secondary" className="w-full sm:w-auto rounded-xl sm:rounded-2xl h-12 sm:h-14 px-8 sm:px-10 font-bold text-sm sm:text-base" onClick={handleShare} disabled={isDownloading}>
+              <Share2 className="w-4 h-4 mr-3" /> <span className="hidden xs:inline">Share Path</span> <span className="xs:hidden">Share</span>
             </Button>
-            <Button className="w-full sm:w-auto rounded-2xl h-14 px-12 font-black amber-button shadow-xl shadow-brand-amber/10" onClick={handleDownloadPdf} disabled={isDownloading}>
+            <Button className="w-full sm:w-auto rounded-xl sm:rounded-2xl h-12 sm:h-14 px-10 sm:px-12 font-black amber-button shadow-xl shadow-brand-amber/10 text-sm sm:text-base" onClick={handleDownloadPdf} disabled={isDownloading}>
               {isDownloading ? (
                 <>
-                  <Loader2 className="w-4 h-4 mr-3 animate-spin" /> Generating...
+                  <Loader2 className="w-4 h-4 mr-3 animate-spin" /> <span className="hidden xs:inline">Generating...</span> <span className="xs:hidden">Wait...</span>
                 </>
               ) : (
                 <>
-                  <Download className="w-4 h-4 mr-3" /> Export PDF
+                  <Download className="w-4 h-4 mr-3" /> <span className="hidden xs:inline">Export PDF</span> <span className="xs:hidden">PDF</span>
                 </>
               )}
             </Button>
