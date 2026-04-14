@@ -18,10 +18,17 @@ interface SpeechRecognition extends EventTarget {
 
 type SpeechCallback = (result: SpeechRecognitionResult) => void;
 type ErrorCallback = (error: string) => void;
+type EndCallback = (finalTranscript: string) => void;
 
 let recognition: SpeechRecognition | null = null;
 let silenceTimeout: NodeJS.Timeout | null = null;
 let maxDurationTimeout: NodeJS.Timeout | null = null;
+
+// Persistent state across auto-restarts
+let accumulatedTranscript = "";
+let isManualStop = false;
+let isSilenceTimeoutReached = false;
+let lastProgressTime = 0;
 
 export function isSpeechRecognitionSupported(): boolean {
   if (typeof window === 'undefined') return false;
@@ -35,7 +42,7 @@ export function isSpeechSynthesisSupported(): boolean {
 
 export function startListening(
   onResult: SpeechCallback,
-  onEnd: () => void,
+  onEnd: EndCallback,
   onError: ErrorCallback
 ): void {
   if (!isSpeechRecognitionSupported()) {
@@ -43,81 +50,138 @@ export function startListening(
     return;
   }
 
-  const SpeechRecognitionConstructor = window.SpeechRecognition || window.webkitSpeechRecognition;
-  const newRecognition = new SpeechRecognitionConstructor();
-  newRecognition.continuous = true;
-  newRecognition.interimResults = true;
-  newRecognition.lang = 'en-IN';
+  // Reset state for a new manual session
+  accumulatedTranscript = "";
+  isManualStop = false;
+  isSilenceTimeoutReached = false;
+  lastProgressTime = Date.now();
 
   const SILENCE_TIMEOUT = 5000;
   const MAX_RECORDING_TIME = 120000;
 
-  newRecognition.onstart = () => {
-    console.log("Speech recognition started");
-    clearTimeouts();
+  const initRecognition = () => {
+    const SpeechRecognitionConstructor = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const newRecognition = new SpeechRecognitionConstructor();
     
-    silenceTimeout = setTimeout(() => {
-      stopListening();
-    }, SILENCE_TIMEOUT);
+    // Critical for mobile: sometimes 'true' causes issues on some browsers, 
+    // but the user explicitly requested it for mobile Chrome/Safari.
+    newRecognition.continuous = true; 
+    newRecognition.interimResults = true;
+    newRecognition.lang = 'en-IN';
 
-    maxDurationTimeout = setTimeout(() => {
-      stopListening();
-    }, MAX_RECORDING_TIME);
-  };
-
-  newRecognition.onresult = (event: SpeechRecognitionEvent) => {
-    if (silenceTimeout) clearTimeout(silenceTimeout);
-    
-    silenceTimeout = setTimeout(() => {
-      stopListening();
-    }, SILENCE_TIMEOUT);
-
-    let interimTranscript = '';
-    let finalTranscript = '';
-
-    for (let i = event.resultIndex; i < event.results.length; i++) {
-      const result = event.results[i];
-      if (result.isFinal) {
-        finalTranscript += result[0].transcript;
-      } else {
-        interimTranscript += result[0].transcript;
+    newRecognition.onstart = () => {
+      console.log("Speech recognition session started");
+      resetSilenceTimeout();
+      
+      if (!maxDurationTimeout) {
+        maxDurationTimeout = setTimeout(() => {
+          stopListening();
+        }, MAX_RECORDING_TIME);
       }
-    }
-
-    if (finalTranscript) {
-      onResult({ transcript: finalTranscript, isFinal: true });
-    } else if (interimTranscript) {
-      onResult({ transcript: interimTranscript, isFinal: false });
-    }
-  };
-
-  newRecognition.onerror = (event: any) => {
-    if (event.error === 'aborted') {
-      console.log('Speech Recognition aborted cleanly.');
-      return;
-    }
-
-    const errorMap: Record<string, string> = {
-      'no-speech': "I didn't catch that. Could you try again?",
-      'audio-capture': 'No microphone found. Please check your audio settings.',
-      'not-allowed': 'Microphone access denied. Please allow permissions.',
-      'network': 'Network error! This often happens due to a slow connection.',
     };
-    
-    console.error('Speech Recognition Error:', event.error);
-    onError(errorMap[event.error] || `Mic Error (${event.error}). Please try again.`);
+
+    const resetSilenceTimeout = () => {
+      if (silenceTimeout) clearTimeout(silenceTimeout);
+      silenceTimeout = setTimeout(() => {
+        console.log("Silence timeout reached");
+        isSilenceTimeoutReached = true;
+        stopListening();
+      }, SILENCE_TIMEOUT);
+    };
+
+    newRecognition.onresult = (event: SpeechRecognitionEvent) => {
+      resetSilenceTimeout();
+      lastProgressTime = Date.now();
+
+      let interimTranscript = '';
+      let currentFinalTranscript = '';
+
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const result = event.results[i];
+        if (result.isFinal) {
+          currentFinalTranscript += result[0].transcript;
+        } else {
+          interimTranscript += result[0].transcript;
+        }
+      }
+
+      // Join accumulated with current
+      // We need to be careful not to duplicate if we are restarting
+      const fullFinal = (accumulatedTranscript + " " + currentFinalTranscript).trim();
+      const fullInterim = (fullFinal + " " + interimTranscript).trim();
+
+      if (currentFinalTranscript) {
+        // Only update the actual accumulated transcript when we get final results
+        // Use a space to join if there's already content
+        accumulatedTranscript = (accumulatedTranscript + " " + currentFinalTranscript).trim();
+        onResult({ transcript: accumulatedTranscript, isFinal: true });
+      } else if (interimTranscript) {
+        onResult({ transcript: fullInterim, isFinal: false });
+      }
+    };
+
+    newRecognition.onerror = (event: any) => {
+      if (event.error === 'aborted') {
+        console.log('Speech Recognition aborted cleanly.');
+        return;
+      }
+
+      // If it's a transient error on mobile, we might want to restart instead of failing
+      if (event.error === 'no-speech' && !isManualStop && !isSilenceTimeoutReached) {
+        console.log('No speech detected, but not stopping yet...');
+        return;
+      }
+
+      const errorMap: Record<string, string> = {
+        'no-speech': "I didn't catch that. Could you try again?",
+        'audio-capture': 'No microphone found. Please check your audio settings.',
+        'not-allowed': 'Microphone access denied. Please allow permissions.',
+        'network': 'Network error! This often happens due to a slow connection.',
+      };
+      
+      console.error('Speech Recognition Error:', event.error);
+      
+      // Only fire error if we're not planning to auto-restart
+      if (isManualStop || isSilenceTimeoutReached) {
+        onError(errorMap[event.error] || `Mic Error (${event.error}). Please try again.`);
+      }
+    };
+
+    newRecognition.onend = () => {
+      console.log("Speech recognition session ended. Manual stop:", isManualStop, "Silence:", isSilenceTimeoutReached);
+      
+      // THE FIX FOR MOBILE: Auto-restart if it wasn't a manual stop and not a silence timeout
+      if (!isManualStop && !isSilenceTimeoutReached) {
+        console.log("Unexpected end on mobile. Restarting...");
+        try {
+          // Brief delay to allow the browser to clean up the previous session
+          setTimeout(() => {
+            if (!isManualStop && !isSilenceTimeoutReached) {
+              const instance = initRecognition();
+              recognition = instance;
+              instance.start();
+            }
+          }, 100);
+        } catch (e) {
+          console.error("Failed to restart recognition:", e);
+          onEnd(accumulatedTranscript);
+        }
+      } else {
+        clearTimeouts();
+        onEnd(accumulatedTranscript);
+      }
+    };
+
+    return newRecognition;
   };
 
-  newRecognition.onend = () => {
-    clearTimeouts();
-    onEnd();
-  };
-
-  recognition = newRecognition;
-  newRecognition.start();
+  const instance = initRecognition();
+  recognition = instance;
+  instance.start();
 }
 
 export function stopListening(): void {
+  isManualStop = true;
   clearTimeouts();
   if (recognition) {
     try {

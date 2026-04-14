@@ -3,11 +3,10 @@
 import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
-import { Clock, Send, SkipForward, XCircle, Loader2 } from "lucide-react"
+import { Clock, Send, SkipForward, XCircle, Loader2, MoreVertical, Mic, Volume2 } from "lucide-react"
 
 import { useInterview } from "@/context/InterviewContext"
 import { VoiceAvatar } from "./VoiceAvatar"
-import { MicButton } from "./MicButton"
 import { TranscriptDisplay } from "./TranscriptDisplay"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -25,8 +24,14 @@ export function InterviewRoom() {
   
   const [timer, setTimer] = useState(0)
   const [textInput, setTextInput] = useState("")
+  const [hasStarted, setHasStarted] = useState(false)
+  const [currentTranscript, setCurrentTranscript] = useState("")
+  const [inactivityTimer, setInactivityTimer] = useState(0)
+  const [showMenu, setShowMenu] = useState(false)
+  
   const isFirstRender = useRef(true)
   const greetingSentRef = useRef(false)
+  const inactivityIntervalRef = useRef<NodeJS.Timeout | null>(null)
   
   // Timer effect
   useEffect(() => {
@@ -38,16 +43,36 @@ export function InterviewRoom() {
 
   // Initial greeting
   useEffect(() => {
-    if (isFirstRender.current && state.conversationHistory.length === 0 && !greetingSentRef.current) {
+    if (hasStarted && isFirstRender.current && state.conversationHistory.length === 0 && !greetingSentRef.current) {
       greetingSentRef.current = true
       isFirstRender.current = false
       startChatWithAI()
     }
-  }, [state.candidate?.name, state.conversationHistory.length])
+  }, [hasStarted, state.candidate?.name, state.conversationHistory.length])
   
   useEffect(() => {
     preloadVoices()
   }, [])
+
+  // Inactivity tracking
+  useEffect(() => {
+    if (state.isRecording) {
+      inactivityIntervalRef.current = setInterval(() => {
+        setInactivityTimer(prev => prev + 1)
+      }, 1000)
+    } else {
+      if (inactivityIntervalRef.current) clearInterval(inactivityIntervalRef.current)
+      setInactivityTimer(0)
+    }
+    return () => {
+      if (inactivityIntervalRef.current) clearInterval(inactivityIntervalRef.current)
+    }
+  }, [state.isRecording])
+
+  // Reset inactivity on transcript change
+  useEffect(() => {
+    setInactivityTimer(0)
+  }, [currentTranscript])
 
   const startChatWithAI = async (userMessage?: string) => {
     if (state.isProcessing && !userMessage?.includes("__RETRY__")) return; 
@@ -120,7 +145,12 @@ export function InterviewRoom() {
         () => {
           setAISpeaking(false)
           // Look for signs that the interview is over wrapped up by AI
-          checkIfInterviewComplete(text)
+          const isComplete = checkIfInterviewComplete(text)
+          
+          if (!isComplete && !state.useFallbackMode) {
+            // HANDS-FREE: Automatically start listening after AI finishes
+            handleStartListening()
+          }
         }
       )
     } else {
@@ -130,7 +160,7 @@ export function InterviewRoom() {
     }
   }
 
-  const checkIfInterviewComplete = (text: string) => {
+  const checkIfInterviewComplete = (text: string): boolean => {
     const lowerText = text.toLowerCase();
     const isEnding = state.currentQuestionIndex >= TOTAL_QUESTIONS - 1 && (
                      lowerText.includes("wraps up") ||
@@ -139,10 +169,12 @@ export function InterviewRoom() {
                      lowerText.includes("thank you") ||
                      lowerText.includes("goodbye")
     );
-                     
+                      
     if (isEnding || state.interviewStatus === 'completing') {
       finishInterview()
+      return true
     }
+    return false
   }
 
   const finishInterview = () => {
@@ -180,38 +212,41 @@ export function InterviewRoom() {
     }, 4000)
   }
 
-  const handleMicToggle = () => {
+  const handleStartListening = () => {
     // Prevent mic usage if interview is ending
-    if (state.interviewStatus === 'completing') {
-      router.push("/report");
-      return;
-    }
+    if (state.interviewStatus === 'completing') return;
 
+    stopSpeaking()
+    setAISpeaking(false)
+    setRecording(true)
+    setCurrentTranscript("")
+    
+    startListening(
+      (result: SpeechRecognitionResult) => {
+        setCurrentTranscript(result.transcript)
+      },
+      (finalTranscript: string) => {
+        setRecording(false)
+        handleCandidateSpeakingFinished(finalTranscript)
+      },
+      (err: string) => {
+        console.error("[INTERVIEW ROOM] Mic error:", err)
+        setRecording(false)
+      }
+    )
+  }
+
+  // Helper for manual toggle (if needed via settings) but mostly unused now
+  const handleMicToggle = () => {
     if (state.isRecording) {
       stopListening()
-      setRecording(false)
     } else {
-      stopSpeaking()
-      setAISpeaking(false)
-      setRecording(true)
-      startListening(
-        (result: SpeechRecognitionResult) => {
-          if (result.isFinal) {
-            handleCandidateSpeakingFinished(result.transcript)
-          }
-        },
-        () => {
-          if (state.isRecording) setRecording(false)
-        },
-        (err: string) => {
-          console.error(err)
-          setRecording(false)
-        }
-      )
+      handleStartListening()
     }
   }
 
   const handleCandidateSpeakingFinished = (transcript: string) => {
+    setCurrentTranscript("")
     if (!transcript.trim()) return
     // Prevent API calls if interview is ending
     if (state.interviewStatus === 'completing') {
@@ -219,13 +254,14 @@ export function InterviewRoom() {
       return;
     }
     
-    // Noise & accidental sound filtering
-    const wordCount = transcript.trim().split(/\s+/).length;
-    if (transcript.length < 5 || wordCount < 2) {
-      const errorMsg = "I didn't catch that clearly. Could you try speaking again?";
-      addMessage({ role: "ai", content: errorMsg, timestamp: new Date().toISOString() });
-      playAIResponse(errorMsg);
-      setRecording(false);
+    // Noise & accidental sound filtering: 3 words OR 10 characters minimum
+    const words = transcript.trim().split(/\s+/);
+    if (transcript.length < 10 && words.length < 3) {
+      console.log("[INTERVIEW ROOM] Filtered out short/noisy transcript:", transcript);
+      // Automatically restart listening if we filtered out noise
+      if (!state.isAISpeaking && !state.isProcessing) {
+        setTimeout(handleStartListening, 1000);
+      }
       return;
     }
     
@@ -303,11 +339,39 @@ export function InterviewRoom() {
           <div className="text-[8px] sm:text-xs font-black text-brand-amber bg-brand-amber/10 px-2 sm:px-4 py-1 sm:py-2 rounded-full border border-brand-amber/20 uppercase tracking-widest whitespace-nowrap">
             {Math.min(state.currentQuestionIndex + 1, TOTAL_QUESTIONS)} / {TOTAL_QUESTIONS}
           </div>
-          <div className="flex items-center text-muted-foreground font-mono text-[9px] sm:text-sm tracking-widest bg-muted/50 px-2 sm:px-4 py-1 sm:py-2 rounded-lg sm:rounded-xl border border-border whitespace-nowrap">
+          <div className="flex items-center text-muted-foreground font-mono text-[9px] sm:text-sm tracking-widest bg-muted/50 px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl border border-border whitespace-nowrap">
             <Clock className="hidden xxs:block w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2 text-brand-cyan" />
             {formatTime(timer)}
           </div>
           <ThemeToggle />
+          
+          {/* Settings Menu Icon */}
+          <div className="relative">
+            <button 
+              onClick={() => setShowMenu(!showMenu)}
+              className="p-2 hover:bg-muted rounded-full transition-colors"
+            >
+              <MoreVertical className="w-5 h-5 text-muted-foreground" />
+            </button>
+            
+            {showMenu && (
+              <div className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-xl shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in duration-200">
+                <button 
+                  onClick={() => { setShowMenu(false); handleSkipQuestion(); }}
+                  className="w-full text-left px-4 py-3 text-xs font-bold uppercase tracking-wider hover:bg-muted flex items-center"
+                >
+                  <SkipForward className="w-4 h-4 mr-3" /> Skip Question
+                </button>
+                <div className="border-t border-border/50" />
+                <button 
+                  onClick={() => { setShowMenu(false); handleEndEarly(); }}
+                  className="w-full text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-red-500 hover:bg-red-500/10 flex items-center"
+                >
+                  <XCircle className="w-4 h-4 mr-3" /> Exit Session
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -318,72 +382,117 @@ export function InterviewRoom() {
         
         <TranscriptDisplay messages={state.conversationHistory} />
         
-        {/* Scroll anchor */}
-        <div className="h-4 sm:h-6" />
+        {/* Hands-Free Instructions (shown before start) */}
+        {!hasStarted && (
+          <div className="absolute inset-0 z-50 flex items-center justify-center p-4 sm:p-10 bg-background/40 backdrop-blur-md animate-in fade-in duration-500">
+            <div className="glass-card max-w-md w-full p-8 sm:p-12 rounded-[2.5rem] shadow-2xl border-brand-amber/20 flex flex-col items-center text-center">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-brand-cyan/10 rounded-full flex items-center justify-center mb-6 border border-brand-cyan/20">
+                <Volume2 className="w-8 h-8 sm:w-10 sm:h-10 text-brand-cyan" />
+              </div>
+              
+              <h2 className="text-2xl sm:text-3xl font-black text-foreground tracking-tight mb-4 uppercase">Phone Call Mode</h2>
+              <p className="text-sm sm:text-base text-muted-foreground font-medium mb-8 leading-relaxed">
+                This interview works like a real call. The AI will speak, and you just talk back naturally. No buttons to press.
+              </p>
+              
+              <div className="w-full space-y-3 mb-10">
+                <div className="flex items-center text-[10px] font-bold text-muted-foreground uppercase tracking-widest bg-muted/30 p-3 rounded-xl border border-border">
+                  <div className="w-2 h-2 rounded-full bg-brand-cyan mr-3 animate-pulse" />
+                  AI speaks first
+                </div>
+                <div className="flex items-center text-[10px] font-bold text-muted-foreground uppercase tracking-widest bg-muted/30 p-3 rounded-xl border border-border">
+                  <div className="w-2 h-2 rounded-full bg-red-500 mr-3 animate-pulse" />
+                  You speak next
+                </div>
+              </div>
+              
+              <Button 
+                onClick={() => setHasStarted(true)}
+                className="w-full h-14 sm:h-16 rounded-2xl sm:rounded-[1.2rem] font-black tracking-widest uppercase amber-button shadow-2xl shadow-brand-amber/20 text-sm sm:text-base group"
+              >
+                Begin Interview 
+                <SkipForward className="w-4 h-4 sm:w-5 sm:h-5 ml-3 transition-transform group-hover:translate-x-1" />
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Real-time Status Area (Hands-free replacement for mic button) */}
+        {hasStarted && state.interviewStatus !== 'completing' && (
+          <div className="mt-auto pt-10 pb-2 flex flex-col items-center animate-in fade-in slide-in-from-bottom-5 duration-500">
+             {state.isAISpeaking ? (
+                <div className="flex flex-col items-center">
+                   <div className="flex items-center space-x-1.5 h-10 mb-2">
+                      {[1, 2, 3, 4, 5, 6].map(i => (
+                        <div key={i} className="w-1.5 bg-brand-cyan rounded-full animate-wave" style={{ height: '100%', animationDelay: `${i * 0.1}s` }} />
+                      ))}
+                   </div>
+                   <p className="text-[10px] font-black tracking-[0.2em] uppercase text-brand-cyan flex items-center">
+                     <Volume2 className="w-3 h-3 mr-2" /> AI is speaking...
+                   </p>
+                </div>
+             ) : state.isRecording ? (
+                <div className="flex flex-col items-center w-full max-w-lg">
+                   <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mb-4 border border-red-500/20 pulse-red">
+                      <Mic className="w-8 h-8 text-red-500 animate-pulse" />
+                   </div>
+                   <p className="text-[11px] font-black tracking-[0.2em] uppercase text-red-500 mb-4 animate-pulse">
+                     Listening... speak your answer
+                   </p>
+                   
+                   {/* Real-time Transcription Display */}
+                   <div className="w-full min-h-[4rem] px-6 py-4 bg-muted/20 rounded-2xl border border-border/40 text-center relative overflow-hidden">
+                      <p className="text-sm font-medium text-foreground/80 italic leading-relaxed">
+                        {currentTranscript || "Waiting for you to speak..."}
+                      </p>
+                      {inactivityTimer > 15 && !currentTranscript && (
+                        <div className="absolute inset-0 bg-background/90 flex items-center justify-center p-4 animate-in fade-in zoom-in">
+                          <p className="text-xs font-bold text-brand-amber uppercase tracking-widest">
+                            I didn't catch anything. Speak or skip to continue.
+                          </p>
+                        </div>
+                      )}
+                   </div>
+                </div>
+             ) : state.isProcessing ? (
+                <div className="flex flex-col items-center">
+                   <Loader2 className="w-12 h-12 text-brand-amber animate-spin mb-4" />
+                   <p className="text-[11px] font-black tracking-[0.2em] uppercase text-brand-amber">
+                     Processing your response...
+                   </p>
+                </div>
+             ) : null}
+          </div>
+        )}
       </div>
 
-      {/* Bottom Controls */}
-      <div className="px-4 sm:px-10 py-4 sm:py-6 bg-muted/30 backdrop-blur-2xl border-t border-border relative z-20 flex flex-col items-center">
-        {state.interviewStatus === 'completing' ? (
+      {/* Bottom Controls - Hands-free Minimal Mode */}
+      <div className="px-4 sm:px-10 py-2 sm:py-4 bg-muted/10 backdrop-blur-2xl border-t border-border relative z-20 flex flex-col items-center">
+        {state.interviewStatus === 'completing' && (
           <div className="w-full py-4 flex flex-col items-center justify-center animate-in fade-in zoom-in duration-500">
             <Loader2 className="w-8 h-8 text-brand-amber animate-spin mb-4" />
             <h3 className="text-xl sm:text-2xl font-black text-foreground tracking-tight mb-2">Interview Complete!</h3>
-            <p className="text-sm text-muted-foreground font-medium">Redirecting to your assessment...</p>
+            <p className="text-sm text-muted-foreground font-medium">Generating your assessment...</p>
           </div>
-        ) : (
-          <>
-            {state.useFallbackMode && (
-              <form onSubmit={handleTextSubmit} className="flex space-x-2 sm:space-x-4 max-w-3xl w-full mx-auto mb-4 sm:mb-6">
-                <Input 
-                  value={textInput}
-                  onChange={(e) => setTextInput(e.target.value)}
-                  placeholder="Type your response..."
-                  className="flex-1 bg-background border-border h-12 sm:h-16 rounded-xl sm:rounded-[1.5rem] text-sm sm:text-lg px-4 sm:px-8 focus:ring-2 focus:ring-brand-amber/30 transition-all font-light"
-                  disabled={state.isProcessing || state.isAISpeaking}
-                />
-                <Button 
-                  type="submit" 
-                  disabled={!textInput.trim() || state.isProcessing || state.isAISpeaking} 
-                  className="h-12 sm:h-16 px-4 sm:px-10 rounded-xl sm:rounded-[1.5rem] font-bold amber-button shadow-xl shadow-brand-amber/10 transition-all active:scale-95"
-                >
-                  <Send className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-3" /> <span className="hidden xs:inline">Submit</span>
-                </Button>
-              </form>
-            )}
-
-            {/* Action Buttons row integrated into flex layout */}
-            <div className={`flex justify-between items-center w-full max-w-4xl mx-auto ${state.useFallbackMode ? 'border-t border-border/40 pt-3 sm:pt-4' : ''}`}>
+        )}
+        
+        {state.interviewStatus !== 'completing' && state.useFallbackMode && (
+           <form onSubmit={handleTextSubmit} className="flex space-x-2 sm:space-x-4 max-w-3xl w-full mx-auto my-4">
+              <Input 
+                value={textInput}
+                onChange={(e) => setTextInput(e.target.value)}
+                placeholder="Type your response..."
+                className="flex-1 bg-background border-border h-12 sm:h-16 rounded-xl sm:rounded-[1.5rem] text-sm sm:text-lg px-4 sm:px-8 focus:ring-2 focus:ring-brand-amber/30 transition-all font-light"
+                disabled={state.isProcessing || state.isAISpeaking}
+              />
               <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={handleEndEarly} 
-                className="text-muted-foreground/50 hover:text-red-500 hover:bg-red-500/10 rounded-lg sm:rounded-xl transition-all text-[8px] sm:text-[10px] font-black uppercase tracking-[0.1em] sm:tracking-[0.2em] px-2 sm:px-4 flex-1 sm:flex-none justify-start sm:justify-center"
+                type="submit" 
+                disabled={!textInput.trim() || state.isProcessing || state.isAISpeaking} 
+                className="h-12 sm:h-16 px-4 sm:px-10 rounded-xl sm:rounded-[1.5rem] font-bold amber-button shadow-xl shadow-brand-amber/10 transition-all active:scale-95"
               >
-                <XCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" /> <span className="hidden sm:inline">Exit Session</span> <span className="sm:hidden">Exit</span>
+                <Send className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-3" /> <span className="hidden xs:inline">Submit</span>
               </Button>
-
-              {!state.useFallbackMode && (
-                  <div className="flex-1 flex justify-center items-center">
-                    <MicButton 
-                      isRecording={state.isRecording}
-                      isProcessing={state.isProcessing}
-                      disabled={false} // Removed isAISpeaking to prevent lockup on mobile
-                      onClick={handleMicToggle}
-                    />
-                  </div>
-              )}
-
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={handleSkipQuestion} 
-                disabled={state.isProcessing || state.isRecording}
-                className="text-muted-foreground/50 hover:text-foreground hover:bg-muted rounded-lg sm:rounded-xl transition-all text-[8px] sm:text-[10px] font-black uppercase tracking-[0.1em] sm:tracking-[0.2em] px-2 sm:px-4 flex-1 sm:flex-none justify-end sm:justify-center"
-              >
-                <span className="hidden sm:inline">Skip Question</span> <span className="sm:hidden">Skip</span> <SkipForward className="w-3.5 h-3.5 sm:w-4 sm:h-4 ml-1.5 sm:ml-2" />
-              </Button>
-            </div>
-          </>
+           </form>
         )}
       </div>
     </div>

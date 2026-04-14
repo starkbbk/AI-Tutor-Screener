@@ -134,7 +134,7 @@
   50% { height: 24px; }
 }
 
-.wave-bar {
+.wave-bar, .animate-wave {
   animation: wave 0.8s ease-in-out infinite;
 }
 
