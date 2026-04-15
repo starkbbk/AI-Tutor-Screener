@@ -17,6 +17,7 @@ export default function MicTestPage() {
   const [error, setError] = useState<string | null>(null)
   const [hasTested, setHasTested] = useState(false)
   const [supported, setSupported] = useState(true)
+  const [volume, setVolume] = useState(0)
 
   useEffect(() => {
     // Redirect if no candidate info
@@ -40,21 +41,39 @@ export default function MicTestPage() {
     setError(null)
     
     startListening(
-      (result: SpeechRecognitionResult) => {
-        setTestResult(result.transcript)
-        if (result.isFinal) {
+      // onResult - Not used with Whisper
+      () => {},
+      // onEnd
+      async (_transcript: string, blob?: Blob | null) => {
+        if (!blob) {
           setIsTesting(false)
-          setHasTested(true)
-          stopListening()
+          return
         }
-      },
-      () => {
-        setIsTesting(false)
-        if (testResult.length > 0) setHasTested(true)
+
+        try {
+          const formData = new FormData()
+          formData.append('file', blob, 'audio.webm')
+          const resp = await fetch('/api/transcribe', { method: 'POST', body: formData })
+          const data = await resp.json()
+          
+          if (data.text) {
+            setTestResult(data.text)
+            setHasTested(true)
+          }
+        } catch (err) {
+          setError("Transcription failed. Please try again.")
+        } finally {
+          setIsTesting(false)
+          setVolume(0)
+        }
       },
       (err: string) => {
         setIsTesting(false)
         setError(err)
+        setVolume(0)
+      },
+      (v: number) => {
+        setVolume(v)
       }
     )
   }
@@ -142,9 +161,16 @@ export default function MicTestPage() {
                       {isTesting ? "Waiting for speech..." : "Your speech will appear here..."}
                     </p>
                     {isTesting && (
-                      <div className="flex gap-1 h-4 sm:h-6 items-end">
-                        {[1, 2, 3, 4, 5, 6].map(i => (
-                          <div key={i} className="w-1 sm:w-1.5 bg-brand-cyan wave-bar rounded-full" style={{ animationDelay: `${i * 0.1}s` }} />
+                      <div className="flex gap-1 h-6 sm:h-10 items-end">
+                        {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
+                          <div 
+                            key={i} 
+                            className="w-1.5 sm:w-2 bg-brand-cyan rounded-full transition-all duration-75" 
+                            style={{ 
+                              height: `${10 + (volume * (Math.sin(i) + 1.2))}%`,
+                              opacity: 0.3 + (volume / 100)
+                            }} 
+                          />
                         ))}
                       </div>
                     )}
