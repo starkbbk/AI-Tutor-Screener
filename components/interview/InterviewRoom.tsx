@@ -11,7 +11,7 @@ import { TranscriptDisplay } from "./TranscriptDisplay"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ThemeToggle } from "@/components/ui/theme-toggle"
-import { formatTime } from "@/lib/utils"
+import { formatTime, cn } from "@/lib/utils"
 import { TOTAL_QUESTIONS } from "@/lib/constants"
 import { speak, startListening, stopListening, stopSpeaking, SpeechRecognitionResult, preloadVoices } from "@/lib/speech"
 
@@ -20,10 +20,11 @@ export function InterviewRoom() {
   const { 
     state, setAISpeaking, setRecording, setProcessing, 
     addMessage, setQuestionIndex, completeInterview, setStatus,
-    incrementAttempts, resetAttempts
+    incrementAttempts, resetAttempts, startInterview
   } = useInterview()
   
-  const [timer, setTimer] = useState(0)
+  const [timeLeft, setTimeLeft] = useState(600)
+  const isTimedOutRef = useRef(false)
   const [textInput, setTextInput] = useState("")
   const [hasStarted, setHasStarted] = useState(false)
   const [currentTranscript, setCurrentTranscript] = useState("")
@@ -35,21 +36,32 @@ export function InterviewRoom() {
   
   // Timer effect
   useEffect(() => {
-    const interval = setInterval(() => {
-      setTimer(prev => prev + 1)
-    }, 1000)
+    let interval: NodeJS.Timeout;
+    if (hasStarted && state.interviewStatus === 'in_progress') {
+      interval = setInterval(() => {
+        setTimeLeft((prev) => {
+          if (prev <= 1) {
+            isTimedOutRef.current = true;
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    
     return () => {
-      clearInterval(interval)
+      if (interval) clearInterval(interval);
       stopSpeaking() 
       stopListening()
     }
-  }, [])
+  }, [hasStarted, state.interviewStatus])
 
   // Initial greeting
   useEffect(() => {
     if (hasStarted && isFirstRender.current && state.conversationHistory.length === 0 && !greetingSentRef.current) {
       greetingSentRef.current = true
       isFirstRender.current = false
+      startInterview()
       startChatWithAI()
     }
   }, [hasStarted, state.candidate?.name, state.conversationHistory.length])
@@ -117,6 +129,12 @@ export function InterviewRoom() {
           const isComplete = checkIfInterviewComplete(text)
           if (isComplete || state.interviewStatus === 'completing') return;
 
+          // Check for timeout wrap-up
+          if (isTimedOutRef.current) {
+            handleTimeOut();
+            return;
+          }
+
           // PROGRESSION LOGIC AFTER AI SPEAKS
           if (state.attemptsOnCurrentQuestion === 1 && followUpAsked === false) {
             // AI acknowledged but didn't ask a follow-up - move to next question automatically
@@ -159,6 +177,28 @@ export function InterviewRoom() {
       return true
     }
     return false
+  }
+
+  const handleTimeOut = () => {
+    if (state.interviewStatus === 'completing') return;
+    
+    const timeOutMessage = "We are running out of time so let us wrap up here. Thank you for your time, you will receive your assessment shortly. Have a great day!";
+    
+    addMessage({
+      role: "ai",
+      content: timeOutMessage,
+      timestamp: new Date().toISOString()
+    })
+
+    setAISpeaking(true)
+    speak(
+      timeOutMessage,
+      () => {},
+      () => {
+        setAISpeaking(false)
+        finishInterview()
+      }
+    )
   }
 
   const finishInterview = () => {
@@ -339,9 +379,15 @@ export function InterviewRoom() {
           <div className="text-[8px] sm:text-xs font-black text-brand-amber bg-brand-amber/10 px-2 sm:px-4 py-1 sm:py-2 rounded-full border border-brand-amber/20 uppercase tracking-widest whitespace-nowrap">
             {Math.min(state.currentQuestionIndex + 1, TOTAL_QUESTIONS)} / {TOTAL_QUESTIONS}
           </div>
-          <div className="flex items-center text-muted-foreground font-mono text-[9px] sm:text-sm tracking-widest bg-muted/50 px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl border border-border whitespace-nowrap">
-            <Clock className="hidden xxs:block w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2 text-brand-cyan" />
-            {formatTime(timer)}
+          <div className={cn(
+            "flex items-center font-mono text-[9px] sm:text-sm tracking-widest bg-muted/50 px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl border border-border whitespace-nowrap transition-all duration-500",
+            timeLeft < 60 ? "text-red-500 animate-pulse-red" : timeLeft < 240 ? "text-brand-amber" : "text-muted-foreground"
+          )}>
+            <Clock className={cn(
+              "hidden xxs:block w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2",
+              timeLeft < 60 ? "text-red-500" : timeLeft < 240 ? "text-brand-amber" : "text-brand-cyan"
+            )} />
+            {formatTime(timeLeft)}
           </div>
           <ThemeToggle />
           
