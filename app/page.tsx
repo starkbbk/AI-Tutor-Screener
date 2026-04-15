@@ -29,11 +29,11 @@ export default function LandingPage() {
         
         <Hero />
         
-        <div className="w-full relative z-10 animate-in fade-in slide-in-from-bottom-6 duration-1000">
+        <div className="w-full relative z-10">
           <CandidateForm />
         </div>
         
-        <div className="w-full animate-in fade-in slide-in-from-bottom-10 duration-1000 delay-300 fill-mode-both">
+        <div className="w-full">
           <InfoCards />
         </div>
       </main>
