@@ -143,7 +143,10 @@ export default function MicTestPage() {
                   onClick={isTesting ? handleStopTest : handleStartTest}
                   variant={isTesting ? "destructive" : "default"}
                   size="icon"
-                  className={`w-24 h-24 sm:w-32 sm:h-32 rounded-full relative z-10 shadow-2xl transition-all duration-500 amber-button ${isTesting ? 'scale-110' : 'hover:scale-105'}`}
+                  className={cn(
+                    "w-24 h-24 sm:w-32 sm:h-32 rounded-full relative z-10 shadow-2xl transition-all duration-500 amber-button",
+                    isTesting ? "scale-110 ring-[12px] ring-brand-amber/30 shadow-[0_0_60px_rgba(255,184,0,0.6)] border-4 border-brand-amber" : "hover:scale-105"
+                  )}
                   disabled={isValidating}
                 >
                   {isValidating ? (
