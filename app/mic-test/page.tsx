@@ -112,7 +112,6 @@ export default function MicTestPage() {
               <div className="relative mb-6 sm:mb-10">
                 {!isTesting && !isValidating && !hasTested && (
                   <div className="absolute right-full mr-4 sm:mr-10 top-1/2 -translate-y-1/2 flex items-center">
-                     <span className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-amber mr-3 hidden md:block animate-pulse duration-[2.5s]">Click</span>
                      <div className="flex items-center space-x-[-8px] sm:space-x-[-12px]">
                         {[0, 1, 2].map((i) => (
                           <ChevronRight 
@@ -136,7 +135,6 @@ export default function MicTestPage() {
                           />
                         ))}
                      </div>
-                     <span className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-amber ml-3 hidden md:block animate-pulse duration-[2.5s]">Click</span>
                   </div>
                 )}
                 
