@@ -38,7 +38,10 @@ export function InterviewRoom() {
     const interval = setInterval(() => {
       setTimer(prev => prev + 1)
     }, 1000)
-    return () => clearInterval(interval)
+    return () => {
+      clearInterval(interval)
+      stopSpeaking() // Ensure speech stops when navigating away
+    }
   }, [])
 
   // Initial greeting
@@ -181,13 +184,15 @@ export function InterviewRoom() {
     // 1. Set flag and prevent any further interactions
     if (state.interviewStatus === 'completing') return;
     
+    // STOP SPEECH IMMEDIATELY
+    stopSpeaking()
+    stopListening()
+    
     console.log('[INTERVIEW ROOM] finishInterview called. Initiating final sequence...');
     setStatus('completing')
     completeInterview()
     
-    // 2. Clear any active speech/listening
-    stopListening()
-    stopSpeaking()
+    // 2. Clear any active state
     setRecording(false)
     setAISpeaking(false)
     
