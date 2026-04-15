@@ -30,7 +30,7 @@ export function CandidateForm() {
   }
 
   return (
-    <Card className="w-full max-w-lg mx-auto border-border bg-card/60 backdrop-blur-3xl shadow-2xl relative group overflow-hidden transition-all duration-500 ease-out focus-within:scale-[1.02] focus-within:bg-card/80 focus-within:shadow-brand-amber/10 focus-within:ring-1 focus-within:ring-brand-amber/20">
+    <Card className="w-full max-w-lg mx-auto border-border bg-card/60 backdrop-blur-3xl shadow-2xl relative group overflow-hidden transition-all duration-500 ease-out hover:bg-brand-amber/[0.04] dark:hover:bg-brand-amber/[0.02] focus-within:scale-[1.02] focus-within:bg-card/80 focus-within:shadow-brand-amber/10 focus-within:ring-1 focus-within:ring-brand-amber/20">
       {/* Subtle internal glow */}
       {/* All-around internal glow on hover */}
       <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-brand-amber/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
