@@ -160,7 +160,7 @@ export default function MicTestPage() {
                   {isValidating ? "Validating Clarity..." : isTesting ? "Recording..." : "Ready to test?"}
                 </p>
                 <p className="text-xs sm:text-sm text-muted-foreground font-light px-4 sm:px-10">
-                  {isValidating ? "Ensuring your audio is crisp and clear" : isTesting ? "Say something like 'Ready to teach!'" : "Check your audio levels before the session"}
+                  {isValidating ? "Ensuring your audio is crisp and clear" : isTesting ? "Say something like 'Ready to teach!'" : "Tap the microphone icon above and say something to test your mic"}
                 </p>
               </div>
               
