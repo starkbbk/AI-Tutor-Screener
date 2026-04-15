@@ -16,7 +16,7 @@ export function ThemeToggle() {
   if (!mounted) return null
 
   return (
-    <div className="flex items-center bg-muted/50 p-1 rounded-xl border border-border/40 shadow-inner transition-all duration-500">
+    <div className="flex items-center bg-muted/60 p-1 rounded-xl border border-border/60 shadow-[inset_0_2px_4px_rgba(0,0,0,0.06)] transition-all duration-500">
       <button
         onClick={() => setTheme("light")}
         className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-300 relative z-10 ${
@@ -26,7 +26,7 @@ export function ThemeToggle() {
         }`}
       >
         {resolvedTheme === "light" && (
-          <div className="absolute inset-0 bg-white dark:bg-brand-amber rounded-lg -z-10 animate-in fade-in duration-300 shadow-sm" />
+          <div className="absolute inset-0 bg-white dark:bg-brand-amber rounded-lg -z-10 animate-in fade-in duration-300 shadow-md ring-1 ring-black/5" />
         )}
         <Sun className={`h-4 w-4 transition-transform duration-500 ${resolvedTheme === "light" ? "rotate-0 scale-110" : "-rotate-90 scale-100"}`} />
         <span className="text-[10px] font-black uppercase tracking-[0.15em]">Light</span>
@@ -41,7 +41,7 @@ export function ThemeToggle() {
         }`}
       >
         {resolvedTheme === "dark" && (
-          <div className="absolute inset-0 bg-brand-navy rounded-lg -z-10 animate-in fade-in duration-300 shadow-sm" />
+          <div className="absolute inset-0 bg-brand-navy rounded-lg -z-10 animate-in fade-in duration-300 shadow-md ring-1 ring-white/10" />
         )}
         <Moon className={`h-4 w-4 transition-transform duration-500 ${resolvedTheme === "dark" ? "rotate-0 scale-110" : "rotate-90 scale-100"}`} />
         <span className="text-[10px] font-black uppercase tracking-[0.15em]">Dark</span>
