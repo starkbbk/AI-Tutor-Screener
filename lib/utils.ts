@@ -15,8 +15,7 @@ export function formatDuration(startTime: number, endTime: number): string {
   const totalSeconds = Math.floor((endTime - startTime) / 1000);
   const mins = Math.floor(totalSeconds / 60);
   const secs = totalSeconds % 60;
-  if (mins === 0) return `${secs} seconds`;
-  return `${mins} min ${secs} sec`;
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
 
 export function formatDate(date: Date): string {
