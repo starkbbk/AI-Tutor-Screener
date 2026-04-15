@@ -28,6 +28,7 @@ export function InterviewRoom() {
   const [currentTranscript, setCurrentTranscript] = useState("")
   const [inactivityTimer, setInactivityTimer] = useState(0)
   const [showMenu, setShowMenu] = useState(false)
+  const [micVolume, setMicVolume] = useState(0)
   
   const isFirstRender = useRef(true)
   const greetingSentRef = useRef(false)
@@ -237,6 +238,12 @@ export function InterviewRoom() {
       (err: string) => {
         console.error("[INTERVIEW ROOM] Mic error:", err)
         setRecording(false)
+      },
+      (volume: number) => {
+        setMicVolume(prev => {
+          // Smooth the volume transition slightly
+          return prev * 0.4 + volume * 0.6;
+        });
       }
     )
   }
@@ -505,8 +512,14 @@ export function InterviewRoom() {
                 </div>
              ) : state.isRecording ? (
                 <div className="flex flex-col items-center w-full max-w-lg">
-                   <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mb-4 border border-red-500/20 pulse-red">
-                      <Mic className="w-8 h-8 text-red-500 animate-pulse" />
+                   <div 
+                     className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mb-4 border border-red-500/20 shadow-lg shadow-red-500/5 transition-transform duration-75"
+                     style={{ 
+                       transform: `scale(${1 + (micVolume / 100)})`,
+                       boxShadow: `0 0 ${micVolume}px rgba(239, 68, 68, 0.2)`
+                     }}
+                   >
+                      <Mic className="w-8 h-8 text-red-500" />
                    </div>
                    <p className="text-[11px] font-black tracking-[0.2em] uppercase text-red-500 mb-4 animate-pulse">
                      Listening... speak your answer

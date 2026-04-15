@@ -20,6 +20,7 @@ interface SpeechRecognition extends EventTarget {
 type SpeechCallback = (result: SpeechRecognitionResult) => void;
 type ErrorCallback = (error: string) => void;
 type EndCallback = (finalTranscript: string, audioBlob?: Blob | null) => void;
+type VolumeCallback = (volume: number) => void;
 
 let recognition: SpeechRecognition | null = null;
 let silenceTimeout: NodeJS.Timeout | null = null;
@@ -70,7 +71,8 @@ export function unlockMic(): void {
 export function startListening(
   onResult: SpeechCallback,
   onEnd: EndCallback,
-  onError: ErrorCallback
+  onError: ErrorCallback,
+  onVolume?: VolumeCallback
 ): void {
   if (!isSpeechRecognitionSupported()) {
     onError('Speech recognition is not supported in this browser.');
@@ -145,6 +147,9 @@ export function startListening(
       volumeWatchdog = setInterval(() => {
         analyser.getByteFrequencyData(dataArray);
         const average = dataArray.reduce((a, b) => a + b) / bufferLength;
+
+        // Pulse the volume to the UI
+        if (onVolume) onVolume(average);
 
         if (average < 1) { // Threshold for "absolute silence/stall"
           silentCheckCount++;
