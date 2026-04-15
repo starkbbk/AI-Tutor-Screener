@@ -6,7 +6,7 @@ import { Mic, AlertCircle, CheckCircle2, MicOff, RefreshCw } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { useInterview } from "@/context/InterviewContext"
-import { isSpeechRecognitionSupported, startListening, stopListening, SpeechRecognitionResult, preloadVoices } from "@/lib/speech"
+import { isSpeechRecognitionSupported, startListening, stopListening, preloadVoices } from "@/lib/speech"
 
 export default function MicTestPage() {
   const router = useRouter()
@@ -17,7 +17,6 @@ export default function MicTestPage() {
   const [error, setError] = useState<string | null>(null)
   const [hasTested, setHasTested] = useState(false)
   const [supported, setSupported] = useState(true)
-  const [volume, setVolume] = useState(0)
 
   useEffect(() => {
     // Redirect if no candidate info
@@ -41,39 +40,20 @@ export default function MicTestPage() {
     setError(null)
     
     startListening(
-      // onResult - Not used with Whisper
-      () => {},
+      // onResult
+      (res) => {
+        setTestResult(res.transcript)
+      },
       // onEnd
-      async (_transcript: string, blob?: Blob | null) => {
-        if (!blob) {
-          setIsTesting(false)
-          return
-        }
-
-        try {
-          const formData = new FormData()
-          formData.append('file', blob, 'audio.webm')
-          const resp = await fetch('/api/transcribe', { method: 'POST', body: formData })
-          const data = await resp.json()
-          
-          if (data.text) {
-            setTestResult(data.text)
-            setHasTested(true)
-          }
-        } catch (err) {
-          setError("Transcription failed. Please try again.")
-        } finally {
-          setIsTesting(false)
-          setVolume(0)
+      (finalTranscript: string) => {
+        setIsTesting(false)
+        if (finalTranscript.trim().length > 0) {
+           setHasTested(true)
         }
       },
       (err: string) => {
         setIsTesting(false)
         setError(err)
-        setVolume(0)
-      },
-      (v: number) => {
-        setVolume(v)
       }
     )
   }
@@ -97,7 +77,6 @@ export default function MicTestPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-3 sm:p-6 bg-background cuemath-grid relative selection:bg-brand-amber selection:text-brand-navy">
-      {/* Background depth glows (reduced for light mode) */}
       <div className="absolute top-[10%] left-[10%] w-[35%] h-[35%] bg-brand-amber/[0.03] dark:bg-brand-amber/5 rounded-full blur-[80px] sm:blur-[120px] pointer-events-none" />
       <div className="absolute bottom-[20%] right-[10%] w-[25%] h-[25%] bg-brand-cyan/[0.03] dark:bg-brand-cyan/5 rounded-full blur-[70px] sm:blur-[100px] pointer-events-none" />
 
@@ -160,20 +139,6 @@ export default function MicTestPage() {
                     <p className="text-muted-foreground italic text-center text-xs sm:text-sm">
                       {isTesting ? "Waiting for speech..." : "Your speech will appear here..."}
                     </p>
-                    {isTesting && (
-                      <div className="flex gap-1 h-6 sm:h-10 items-end">
-                        {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
-                          <div 
-                            key={i} 
-                            className="w-1.5 sm:w-2 bg-brand-cyan rounded-full transition-all duration-75" 
-                            style={{ 
-                              height: `${10 + (volume * (Math.sin(i) + 1.2))}%`,
-                              opacity: 0.3 + (volume / 100)
-                            }} 
-                          />
-                        ))}
-                      </div>
-                    )}
                   </div>
                 )}
               </div>
@@ -183,7 +148,7 @@ export default function MicTestPage() {
                   <div className="p-4 sm:p-6 rounded-[1.5rem] sm:rounded-[2rem] bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 flex items-start animate-in shake duration-500 shadow-sm">
                     <AlertCircle className="w-5 h-5 sm:w-6 sm:h-6 mr-3 sm:4 flex-shrink-0 mt-0.5" />
                     <div className="space-y-1">
-                      <p className="font-bold text-base sm:text-lg">Connection Issue</p>
+                      <p className="font-bold text-base sm:text-lg">Mic Issue</p>
                       <p className="text-xs sm:text-sm opacity-90 leading-relaxed">{error}</p>
                     </div>
                   </div>
@@ -232,4 +197,3 @@ export default function MicTestPage() {
 
   )
 }
-

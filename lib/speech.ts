@@ -1,16 +1,12 @@
-declare global {
-  interface Window {
-    SpeechRecognition: any;
-    webkitSpeechRecognition: any;
-  }
-}
-
 /**
- * Speech Engine v3 (Zero-Latency Hybrid)
+ * Robust Native Speech Recognition Engine
  * 
- * Uses Native Web Speech API for instant word-by-word feedback and zero-lag response.
- * Uses MediaRecorder + AudioContext as a "Hardware Watchdog" to prevent stalls.
- * Provides Whisper as an invisible background fallback for 100% accuracy.
+ * Features:
+ * 1. Continuous Listening across phrase boundaries.
+ * 2. Auto-Restart watchdog to handle unexpected browser stops.
+ * 3. Accumulated transcript across multiple recognition sessions.
+ * 4. Custom silence detection for intelligent auto-submission.
+ * 5. Robust error handling and double-start prevention.
  */
 
 export interface SpeechRecognitionResult {
@@ -18,22 +14,21 @@ export interface SpeechRecognitionResult {
   isFinal: boolean;
 }
 
-type VolumeCallback = (volume: number) => void;
-type EndCallback = (finalTranscript: string, audioBlob?: Blob | null) => void;
+type SpeechCallback = (result: SpeechRecognitionResult) => void;
+type EndCallback = (finalTranscript: string) => void;
 type ErrorCallback = (error: string) => void;
 
-// Module-level state
+// Module-level state persistent across sessions and restarts
 let recognition: any = null;
-let mediaRecorder: MediaRecorder | null = null;
-let audioChunks: Blob[] = [];
-let audioContext: AudioContext | null = null;
-let audioStream: MediaStream | null = null;
-let volumeWatchdog: NodeJS.Timeout | null = null;
-let activeSpeechId = 0;
+let isListeningActive = false;
+let fullTranscript = "";
+let silenceTimer: NodeJS.Timeout | null = null;
+let noSpeechTimer: NodeJS.Timeout | null = null;
 
-// Persistent transcript across auto-restarts
-let accumulatedTranscript = "";
-let isManualStop = false;
+// Callbacks captured on start
+let currentOnResult: SpeechCallback | null = null;
+let currentOnEnd: EndCallback | null = null;
+let currentOnError: ErrorCallback | null = null;
 
 export function isSpeechRecognitionSupported(): boolean {
   if (typeof window === 'undefined') return false;
@@ -46,174 +41,270 @@ export function isSpeechSynthesisSupported(): boolean {
 }
 
 /**
- * Start listening with Zero-Latency Native API + Hardware Watchdog
+ * Cleanup timers
+ */
+function clearTimers() {
+  if (silenceTimer) {
+    clearTimeout(silenceTimer);
+    silenceTimer = null;
+  }
+  if (noSpeechTimer) {
+    clearTimeout(noSpeechTimer);
+    noSpeechTimer = null;
+  }
+}
+
+/**
+ * Handle success/submission after silence
+ */
+function handleSilenceTimeout() {
+  const final = fullTranscript.trim();
+  
+  if (final.length >= 10) {
+    console.log("[SPEECH] Silence detected, submitting answer:", final);
+    stopListening();
+    if (currentOnEnd) currentOnEnd(final);
+  } else {
+    console.log("[SPEECH] Silence detected but text too short. Prompting for more...");
+    if (currentOnResult) {
+      currentOnResult({ transcript: "Could you say a bit more?", isFinal: false });
+    }
+    // Reset timers to keep listening
+    resetTimers();
+  }
+}
+
+/**
+ * Handle total lack of speech
+ */
+function handleNoSpeechTimeout() {
+  if (!fullTranscript.trim()) {
+    console.log("[SPEECH] No speech detected for 15s.");
+    if (currentOnResult) {
+      currentOnResult({ transcript: "I did not hear anything. Please speak your answer.", isFinal: false });
+    }
+    resetTimers();
+  }
+}
+
+/**
+ * Reset timers on every piece of speech
+ */
+function resetTimers() {
+  clearTimers();
+  if (!isListeningActive) return;
+
+  // 15s timer for when they haven't said ANYTHING
+  noSpeechTimer = setTimeout(handleNoSpeechTimeout, 15000);
+
+  // 5s timer for when they've finished speaking
+  silenceTimer = setTimeout(handleSilenceTimeout, 5000);
+}
+
+/**
+ * Initialize recognition object
+ */
+function initRecognition() {
+  const SpeechRecognitionConstructor = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+  const rec = new SpeechRecognitionConstructor();
+  
+  rec.continuous = true;
+  rec.interimResults = true;
+  rec.lang = 'en-US';
+
+  rec.onresult = (event: any) => {
+    resetTimers();
+    
+    let interimTranscript = '';
+    let currentFinalTranscript = '';
+
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      const result = event.results[i];
+      if (result.isFinal) {
+        currentFinalTranscript += result[0].transcript;
+      } else {
+        interimTranscript += result[0].transcript;
+      }
+    }
+
+    if (currentFinalTranscript) {
+      fullTranscript = (fullTranscript + " " + currentFinalTranscript).trim();
+    }
+
+    const displayTranscript = (fullTranscript + " " + interimTranscript).trim();
+    if (currentOnResult) {
+      currentOnResult({ transcript: displayTranscript, isFinal: false });
+    }
+  };
+
+  rec.onerror = (event: any) => {
+    console.warn("[SPEECH] Recognition error:", event.error);
+    
+    const errorMap: Record<string, string> = {
+      'audio-capture': "Microphone not available. Please check your mic.",
+      'not-allowed': "Microphone permission denied. Please allow microphone access.",
+    };
+
+    if (errorMap[event.error]) {
+      isListeningActive = false;
+      if (currentOnError) currentOnError(errorMap[event.error]);
+    } else {
+      // For no-speech, network, etc. - restart silently in onend
+      console.log("[SPEECH] Persistent error or silence, will auto-restart if active.");
+    }
+  };
+
+  rec.onend = () => {
+    console.log("[SPEECH] Session ended. Active?", isListeningActive);
+    if (isListeningActive) {
+      console.log("[SPEECH] Auto-restarting...");
+      startRecognitionInstance();
+    }
+  };
+
+  return rec;
+}
+
+/**
+ * Safe start/restart logic
+ */
+function startRecognitionInstance() {
+  if (!recognition) recognition = initRecognition();
+  
+  try {
+    recognition.start();
+  } catch (e) {
+    console.warn("[SPEECH] Double start prevention triggered. Stopping then restarting...");
+    try {
+      recognition.stop();
+    } catch {}
+    
+    setTimeout(() => {
+      if (isListeningActive) {
+        try { recognition.start(); } catch (e2) { console.error("[SPEECH] Fatal restart error:", e2); }
+      }
+    }, 100);
+  }
+}
+
+/**
+ * Public function to start listening
  */
 export async function startListening(
-  onResult: (res: SpeechRecognitionResult) => void,
+  onResult: SpeechCallback,
   onEnd: EndCallback,
-  onError: ErrorCallback,
-  onVolume?: VolumeCallback
+  onError: ErrorCallback
 ): Promise<void> {
   if (!isSpeechRecognitionSupported()) {
     onError("Speech recognition not supported");
     return;
   }
 
-  // Reset State
-  accumulatedTranscript = "";
-  isManualStop = false;
-  audioChunks = [];
+  // Reset module state
+  isListeningActive = true;
+  fullTranscript = "";
+  currentOnResult = onResult;
+  currentOnEnd = onEnd;
+  currentOnError = onError;
 
-  const initNativeRecognition = () => {
-    const SpeechRecognitionConstructor = window.SpeechRecognition || window.webkitSpeechRecognition;
-    const rec = new SpeechRecognitionConstructor();
-    rec.continuous = false; // Better for mobile/Safari to use short bursts with auto-restart
-    rec.interimResults = true;
-    rec.lang = 'en-US';
-
-    rec.onresult = (event: any) => {
-      let interimTranscript = '';
-      let sessionFinal = '';
-      
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        if (event.results[i].isFinal) {
-          sessionFinal += event.results[i][0].transcript;
-        } else {
-          interimTranscript += event.results[i][0].transcript;
-        }
-      }
-
-      const currentDisplay = (accumulatedTranscript + " " + sessionFinal + " " + interimTranscript).trim();
-      onResult({ transcript: currentDisplay, isFinal: false });
-
-      if (sessionFinal) {
-        accumulatedTranscript = (accumulatedTranscript + " " + sessionFinal).trim();
-      }
-    };
-
-    rec.onerror = (event: any) => {
-      if (event.error === 'aborted' || event.error === 'no-speech') return;
-      console.warn("[SPEECH] Native Error:", event.error);
-    };
-
-    rec.onend = () => {
-      if (!isManualStop) {
-        // AUTO-RESTART: The secret to zero-lag persistence
-        try {
-          rec.start();
-        } catch (e) {
-          // Already started or busy
-        }
-      }
-    };
-
-    return rec;
-  };
-
-  try {
-    // 1. Setup Audio Stream & Hardware Monitor
-    if (!audioStream) {
-      audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    }
-
-    // 2. Setup Analyser for Volume UI & Stall Protection
-    if (!audioContext) {
-      audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-    }
-    if (audioContext.state === 'suspended') await audioContext.resume();
-
-    const source = audioContext.createMediaStreamSource(audioStream);
-    const analyser = audioContext.createAnalyser();
-    analyser.fftSize = 256;
-    source.connect(analyser);
-    const dataArray = new Uint8Array(analyser.frequencyBinCount);
-
-    // 3. Start MediaRecorder (Background High-Quality Backup)
-    const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus' : 'audio/mp4';
-    mediaRecorder = new MediaRecorder(audioStream, { mimeType });
-    mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) audioChunks.push(e.data); };
-    mediaRecorder.start(1000);
-
-    // 4. Start Native Engine
-    recognition = initNativeRecognition();
-    recognition.start();
-
-    // 5. Hardware Watchdog Loop
-    if (volumeWatchdog) clearInterval(volumeWatchdog);
-    volumeWatchdog = setInterval(() => {
-      analyser.getByteFrequencyData(dataArray);
-      const volume = dataArray.reduce((a, b) => a + b) / dataArray.length;
-      if (onVolume) onVolume(volume);
-
-      // If recognition is stuck (Chrome bug), we can detect silence here and kick it
-      // But for now, we leave it to manual stop by the user in the interview room
-    }, 100);
-
-  } catch (err: any) {
-    onError(err.message);
-  }
+  resetTimers();
+  startRecognitionInstance();
 }
 
+/**
+ * Public function to stop listening
+ */
 export function stopListening(): void {
-  isManualStop = true;
-  if (volumeWatchdog) {
-    clearInterval(volumeWatchdog);
-    volumeWatchdog = null;
-  }
-
+  console.log("[SPEECH] stopListening called.");
+  isListeningActive = false;
+  clearTimers();
+  
   if (recognition) {
-    try { recognition.stop(); } catch (e) {}
-    recognition = null;
-  }
-
-  if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-    mediaRecorder.onstop = () => {
-      const audioBlob = new Blob(audioChunks, { type: mediaRecorder?.mimeType });
-      // Here we could call currentEndCallback, but we'll use a globally scoped pattern
-      if (globalEndCallback) {
-        globalEndCallback(accumulatedTranscript, audioBlob);
-        globalEndCallback = null;
-      }
-    };
-    mediaRecorder.stop();
+    try {
+      recognition.stop();
+    } catch (e) {
+      // already stopped
+    }
   }
 }
 
-let globalEndCallback: EndCallback | null = null;
-export async function startListeningStandard(
-  onResult: (res: SpeechRecognitionResult) => void,
-  onEnd: EndCallback,
-  onError: ErrorCallback,
-  onVolume?: VolumeCallback
-) {
-  globalEndCallback = onEnd;
-  await startListening(onResult, onEnd, onError, onVolume);
-}
+// Re-export correct name for compatibility if needed
+export { startListening as startListeningFinal };
+export { startListening as startListeningStandard };
 
-// Re-export correct name
-export { startListeningStandard as startListeningFinal };
+// --- SPEECH SYNTHESIS ---
 
-// --- SPEECH SYNTHESIS (Unchanged) ---
-export function speak(text: string, onStart?: () => void, onEnd?: () => void): void {
-  if (!isSpeechSynthesisSupported()) { onEnd?.(); return; }
-  window.speechSynthesis.cancel();
-  const utterance = new SpeechSynthesisUtterance(text);
+export const getPreferredVoice = (): SpeechSynthesisVoice | null => {
+  if (typeof window === 'undefined') return null;
   const voices = window.speechSynthesis.getVoices();
-  const voice = voices.find(v => v.name.includes('Female')) || voices[0];
+  
+  const preferredVoices = [
+    'Google UK English Female',
+    'Google US English Female', 
+    'Samantha',
+    'Microsoft Jenny',
+    'en-US-Female',
+  ];
+  
+  for (const name of preferredVoices) {
+    const voice = voices.find(v => v.name.includes(name));
+    if (voice) return voice;
+  }
+  
+  return voices.find(v => v.lang.startsWith('en')) || voices[0] || null;
+};
+
+export function preloadVoices(): void {
+  if (typeof window !== 'undefined') {
+    window.speechSynthesis.getVoices();
+    window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+  }
+}
+
+export function speak(
+  text: string,
+  onStart?: () => void,
+  onEnd?: () => void
+): void {
+  if (!isSpeechSynthesisSupported()) {
+    onEnd?.();
+    return;
+  }
+
+  window.speechSynthesis.cancel();
+
+  // Handle Chrome silence bug and chunking if needed, but keeping it simple for now
+  const utterance = new SpeechSynthesisUtterance(text);
+  const voice = getPreferredVoice();
   if (voice) utterance.voice = voice;
+  
+  utterance.lang = 'en-US';
+  utterance.rate = 1.0;
+  
   utterance.onstart = () => onStart?.();
   utterance.onend = () => onEnd?.();
-  window.speechSynthesis.resume();
+  utterance.onerror = (e) => {
+    console.error("Speech Synthesis Error:", e);
+    onEnd?.();
+  };
+
   window.speechSynthesis.speak(utterance);
 }
 
 export function stopSpeaking(): void {
-  activeSpeechId++;
-  window.speechSynthesis.cancel();
+  if (typeof window !== 'undefined') {
+    window.speechSynthesis.cancel();
+  }
 }
 
-export function preloadVoices(): void {
-  if (typeof window !== 'undefined') window.speechSynthesis.getVoices();
+export function unlockMic(): void {
+  // Keeping as placeholder for compatibility
 }
 
-export function unlockMic(): void {}
+// Add global types
+declare global {
+  interface Window {
+    SpeechRecognition: any;
+    webkitSpeechRecognition: any;
+  }
+}

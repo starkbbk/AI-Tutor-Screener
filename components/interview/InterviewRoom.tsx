@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input"
 import { ThemeToggle } from "@/components/ui/theme-toggle"
 import { formatTime } from "@/lib/utils"
 import { TOTAL_QUESTIONS } from "@/lib/constants"
-import { speak, startListening, stopListening, stopSpeaking, SpeechRecognitionResult, preloadVoices, unlockMic } from "@/lib/speech"
+import { speak, startListening, stopListening, stopSpeaking, SpeechRecognitionResult, preloadVoices } from "@/lib/speech"
 
 export function InterviewRoom() {
   const router = useRouter()
@@ -26,14 +26,10 @@ export function InterviewRoom() {
   const [textInput, setTextInput] = useState("")
   const [hasStarted, setHasStarted] = useState(false)
   const [currentTranscript, setCurrentTranscript] = useState("")
-  const [inactivityTimer, setInactivityTimer] = useState(0)
   const [showMenu, setShowMenu] = useState(false)
-  const [micVolume, setMicVolume] = useState(0)
-  const [isTranscribing, setIsTranscribing] = useState(false)
   
   const isFirstRender = useRef(true)
   const greetingSentRef = useRef(false)
-  const inactivityIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const isSkippingRef = useRef(false)
   
   // Timer effect
@@ -43,7 +39,8 @@ export function InterviewRoom() {
     }, 1000)
     return () => {
       clearInterval(interval)
-      stopSpeaking() // Ensure speech stops when navigating away
+      stopSpeaking() 
+      stopListening()
     }
   }, [])
 
@@ -60,30 +57,9 @@ export function InterviewRoom() {
     preloadVoices()
   }, [])
 
-  // Inactivity tracking
-  useEffect(() => {
-    if (state.isRecording) {
-      inactivityIntervalRef.current = setInterval(() => {
-        setInactivityTimer(prev => prev + 1)
-      }, 1000)
-    } else {
-      if (inactivityIntervalRef.current) clearInterval(inactivityIntervalRef.current)
-      setInactivityTimer(0)
-    }
-    return () => {
-      if (inactivityIntervalRef.current) clearInterval(inactivityIntervalRef.current)
-    }
-  }, [state.isRecording])
-
-  // Reset inactivity on transcript change
-  useEffect(() => {
-    setInactivityTimer(0)
-  }, [currentTranscript])
-
   const startChatWithAI = async (userMessage?: string) => {
     if (state.isProcessing && !userMessage?.includes("__RETRY__")) return; 
     
-    // If it's a retry, we don't want to block ourselves
     const isRetry = userMessage?.includes("__RETRY__");
     const actualMessage = isRetry ? userMessage?.replace("__RETRY__", "") : userMessage;
 
@@ -106,7 +82,6 @@ export function InterviewRoom() {
         throw new Error(data.error || 'Failed to get response')
       }
 
-      // Sync counter perfectly with AI state
       if (data.questionNumber) {
         if (data.questionNumber === 'DONE') {
           finishInterview();
@@ -125,14 +100,7 @@ export function InterviewRoom() {
       
     } catch (error: any) {
       console.warn('[INTERVIEW ROOM] Chat error. Auto-retrying in 5 seconds...', error.message)
-      
-      // Keep processing state active
       setProcessing(true)
-      
-      // Temporary "friendly message" in logs/UI if needed
-      // We don't want to permanently add an error message to history if we're retrying
-      // Instead, we wait and try again.
-      
       setTimeout(() => {
         startChatWithAI((actualMessage || "") + "__RETRY__")
       }, 5000)
@@ -142,30 +110,16 @@ export function InterviewRoom() {
   const playAIResponse = (text: string) => {
     setProcessing(false)
     
-    // Only use speech synthesis if not in fallback mode
     if (!state.useFallbackMode) {
       setAISpeaking(true)
       
-      // SAFETY WATCHDOG: If AI speech gets stuck for 15s (Chrome bug), recovery automatically
-      const watchdog = setTimeout(() => {
-        if (state.isAISpeaking) {
-          console.warn("[SPEECH WATCHDOG] Speech stuck. Forcing recovery...");
-          setAISpeaking(false);
-          if (state.interviewStatus !== 'completing') handleStartListening();
-        }
-      }, 15000);
-
       speak(
         text,
         () => {}, // onStart
         () => {
-          clearTimeout(watchdog);
           setAISpeaking(false)
-          // Look for signs that the interview is over wrapped up by AI
           const isComplete = checkIfInterviewComplete(text)
-          
           if (!isComplete && state.interviewStatus !== 'completing') {
-            // HANDS-FREE: Automatically start listening after AI finishes
             handleStartListening()
           }
         }
@@ -173,7 +127,7 @@ export function InterviewRoom() {
     } else {
       setTimeout(() => {
         checkIfInterviewComplete(text)
-      }, 2000) // Brief delay in text mode before checking complete
+      }, 2000) 
     }
   }
 
@@ -195,22 +149,17 @@ export function InterviewRoom() {
   }
 
   const finishInterview = () => {
-    // 1. Set flag and prevent any further interactions
     if (state.interviewStatus === 'completing') return;
     
-    // STOP SPEECH IMMEDIATELY
     stopSpeaking()
     stopListening()
     
-    console.log('[INTERVIEW ROOM] finishInterview called. Initiating final sequence...');
     setStatus('completing')
     completeInterview()
     
-    // 2. Clear any active state
     setRecording(false)
     setAISpeaking(false)
     
-    // 3. Save full transcript and session data to localStorage
     try {
       localStorage.setItem(`cuemath_session_backup_${state.candidate?.name?.replace(/\s+/g, '_')}`, JSON.stringify({
         candidate: state.candidate,
@@ -219,14 +168,11 @@ export function InterviewRoom() {
         endTime: Date.now(),
         isCompleted: true
       }));
-      console.log("[INTERVIEW ROOM] Final session backup saved.");
     } catch (e) {
       console.error("[INTERVIEW ROOM] Backup failed:", e);
     }
 
-    // 4. Auto-redirect after 4 seconds
     setTimeout(() => {
-      console.log('[INTERVIEW ROOM] Redirecting to report...');
       router.push("/report")
     }, 4000)
   }
@@ -238,93 +184,37 @@ export function InterviewRoom() {
     setAISpeaking(false)
     setRecording(true)
     setCurrentTranscript("")
-    setIsTranscribing(false)
     
     startListening(
-      // onResult - Now re-enabled for instant feedback
       (result: SpeechRecognitionResult) => {
         setCurrentTranscript(result.transcript)
       }, 
-      // onEnd 
-      async (finalTranscript: string, audioBlob?: Blob | null) => {
-        setRecording(false)
+      (finalTranscript: string) => {
         if (isSkippingRef.current) {
           isSkippingRef.current = false;
           return;
         }
-        
-        // INSTANT SPEED: If we already have the native transcript, use it immediately!
-        if (finalTranscript.trim().length > 5) {
-          handleCandidateSpeakingFinished(finalTranscript)
-        } else if (audioBlob) {
-          // Robust Fallback: Use Whisper only if native transcript was weak/empty
-          await handleWhisperTranscription(audioBlob)
-        } else {
-          handleCandidateSpeakingFinished("")
-        }
+        handleCandidateSpeakingFinished(finalTranscript)
       },
       (err: string) => {
         console.error("[INTERVIEW ROOM] Mic error:", err)
         setRecording(false)
-      },
-      (volume: number) => {
-        setMicVolume(prev => prev * 0.3 + volume * 0.7);
+        // Auto-recovery if permitted
+        if (state.interviewStatus !== 'completing') {
+           setTimeout(handleStartListening, 1000);
+        }
       }
     )
   }
 
-  const handleWhisperTranscription = async (blob: Blob) => {
-    if (blob.size < 2000) { // Very short clip
-       handleCandidateSpeakingFinished("");
-       return;
-    }
-
-    try {
-      setIsTranscribing(true)
-      const formData = new FormData()
-      formData.append('file', blob, 'audio.webm')
-      
-      const response = await fetch('/api/transcribe', {
-        method: 'POST',
-        body: formData
-      })
-      
-      const data = await response.json()
-      setIsTranscribing(false)
-      handleCandidateSpeakingFinished(data.text || "")
-    } catch (err) {
-      console.error("[WHISPER] API Error:", err)
-      setIsTranscribing(false)
-      handleCandidateSpeakingFinished("")
-    }
-  }
-
-  // Helper for manual toggle (if needed via settings) but mostly unused now
-  const handleMicToggle = () => {
-    if (state.isRecording) {
-      stopListening()
-    } else {
-      handleStartListening()
-    }
-  }
-
   const handleCandidateSpeakingFinished = (transcript: string) => {
     const finalTranscript = transcript.trim();
+    setRecording(false)
     
-    if (!finalTranscript) {
-      console.log("[INTERVIEW ROOM] No transcript. Showing retry prompt...");
-      setCurrentTranscript("I didn't catch that, could you speak again?")
-      setTimeout(() => {
-        if (!state.isAISpeaking && !state.isProcessing) {
-          handleStartListening();
-        }
-      }, 2000);
-      return;
-    }
+    if (!finalTranscript) return;
 
-    setCurrentTranscript(finalTranscript)
+    setCurrentTranscript("")
     
-    // ZERO LAG: Add message and start AI immediately
     addMessage({
       role: "candidate",
       content: finalTranscript,
@@ -336,7 +226,6 @@ export function InterviewRoom() {
   const handleTextSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!textInput.trim()) return
-    // Prevent API calls if interview is ending
     if (state.interviewStatus === 'completing') {
       router.push("/report");
       return;
@@ -355,7 +244,6 @@ export function InterviewRoom() {
   }
 
   const handleSkipQuestion = () => {
-    // Prevent skip if interview is ending
     if (state.interviewStatus === 'completing') {
       router.push("/report");
       return;
@@ -379,19 +267,17 @@ export function InterviewRoom() {
     stopSpeaking()
     finishInterview()
   }
+
   const handleManualReplay = (text: string) => {
-    // 1. Force stop everything current
     stopListening()
     stopSpeaking()
     setRecording(false)
     setAISpeaking(true)
     
-    // 2. Play the requested text
     speak(
       text,
-      () => {}, // onStart
+      () => {}, 
       () => {
-        // 3. Cleanup and auto-resume listening
         setAISpeaking(false)
         if (state.interviewStatus !== 'completing') {
           handleStartListening()
@@ -404,7 +290,7 @@ export function InterviewRoom() {
   return (
     <div className="flex flex-col h-[calc(100dvh-120px)] sm:h-[calc(100vh-140px)] max-w-5xl mx-auto glass-card rounded-[1.5rem] sm:rounded-[3rem] shadow-2xl overflow-hidden relative ring-1 ring-border mt-2 sm:mt-4">
       
-      {/* Live Indicator (Mobile focus) */}
+      {/* Live Indicator */}
       {hasStarted && state.interviewStatus === 'in_progress' && (
         <div className="bg-red-500/5 border-b border-red-500/10 py-1 sm:py-1.5 flex items-center justify-center space-x-2 animate-in fade-in duration-700">
           <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-red-500 pulse-live" />
@@ -431,7 +317,6 @@ export function InterviewRoom() {
           </div>
           <ThemeToggle />
           
-          {/* Settings Menu Icon */}
           <div className="relative">
             <button 
               onClick={() => setShowMenu(!showMenu)}
@@ -463,7 +348,6 @@ export function InterviewRoom() {
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col overflow-y-auto overflow-x-hidden p-3 sm:p-10 relative scrollbar-hide">
-        {/* Decorative theme-aware glows */}
         <div className="absolute top-0 left-1/4 w-1/2 h-1/2 bg-brand-cyan/5 dark:bg-brand-cyan/10 rounded-full blur-[80px] sm:blur-[120px] pointer-events-none" />
         
         <TranscriptDisplay 
@@ -471,7 +355,6 @@ export function InterviewRoom() {
           onReplay={handleManualReplay}
         />
         
-        {/* Hands-Free Instructions (shown before start) */}
         {!hasStarted && (
           <div className="absolute inset-0 z-50 flex items-center justify-center p-4 sm:p-10 bg-background/40 backdrop-blur-md animate-in fade-in duration-500">
             <div className="glass-card max-w-md w-full p-8 sm:p-12 rounded-[2.5rem] shadow-2xl border-brand-amber/20 flex flex-col items-center text-center">
@@ -496,10 +379,7 @@ export function InterviewRoom() {
               </div>
               
               <Button 
-                onClick={() => {
-                  unlockMic();
-                  setHasStarted(true);
-                }}
+                onClick={() => setHasStarted(true)}
                 className="w-full h-14 sm:h-16 rounded-2xl sm:rounded-[1.2rem] font-black tracking-widest uppercase amber-button shadow-2xl shadow-brand-amber/20 text-sm sm:text-base group"
               >
                 Begin Interview 
@@ -509,7 +389,7 @@ export function InterviewRoom() {
           </div>
         )}
 
-        {/* Real-time Status Area (Hands-free replacement for mic button) */}
+        {/* Real-time Status Area */}
         {hasStarted && state.interviewStatus !== 'completing' && (
           <div className="mt-auto pt-10 pb-2 flex flex-col items-center animate-in fade-in slide-in-from-bottom-5 duration-500">
              {state.isAISpeaking ? (
@@ -523,30 +403,20 @@ export function InterviewRoom() {
                      <Volume2 className="w-3 h-3 mr-2" /> AI is speaking...
                    </p>
                 </div>
-              ) : state.isRecording || isTranscribing ? (
+              ) : state.isRecording ? (
                  <div className="flex flex-col items-center w-full max-w-lg">
-                    {isTranscribing ? (
-                      <Loader2 className="w-16 h-16 text-brand-amber animate-spin mb-4" />
-                    ) : (
-                      <div 
-                        className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mb-4 border border-red-500/20 shadow-lg shadow-red-500/5 transition-transform duration-75"
-                        style={{ 
-                          transform: `scale(${1 + (micVolume / 100)})`,
-                          boxShadow: `0 0 ${micVolume}px rgba(239, 68, 68, 0.2)`
-                        }}
-                      >
-                         <Mic className="w-8 h-8 text-red-500" />
-                      </div>
-                    )}
+                    <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mb-4 border border-red-500/20 shadow-lg shadow-red-500/5 pulse-red">
+                        <Mic className="w-8 h-8 text-red-500 animate-pulse" />
+                    </div>
                     
-                    <p className={`text-[11px] font-black tracking-[0.2em] uppercase mb-4 ${isTranscribing ? 'text-brand-amber animate-pulse' : 'text-red-500 animate-pulse'}`}>
-                      {isTranscribing ? 'Analysing your answer...' : 'Listening... speak naturally'}
+                    <p className="text-[11px] font-black tracking-[0.2em] uppercase mb-4 text-red-500 animate-pulse">
+                      Listening... speak naturally
                     </p>
                     
-                    {/* Real-time Transcription/Feedback Display */}
+                    {/* Real-time Transcription feedback */}
                     <div className="w-full min-h-[4rem] px-6 py-4 bg-muted/20 rounded-2xl border border-border/40 text-center relative overflow-hidden flex items-center justify-center">
-                       <p className={`text-sm font-medium italic leading-relaxed ${currentTranscript.includes("Didn't catch") ? 'text-red-500' : 'text-foreground/80'}`}>
-                         {currentTranscript || (isTranscribing ? "Thinking..." : "We are capturing your audio...")}
+                       <p className={`text-sm font-medium italic leading-relaxed ${currentTranscript.includes("Didn't catch") || currentTranscript.includes("Could you say") ? 'text-brand-amber' : 'text-foreground/80'}`}>
+                         {currentTranscript || "Waiting for you to speak..."}
                        </p>
                     </div>
                  </div>
@@ -562,7 +432,7 @@ export function InterviewRoom() {
         )}
       </div>
 
-      {/* Bottom Controls - Hands-free Minimal Mode */}
+      {/* Bottom Controls */}
       <div className="px-4 sm:px-10 py-2 sm:py-4 bg-muted/10 backdrop-blur-2xl border-t border-border relative z-20 flex flex-col items-center">
         {state.interviewStatus === 'completing' && (
           <div className="w-full py-4 flex flex-col items-center justify-center animate-in fade-in zoom-in duration-500">
@@ -595,4 +465,3 @@ export function InterviewRoom() {
 
   )
 }
-
