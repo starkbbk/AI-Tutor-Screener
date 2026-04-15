@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button"
 import { useInterview } from "@/context/InterviewContext"
 import { isSpeechRecognitionSupported, startListening, stopListening, preloadVoices } from "@/lib/speech"
+import { cn } from "@/lib/utils"
 
 export default function MicTestPage() {
   const router = useRouter()
@@ -222,7 +223,10 @@ export default function MicTestPage() {
         <CardFooter className="flex-col gap-4 sm:gap-5 pb-8 sm:pb-10 px-4 sm:px-6">
           <Button 
             size="lg"
-            className="w-full text-base sm:text-lg h-14 sm:h-16 rounded-[1.5rem] sm:rounded-[2rem] font-black tracking-tight amber-button shadow-xl shadow-brand-amber/10" 
+            className={cn(
+              "w-full text-base sm:text-lg h-14 sm:h-16 rounded-[1.5rem] sm:rounded-[2rem] font-black tracking-tight amber-button shadow-xl shadow-brand-amber/10 transition-all duration-300",
+              hasTested && !isTesting && !isValidating && "pulse-gentle ring-2 ring-brand-amber/20"
+            )}
             onClick={handleContinue}
             disabled={!supported ? false : (!hasTested && !error)}
           >
