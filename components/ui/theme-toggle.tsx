@@ -16,7 +16,7 @@ export function ThemeToggle() {
   if (!mounted) return null
 
   return (
-    <div className="flex items-center bg-muted/60 p-1 rounded-xl border border-border/60 shadow-[inset_0_2px_4px_rgba(0,0,0,0.06)] transition-all duration-500">
+    <div className="flex items-center bg-muted/90 p-1 rounded-xl border border-border/80 shadow-[inset_0_2px_4px_rgba(0,0,0,0.08)] backdrop-blur-sm transition-all duration-500">
       <button
         onClick={() => setTheme("light")}
         className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-300 relative z-10 ${
