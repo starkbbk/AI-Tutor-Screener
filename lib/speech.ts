@@ -35,6 +35,9 @@ let lastProgressTime = 0;
 let mediaRecorder: MediaRecorder | null = null;
 let audioChunks: Blob[] = [];
 
+// Speech Synthesis Lock - Prevents phantom voices after stop
+let activeSpeechId = 0;
+
 export function isSpeechRecognitionSupported(): boolean {
   if (typeof window === 'undefined') return false;
   return !!(window.SpeechRecognition || window.webkitSpeechRecognition);
@@ -178,7 +181,15 @@ export function startListening(
       console.log("Speech recognition session started");
       resetSilenceTimeout();
       resetWatchdogTimer();
-      startHardwareMonitor();
+      
+      // Attempt to start hardware monitor (MediaRecorder + Volume)
+      // We do this inside a microtask to avoid blocking the main thread
+      setTimeout(() => {
+        startHardwareMonitor().catch(e => {
+          console.warn("Hardware monitor failed (likely Safari mic conflict):", e);
+          // If native recognition is already running, we might still be okay
+        });
+      }, 0);
       
       if (!maxDurationTimeout) {
         maxDurationTimeout = setTimeout(() => {
@@ -422,8 +433,15 @@ export function speak(
   // Sequential chunk processing
   let currentIndex = 0;
   let hasStarted = false;
+  const currentSpeechId = ++activeSpeechId; // Increment ID for this speech session
 
   const speakNext = () => {
+    // ABORT if this session is no longer active
+    if (currentSpeechId !== activeSpeechId) {
+      console.log("[SPEECH] Aborting session", currentSpeechId);
+      return;
+    }
+
     if (currentIndex >= chunks.length) {
       onEnd?.();
       return;
@@ -437,8 +455,8 @@ export function speak(
     }
     
     utterance.lang = 'en-US';
-    utterance.rate = 0.9;      // Calm and clear
-    utterance.pitch = 1.05;    // Friendly female tone
+    utterance.rate = 0.9;      
+    utterance.pitch = 1.05;    
     utterance.volume = 1.0;
 
     utterance.onstart = () => {
@@ -449,32 +467,33 @@ export function speak(
     };
 
     utterance.onend = () => {
+      if (currentSpeechId !== activeSpeechId) return; // Guard against late events
       currentIndex++;
       speakNext();
     };
 
-    utterance.onerror = (e) => {
+    utterance.onerror = (e: any) => {
+      if (e.error === 'interrupted' || e.error === 'canceled') return;
       console.error("Speech error:", e);
-      // Ensure we don't get stuck if there's an error
-      currentIndex++;
-      if (currentIndex >= chunks.length) {
-        onEnd?.();
-      } else {
-        speakNext();
+      
+      if (currentSpeechId === activeSpeechId) {
+        currentIndex++;
+        if (currentIndex >= chunks.length) {
+          onEnd?.();
+        } else {
+          speakNext();
+        }
       }
     };
 
     window.speechSynthesis.speak(utterance);
-    
-    // Safety fallback: If speech doesn't start or get blocked on mobile without gesture, 
-    // we need to make sure we don't stay in a 'speaking' state forever.
-    // Most browsers will trigger onerror immediately if blocked.
   };
 
   speakNext();
 }
 
 export function stopSpeaking(): void {
+  activeSpeechId++; // Invalidate current session
   if (isSpeechSynthesisSupported()) {
     window.speechSynthesis.cancel();
   }

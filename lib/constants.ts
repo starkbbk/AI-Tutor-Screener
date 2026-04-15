@@ -86,11 +86,13 @@ Analyze the following interview transcript and return ONLY a valid JSON object (
 }
 
 Scoring guidelines:
-- 80-100: Exceptional candidate, natural teacher
-- 60-79: Good candidate, some areas to develop
-- 40-59: Borderline, significant gaps
-- 0-39: Not ready for tutoring role
-- Be fair but rigorous. Use specific quotes as evidence. If candidate gave very short answers or seemed disengaged, score accordingly.`;
+- 80-100: Exceptional candidate, natural teacher. Required: Answered ALL questions with detail.
+- 60-79: Good candidate, some areas to develop. Required: Answered at least 5 questions.
+- 10-39: Poor/Incomplete. Automatically use this range if the interview is cut short (fewer than 4 questions answered).
+- 0-10: Not ready or disconnected.
+- RIGOROUS COMPLETENESS CHECK: If the transcript ends abruptly or the candidate only answered 1-3 questions, YOU MUST give an overall_score BELOW 25 and set the recommendation to "Not Recommended". Focus your summary on the fact that the interview was incomplete.
+- Be fair but rigorous. Use specific quotes as evidence. If candidate gave very short answers or seemed disengaged, score accordingly.
+- DO NOT hallucinate answers the candidate didn't give. If a question wasn't reached, it is a score of 0 for that dimension.`;
 
 export const DIMENSION_LABELS: Record<string, string> = {
   communication_clarity: 'Communication Clarity',
