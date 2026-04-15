@@ -23,6 +23,12 @@ let analyser: AnalyserNode | null = null;
 let volumeWatchdog: NodeJS.Timeout | null = null;
 let activeSpeechId = 0; // For synthesis lock
 
+export function isSpeechRecognitionSupported(): boolean {
+  if (typeof window === 'undefined') return false;
+  // Now returns true if general audio recording is supported, as we use Whisper
+  return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+}
+
 export function isSpeechSynthesisSupported(): boolean {
   if (typeof window === 'undefined') return false;
   return !!window.speechSynthesis;
