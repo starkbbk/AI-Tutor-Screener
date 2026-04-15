@@ -164,7 +164,7 @@ export function InterviewRoom() {
           // Look for signs that the interview is over wrapped up by AI
           const isComplete = checkIfInterviewComplete(text)
           
-          if (!isComplete && !state.interviewStatus === 'completing') {
+          if (!isComplete && state.interviewStatus !== 'completing') {
             // HANDS-FREE: Automatically start listening after AI finishes
             handleStartListening()
           }
@@ -241,9 +241,11 @@ export function InterviewRoom() {
     setIsTranscribing(false)
     
     startListening(
-      // onResult - No longer real-time for Whisper, but kept for compatibility
-      () => {}, 
-      // onEnd - Triggered when silence detector stops
+      // onResult - Now re-enabled for instant feedback
+      (result: SpeechRecognitionResult) => {
+        setCurrentTranscript(result.transcript)
+      }, 
+      // onEnd 
       async (finalTranscript: string, audioBlob?: Blob | null) => {
         setRecording(false)
         if (isSkippingRef.current) {
@@ -251,10 +253,13 @@ export function InterviewRoom() {
           return;
         }
         
-        if (audioBlob) {
+        // INSTANT SPEED: If we already have the native transcript, use it immediately!
+        if (finalTranscript.trim().length > 5) {
+          handleCandidateSpeakingFinished(finalTranscript)
+        } else if (audioBlob) {
+          // Robust Fallback: Use Whisper only if native transcript was weak/empty
           await handleWhisperTranscription(audioBlob)
         } else {
-          // No audio caught
           handleCandidateSpeakingFinished("")
         }
       },
@@ -319,15 +324,13 @@ export function InterviewRoom() {
 
     setCurrentTranscript(finalTranscript)
     
-    // Brief delay to show transcribed text to candidate
-    setTimeout(() => {
-      addMessage({
-        role: "candidate",
-        content: finalTranscript,
-        timestamp: new Date().toISOString()
-      })
-      startChatWithAI(finalTranscript)
-    }, 1500)
+    // ZERO LAG: Add message and start AI immediately
+    addMessage({
+      role: "candidate",
+      content: finalTranscript,
+      timestamp: new Date().toISOString()
+    })
+    startChatWithAI(finalTranscript)
   }
 
   const handleTextSubmit = (e: React.FormEvent) => {
