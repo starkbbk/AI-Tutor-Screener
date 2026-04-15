@@ -33,6 +33,7 @@ export function InterviewRoom() {
   const isFirstRender = useRef(true)
   const greetingSentRef = useRef(false)
   const isSkippingRef = useRef(false)
+  const isProcessingQuestion = useRef(false)
   
   // Timer effect
   useEffect(() => {
@@ -71,12 +72,13 @@ export function InterviewRoom() {
   }, [])
 
   const startChatWithAI = async (userMessage?: string) => {
-    if (state.isProcessing && !userMessage?.includes("__RETRY__")) return; 
+    if (isProcessingQuestion.current && !userMessage?.includes("__RETRY__")) return; 
     
     const isRetry = userMessage?.includes("__RETRY__");
     const actualMessage = isRetry ? userMessage?.replace("__RETRY__", "") : userMessage;
 
     try {
+      isProcessingQuestion.current = true;
       setProcessing(true)
       
       const response = await fetch('/api/chat', {
@@ -96,8 +98,10 @@ export function InterviewRoom() {
         throw new Error(data.error || 'Failed to get response')
       }
 
-      // Navigation is now handled locally in InterviewRoom, logic moved out
-
+      // Reset guard only on success (ready for next user input after AI speaks)
+      // Note: We don't reset in 'finally' because AI is still speaking
+      // We'll reset it once startListening is called again
+      
       addMessage({
         role: "ai",
         content: data.response,
@@ -108,6 +112,7 @@ export function InterviewRoom() {
       
     } catch (error: any) {
       console.warn('[INTERVIEW ROOM] Chat error. Auto-retrying in 5 seconds...', error.message)
+      isProcessingQuestion.current = false;
       setProcessing(true)
       setTimeout(() => {
         startChatWithAI((actualMessage || "") + "__RETRY__")
@@ -126,6 +131,8 @@ export function InterviewRoom() {
         () => {}, 
         () => {
           setAISpeaking(false)
+          
+          // Check for completion first
           const isComplete = checkIfInterviewComplete(text)
           if (isComplete || state.interviewStatus === 'completing') return;
 
@@ -135,24 +142,9 @@ export function InterviewRoom() {
             return;
           }
 
-          // PROGRESSION LOGIC AFTER AI SPEAKS
-          if (state.attemptsOnCurrentQuestion === 1 && followUpAsked === false) {
-            // AI acknowledged but didn't ask a follow-up - move to next question automatically
-            resetAttempts();
-            const nextIdx = state.currentQuestionIndex + 1;
-            
-            if (nextIdx < TOTAL_QUESTIONS) {
-              setQuestionIndex(nextIdx);
-              startChatWithAI(); // Call for next question (QX+1, attempts=0)
-            } else {
-              // Should trigger closing message
-              setQuestionIndex(TOTAL_QUESTIONS);
-              startChatWithAI();
-            }
-          } else {
-            // AI asked a follow-up or it's the first ask - wait for candidate input
-            handleStartListening()
-          }
+          // Force progression to next question if we just finished one
+          // This ensures linear progression (1, 2, 3...)
+          handleStartListening()
         }
       )
     } else {
@@ -164,12 +156,15 @@ export function InterviewRoom() {
 
   const checkIfInterviewComplete = (text: string): boolean => {
     const lowerText = text.toLowerCase();
-    const isEnding = state.currentQuestionIndex >= TOTAL_QUESTIONS - 1 && (
+    
+    // Determine if we reached the end or if AI said goodbye
+    const isEnding = state.currentQuestionIndex >= TOTAL_QUESTIONS && (
                      lowerText.includes("wraps up") ||
                      lowerText.includes("assessment shortly") ||
                      lowerText.includes("have a great day") ||
                      lowerText.includes("thank you") ||
-                     lowerText.includes("goodbye")
+                     lowerText.includes("goodbye") ||
+                     lowerText.includes("no more questions")
     );
                       
     if (state.currentQuestionIndex >= TOTAL_QUESTIONS || isEnding || state.interviewStatus === 'completing') {
@@ -239,6 +234,7 @@ export function InterviewRoom() {
       setAISpeaking(false)
       setRecording(true)
       setCurrentTranscript("")
+      isProcessingQuestion.current = false // RELAX GUARD: READY FOR NEXT INPUT
       
       startListening(
       (result: SpeechRecognitionResult) => {
@@ -277,18 +273,10 @@ export function InterviewRoom() {
       timestamp: new Date().toISOString()
     })
 
-    // PROGRESSION LOGIC - CANDIDATE SIDE
-    if (state.attemptsOnCurrentQuestion === 0) {
-      // First answer to the current question
-      incrementAttempts();
-      startChatWithAI(finalTranscript);
-    } else {
-      // Answer to a follow-up (second attempt) - Always move to next
-      resetAttempts();
-      const nextIdx = state.currentQuestionIndex + 1;
-      setQuestionIndex(nextIdx);
-      startChatWithAI(finalTranscript);
-    }
+    // LINEAR PROGRESSION: Move to next question immediately
+    const nextIdx = state.currentQuestionIndex + 1;
+    setQuestionIndex(nextIdx);
+    startChatWithAI(finalTranscript);
   }
 
   const handleTextSubmit = (e: React.FormEvent) => {
@@ -312,11 +300,6 @@ export function InterviewRoom() {
   }
 
   const handleSkipQuestion = () => {
-    if (state.interviewStatus === 'completing') {
-      router.push("/report");
-      return;
-    }
-
     isSkippingRef.current = true
     stopListening()
     stopSpeaking()
@@ -327,6 +310,9 @@ export function InterviewRoom() {
       content: "[Candidate skipped the question]",
       timestamp: new Date().toISOString()
     })
+    
+    const nextIdx = state.currentQuestionIndex + 1;
+    setQuestionIndex(nextIdx);
     startChatWithAI("I'd like to skip this question. Please ask the next one.")
   }
 
