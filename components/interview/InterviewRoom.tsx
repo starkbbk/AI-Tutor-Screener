@@ -29,10 +29,12 @@ export function InterviewRoom() {
   const [inactivityTimer, setInactivityTimer] = useState(0)
   const [showMenu, setShowMenu] = useState(false)
   const [micVolume, setMicVolume] = useState(0)
+  const [isTranscribing, setIsTranscribing] = useState(false)
   
   const isFirstRender = useRef(true)
   const greetingSentRef = useRef(false)
   const inactivityIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const isSkippingRef = useRef(false)
   
   // Timer effect
   useEffect(() => {
@@ -230,33 +232,66 @@ export function InterviewRoom() {
   }
 
   const handleStartListening = () => {
-    // Prevent mic usage if interview is ending
     if (state.interviewStatus === 'completing') return;
 
     stopSpeaking()
     setAISpeaking(false)
     setRecording(true)
     setCurrentTranscript("")
+    setIsTranscribing(false)
     
     startListening(
-      (result: SpeechRecognitionResult) => {
-        setCurrentTranscript(result.transcript)
-      },
-      (finalTranscript: string, audioBlob?: Blob | null) => {
+      // onResult - No longer real-time for Whisper, but kept for compatibility
+      () => {}, 
+      // onEnd - Triggered when silence detector stops
+      async (finalTranscript: string, audioBlob?: Blob | null) => {
         setRecording(false)
-        handleCandidateSpeakingFinished(finalTranscript, audioBlob)
+        if (isSkippingRef.current) {
+          isSkippingRef.current = false;
+          return;
+        }
+        
+        if (audioBlob) {
+          await handleWhisperTranscription(audioBlob)
+        } else {
+          // No audio caught
+          handleCandidateSpeakingFinished("")
+        }
       },
       (err: string) => {
         console.error("[INTERVIEW ROOM] Mic error:", err)
         setRecording(false)
       },
       (volume: number) => {
-        setMicVolume(prev => {
-          // Smooth the volume transition slightly
-          return prev * 0.4 + volume * 0.6;
-        });
+        setMicVolume(prev => prev * 0.3 + volume * 0.7);
       }
     )
+  }
+
+  const handleWhisperTranscription = async (blob: Blob) => {
+    if (blob.size < 2000) { // Very short clip
+       handleCandidateSpeakingFinished("");
+       return;
+    }
+
+    try {
+      setIsTranscribing(true)
+      const formData = new FormData()
+      formData.append('file', blob, 'audio.webm')
+      
+      const response = await fetch('/api/transcribe', {
+        method: 'POST',
+        body: formData
+      })
+      
+      const data = await response.json()
+      setIsTranscribing(false)
+      handleCandidateSpeakingFinished(data.text || "")
+    } catch (err) {
+      console.error("[WHISPER] API Error:", err)
+      setIsTranscribing(false)
+      handleCandidateSpeakingFinished("")
+    }
   }
 
   // Helper for manual toggle (if needed via settings) but mostly unused now
@@ -268,68 +303,31 @@ export function InterviewRoom() {
     }
   }
 
-  const handleCandidateSpeakingFinished = async (transcript: string, audioBlob?: Blob | null) => {
-    setCurrentTranscript("")
+  const handleCandidateSpeakingFinished = (transcript: string) => {
+    const finalTranscript = transcript.trim();
     
-    let finalTranscript = transcript.trim();
-    
-    // FALLBACK TRIGGER: If native speech failed but we have raw audio
-    if (!finalTranscript && audioBlob && audioBlob.size > 2000) { // > 2KB to ignore tap noises
-      console.log("[INTERVIEW ROOM] Native speech failed. Triggering Whisper Fallback...");
-      setProcessing(true);
-      
-      try {
-        const formData = new FormData();
-        formData.append('file', audioBlob);
-        
-        const response = await fetch('/api/transcribe', {
-          method: 'POST',
-          body: formData
-        });
-        
-        const data = await response.json();
-        if (data.text) {
-          finalTranscript = data.text;
-          console.log("[INTERVIEW ROOM] Whisper Fallback Success:", finalTranscript);
-        }
-      } catch (err) {
-        console.error("[INTERVIEW ROOM] Whisper Fallback Failed:", err);
-      } finally {
-        setProcessing(false);
-      }
-    }
-
     if (!finalTranscript) {
-      console.log("[INTERVIEW ROOM] No transcript after both methods. Restarting...");
-      if (!state.isAISpeaking && !state.isProcessing) {
-        setTimeout(handleStartListening, 1500);
-      }
+      console.log("[INTERVIEW ROOM] No transcript. Showing retry prompt...");
+      setCurrentTranscript("I didn't catch that, could you speak again?")
+      setTimeout(() => {
+        if (!state.isAISpeaking && !state.isProcessing) {
+          handleStartListening();
+        }
+      }, 2000);
       return;
     }
 
-    // Prevent API calls if interview is ending
-    if (state.interviewStatus === 'completing') {
-      router.push("/report");
-      return;
-    }
+    setCurrentTranscript(finalTranscript)
     
-    // Noise filtering (relaxed since Whisper is high quality)
-    if (finalTranscript.length < 5 && !audioBlob) {
-      console.log("[INTERVIEW ROOM] Filtered out short noisy transcript:", finalTranscript);
-      if (!state.isAISpeaking && !state.isProcessing) {
-        setTimeout(handleStartListening, 1000);
-      }
-      return;
-    }
-    
-    setRecording(false)
-    addMessage({
-      role: "candidate",
-      content: finalTranscript,
-      timestamp: new Date().toISOString()
-    })
-    
-    startChatWithAI(finalTranscript)
+    // Brief delay to show transcribed text to candidate
+    setTimeout(() => {
+      addMessage({
+        role: "candidate",
+        content: finalTranscript,
+        timestamp: new Date().toISOString()
+      })
+      startChatWithAI(finalTranscript)
+    }, 1500)
   }
 
   const handleTextSubmit = (e: React.FormEvent) => {
@@ -360,6 +358,7 @@ export function InterviewRoom() {
       return;
     }
 
+    isSkippingRef.current = true
     stopListening()
     stopSpeaking()
     setRecording(false)
@@ -521,40 +520,34 @@ export function InterviewRoom() {
                      <Volume2 className="w-3 h-3 mr-2" /> AI is speaking...
                    </p>
                 </div>
-             ) : state.isRecording ? (
-                <div className="flex flex-col items-center w-full max-w-lg">
-                   <div 
-                     className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mb-4 border border-red-500/20 shadow-lg shadow-red-500/5 transition-transform duration-75"
-                     style={{ 
-                       transform: `scale(${1 + (micVolume / 100)})`,
-                       boxShadow: `0 0 ${micVolume}px rgba(239, 68, 68, 0.2)`
-                     }}
-                   >
-                      <Mic className="w-8 h-8 text-red-500" />
-                   </div>
-                   <p className="text-[11px] font-black tracking-[0.2em] uppercase text-red-500 mb-4 animate-pulse">
-                     Listening... speak your answer
-                   </p>
-                   
-                   {/* Real-time Transcription Display */}
-                   <div className="w-full min-h-[4rem] px-6 py-4 bg-muted/20 rounded-2xl border border-border/40 text-center relative overflow-hidden">
-                      <p className="text-sm font-medium text-foreground/80 italic leading-relaxed">
-                        {currentTranscript || "Waiting for you to speak..."}
-                      </p>
-                      {inactivityTimer > 15 && !currentTranscript && (
-                        <div className="absolute inset-0 bg-background/95 flex flex-col items-center justify-center p-4 animate-in fade-in zoom-in">
-                          <div className="flex items-center space-x-2 mb-2">
-                             <div className="w-2 h-2 rounded-full bg-brand-cyan animate-pulse" />
-                             <p className="text-[10px] font-black text-brand-cyan uppercase tracking-[0.2em]">Secure Capture Active</p>
-                          </div>
-                          <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest text-center">
-                            Continue speaking... we are recording your response safely.
-                          </p>
-                        </div>
-                      )}
-                   </div>
-                </div>
-             ) : state.isProcessing ? (
+              ) : state.isRecording || isTranscribing ? (
+                 <div className="flex flex-col items-center w-full max-w-lg">
+                    {isTranscribing ? (
+                      <Loader2 className="w-16 h-16 text-brand-amber animate-spin mb-4" />
+                    ) : (
+                      <div 
+                        className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mb-4 border border-red-500/20 shadow-lg shadow-red-500/5 transition-transform duration-75"
+                        style={{ 
+                          transform: `scale(${1 + (micVolume / 100)})`,
+                          boxShadow: `0 0 ${micVolume}px rgba(239, 68, 68, 0.2)`
+                        }}
+                      >
+                         <Mic className="w-8 h-8 text-red-500" />
+                      </div>
+                    )}
+                    
+                    <p className={`text-[11px] font-black tracking-[0.2em] uppercase mb-4 ${isTranscribing ? 'text-brand-amber animate-pulse' : 'text-red-500 animate-pulse'}`}>
+                      {isTranscribing ? 'Analysing your answer...' : 'Listening... speak naturally'}
+                    </p>
+                    
+                    {/* Real-time Transcription/Feedback Display */}
+                    <div className="w-full min-h-[4rem] px-6 py-4 bg-muted/20 rounded-2xl border border-border/40 text-center relative overflow-hidden flex items-center justify-center">
+                       <p className={`text-sm font-medium italic leading-relaxed ${currentTranscript.includes("Didn't catch") ? 'text-red-500' : 'text-foreground/80'}`}>
+                         {currentTranscript || (isTranscribing ? "Thinking..." : "We are capturing your audio...")}
+                       </p>
+                    </div>
+                 </div>
+              ) : state.isProcessing ? (
                 <div className="flex flex-col items-center">
                    <Loader2 className="w-12 h-12 text-brand-amber animate-spin mb-4" />
                    <p className="text-[11px] font-black tracking-[0.2em] uppercase text-brand-amber">
