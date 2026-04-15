@@ -376,9 +376,6 @@ export function InterviewRoom() {
           <div className="hidden xs:flex items-center">
             <VoiceAvatar />
           </div>
-          <div className="text-[8px] sm:text-xs font-black text-brand-amber bg-brand-amber/10 px-2 sm:px-4 py-1 sm:py-2 rounded-full border border-brand-amber/20 uppercase tracking-widest whitespace-nowrap">
-            {Math.min(state.currentQuestionIndex + 1, TOTAL_QUESTIONS)} / {TOTAL_QUESTIONS}
-          </div>
           <div className={cn(
             "flex items-center font-mono text-[9px] sm:text-sm tracking-widest bg-muted/50 px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl border border-border whitespace-nowrap transition-all duration-500",
             timeLeft < 60 ? "text-red-500 animate-pulse-red" : timeLeft < 240 ? "text-brand-amber" : "text-muted-foreground"
@@ -416,6 +413,29 @@ export function InterviewRoom() {
                 </button>
               </div>
             )}
+          </div>
+        </div>
+      </div>
+
+      {/* Modern Progress Bar */}
+      <div className="px-5 sm:px-10 pb-6 -mt-2 animate-in fade-in slide-in-from-top-4 duration-1000 relative z-10">
+        <div className="glass-card p-3 sm:p-4 rounded-xl sm:rounded-2xl border-border/50 bg-background/20">
+          <div className="flex justify-between items-center mb-2 sm:mb-3">
+            <span className="text-[9px] sm:text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] flex items-center">
+              <span className="w-1.5 h-1.5 rounded-full bg-brand-amber mr-2 animate-pulse" />
+              Interview Progress
+            </span>
+            <span className="text-[10px] sm:text-xs font-bold text-brand-amber uppercase tracking-tight">
+              Question <span className="text-foreground">{Math.min(state.currentQuestionIndex + 1, TOTAL_QUESTIONS)}</span> of {TOTAL_QUESTIONS}
+            </span>
+          </div>
+          <div className="h-1.5 sm:h-2 w-full bg-muted/50 rounded-full overflow-hidden border border-border/20 p-[1px]">
+            <div 
+              className="h-full bg-[#FFBA07] rounded-full transition-all duration-1000 ease-in-out shadow-[0_0_15px_rgba(255,184,7,0.4)] relative overflow-hidden"
+              style={{ width: `${((state.currentQuestionIndex + 1) / TOTAL_QUESTIONS) * 100}%` }}
+            >
+               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer" style={{ backgroundSize: '200% 100%' }} />
+            </div>
           </div>
         </div>
       </div>
