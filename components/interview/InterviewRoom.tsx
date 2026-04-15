@@ -143,15 +143,26 @@ export function InterviewRoom() {
     // Only use speech synthesis if not in fallback mode
     if (!state.useFallbackMode) {
       setAISpeaking(true)
+      
+      // SAFETY WATCHDOG: If AI speech gets stuck for 15s (Chrome bug), recovery automatically
+      const watchdog = setTimeout(() => {
+        if (state.isAISpeaking) {
+          console.warn("[SPEECH WATCHDOG] Speech stuck. Forcing recovery...");
+          setAISpeaking(false);
+          if (state.interviewStatus !== 'completing') handleStartListening();
+        }
+      }, 15000);
+
       speak(
         text,
         () => {}, // onStart
         () => {
+          clearTimeout(watchdog);
           setAISpeaking(false)
           // Look for signs that the interview is over wrapped up by AI
           const isComplete = checkIfInterviewComplete(text)
           
-          if (!isComplete && !state.useFallbackMode) {
+          if (!isComplete && !state.interviewStatus === 'completing') {
             // HANDS-FREE: Automatically start listening after AI finishes
             handleStartListening()
           }

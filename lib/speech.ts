@@ -491,6 +491,10 @@ export function speak(
       }
     };
 
+    // Chrome Fix: Ensure the synthesis engine is not paused/stalled
+    if (isSpeechSynthesisSupported()) {
+      window.speechSynthesis.resume();
+    }
     window.speechSynthesis.speak(utterance);
   };
 
