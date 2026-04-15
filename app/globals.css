@@ -164,6 +164,25 @@
   from { stroke-dashoffset: 283; }
 }
 
+@keyframes sequential-glow {
+  0%, 100%, 75% { 
+    opacity: 0.1; 
+    transform: scale(0.95);
+    filter: brightness(0.6);
+  }
+  15%, 45% { 
+    opacity: 1; 
+    transform: scale(1.1);
+    filter: brightness(1.2);
+    color: var(--brand-amber);
+  }
+}
+
+.animate-sequential-left, .animate-sequential-right {
+  animation: sequential-glow 2.5s ease-in-out infinite;
+  opacity: 0.1;
+}
+
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {

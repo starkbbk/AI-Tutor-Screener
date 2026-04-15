@@ -42,6 +42,7 @@ export interface InterviewState {
   assessment: AssessmentResult | null;
   interviewStatus: 'not_started' | 'in_progress' | 'completing' | 'completed';
   useFallbackMode: boolean;
+  attemptsOnCurrentQuestion: number;
 }
 
 export type InterviewAction =
@@ -56,4 +57,6 @@ export type InterviewAction =
   | { type: 'SET_ASSESSMENT'; payload: AssessmentResult }
   | { type: 'SET_STATUS'; payload: InterviewState['interviewStatus'] }
   | { type: 'SET_FALLBACK_MODE'; payload: boolean }
+  | { type: 'INCREMENT_ATTEMPTS' }
+  | { type: 'RESET_ATTEMPTS' }
   | { type: 'RESET' };

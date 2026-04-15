@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Mic, AlertCircle, CheckCircle2, MicOff, RefreshCw } from "lucide-react"
+import { Mic, AlertCircle, CheckCircle2, MicOff, RefreshCw, Loader2, CornerLeftUp, CornerRightUp, ChevronRight, ChevronLeft } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { useInterview } from "@/context/InterviewContext"
@@ -16,6 +16,7 @@ export default function MicTestPage() {
   const [testResult, setTestResult] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [hasTested, setHasTested] = useState(false)
+  const [isValidating, setIsValidating] = useState(false)
   const [supported, setSupported] = useState(true)
 
   useEffect(() => {
@@ -48,7 +49,12 @@ export default function MicTestPage() {
       (finalTranscript: string) => {
         setIsTesting(false)
         if (finalTranscript.trim().length > 0) {
-           setHasTested(true)
+          setIsValidating(true)
+          // Simulate a validation/checking period
+          setTimeout(() => {
+            setIsValidating(false)
+            setHasTested(true)
+          }, 2000)
         }
       },
       (err: string) => {
@@ -80,7 +86,7 @@ export default function MicTestPage() {
       <div className="absolute top-[10%] left-[10%] w-[35%] h-[35%] bg-brand-amber/[0.03] dark:bg-brand-amber/5 rounded-full blur-[80px] sm:blur-[120px] pointer-events-none" />
       <div className="absolute bottom-[20%] right-[10%] w-[25%] h-[25%] bg-brand-cyan/[0.03] dark:bg-brand-cyan/5 rounded-full blur-[70px] sm:blur-[100px] pointer-events-none" />
 
-      <Card className="w-full max-w-lg glass-card shadow-2xl relative z-10 animate-in fade-in zoom-in-95 duration-700 overflow-hidden">
+      <Card className="w-full max-w-lg glass-card shadow-2xl relative z-10 animate-in fade-in zoom-in-95 duration-700">
         <CardHeader className="text-center pb-2 px-4 sm:px-6">
           <CardTitle className="text-2xl sm:text-3xl font-extrabold tracking-tight mb-2 text-foreground">Test Your Microphone</CardTitle>
           <CardDescription className="text-muted-foreground text-base sm:text-lg font-light italic">
@@ -101,18 +107,49 @@ export default function MicTestPage() {
               </div>
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center py-2 sm:py-4">
+            <>
+            <div className="flex flex-col items-center justify-center py-2 sm:py-4 relative">
               <div className="relative mb-6 sm:mb-10">
-                {isTesting ? (
-                  <div className="absolute -inset-4 sm:-inset-6 rounded-full pulse-blue bg-brand-cyan/20 blur-xl transition-all duration-500" />
-                ) : null}
+                {!isTesting && !isValidating && !hasTested && (
+                  <div className="absolute right-full mr-4 sm:mr-10 top-1/2 -translate-y-1/2 flex items-center">
+                     <span className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-amber mr-3 hidden md:block animate-pulse duration-[2.5s]">Click</span>
+                     <div className="flex items-center space-x-[-8px] sm:space-x-[-12px]">
+                        {[0, 1, 2].map((i) => (
+                          <ChevronRight 
+                            key={i} 
+                            className="w-5 h-5 sm:w-8 sm:h-8 text-brand-amber bg-transparent animate-sequential-left"
+                            style={{ animationDelay: `${i * 0.2}s` }}
+                          />
+                        ))}
+                     </div>
+                  </div>
+                )}
+                
+                {!isTesting && !isValidating && !hasTested && (
+                  <div className="absolute left-full ml-4 sm:ml-10 top-1/2 -translate-y-1/2 flex items-center">
+                     <div className="flex items-center flex-row-reverse space-x-[-8px] space-x-reverse sm:space-x-[-12px] sm:space-x-reverse">
+                        {[0, 1, 2].map((i) => (
+                          <ChevronLeft 
+                            key={i} 
+                            className="w-5 h-5 sm:w-8 sm:h-8 text-brand-amber bg-transparent animate-sequential-right"
+                            style={{ animationDelay: `${i * 0.2}s` }}
+                          />
+                        ))}
+                     </div>
+                     <span className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-amber ml-3 hidden md:block animate-pulse duration-[2.5s]">Click</span>
+                  </div>
+                )}
+                
                 <Button
                   onClick={isTesting ? handleStopTest : handleStartTest}
                   variant={isTesting ? "destructive" : "default"}
                   size="icon"
                   className={`w-24 h-24 sm:w-32 sm:h-32 rounded-full relative z-10 shadow-2xl transition-all duration-500 amber-button ${isTesting ? 'scale-110' : 'hover:scale-105'}`}
+                  disabled={isValidating}
                 >
-                  {isTesting ? (
+                  {isValidating ? (
+                    <Loader2 className="w-8 h-8 sm:w-14 sm:h-14 text-brand-amber animate-spin" />
+                  ) : isTesting ? (
                     <Mic className="w-8 h-8 sm:w-14 sm:h-14 text-white animate-pulse" />
                   ) : (
                     <Mic className="w-8 h-8 sm:w-14 sm:h-14" />
@@ -121,16 +158,25 @@ export default function MicTestPage() {
               </div>
               
               <div className="text-center space-y-1 sm:space-y-2 mb-6 sm:mb-10">
-                <p className={`text-lg sm:text-xl transition-colors duration-300 font-bold tracking-tight ${isTesting ? 'text-brand-cyan' : 'text-foreground hover:text-brand-navy'}`}>
-                  {isTesting ? "Recording..." : "Ready to test?"}
+                <p className={`text-lg sm:text-xl transition-colors duration-300 font-bold tracking-tight ${isValidating ? 'text-brand-amber' : isTesting ? 'text-brand-cyan' : 'text-foreground hover:text-brand-navy'}`}>
+                  {isValidating ? "Validating Clarity..." : isTesting ? "Recording..." : "Ready to test?"}
                 </p>
                 <p className="text-xs sm:text-sm text-muted-foreground font-light px-4 sm:px-10">
-                  {isTesting ? "Say something like 'Ready to teach!'" : "Check your audio levels before the session"}
+                  {isValidating ? "Ensuring your audio is crisp and clear" : isTesting ? "Say something like 'Ready to teach!'" : "Check your audio levels before the session"}
                 </p>
               </div>
               
-              <div className={`w-full p-6 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] border min-h-24 sm:min-h-32 transition-all duration-500 flex items-center justify-center relative overflow-hidden ${isTesting ? 'border-brand-cyan/30 bg-brand-cyan/5' : 'border-border bg-muted/30'}`}>
-                {testResult ? (
+              <div className={`w-full p-6 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] border min-h-24 sm:min-h-32 transition-all duration-500 flex items-center justify-center relative overflow-hidden ${isValidating ? 'border-brand-amber/30 bg-brand-amber/5' : isTesting ? 'border-brand-cyan/30 bg-brand-cyan/5' : 'border-border bg-muted/30'}`}>
+                {isValidating ? (
+                  <div className="flex flex-col items-center space-y-3">
+                     <div className="flex gap-1 h-8 items-end">
+                        {[1, 2, 3, 4, 5].map(i => (
+                          <div key={i} className="w-1.5 bg-brand-amber rounded-full animate-wave" style={{ animationDelay: `${i * 0.1}s` }} />
+                        ))}
+                     </div>
+                     <p className="text-[10px] font-black tracking-[0.2em] uppercase text-brand-amber animate-pulse">Running Audio AI Analysis...</p>
+                  </div>
+                ) : testResult ? (
                   <p className="text-foreground text-lg sm:text-xl font-medium text-center tracking-tight leading-relaxed animate-in fade-in duration-300 italic px-2 sm:px-4">
                     "{testResult}"
                   </p>
@@ -141,6 +187,7 @@ export default function MicTestPage() {
                     </p>
                   </div>
                 )}
+              </div>
               </div>
               
               {error && (
@@ -154,7 +201,7 @@ export default function MicTestPage() {
                   </div>
                 </div>
               )}
-            </div>
+            </>
           )}
           
           <div className="bg-muted/50 border border-border rounded-[1.5rem] sm:rounded-[2.5rem] p-6 sm:p-8 text-xs sm:text-sm group">

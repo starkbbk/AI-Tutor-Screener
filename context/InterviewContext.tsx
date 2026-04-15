@@ -15,6 +15,7 @@ const initialState: InterviewState = {
   assessment: null,
   interviewStatus: 'not_started',
   useFallbackMode: false,
+  attemptsOnCurrentQuestion: 0,
 };
 
 function interviewReducer(state: InterviewState, action: InterviewAction): InterviewState {
@@ -41,6 +42,10 @@ function interviewReducer(state: InterviewState, action: InterviewAction): Inter
       return { ...state, interviewStatus: action.payload };
     case 'SET_FALLBACK_MODE':
       return { ...state, useFallbackMode: action.payload };
+    case 'INCREMENT_ATTEMPTS':
+      return { ...state, attemptsOnCurrentQuestion: state.attemptsOnCurrentQuestion + 1 };
+    case 'RESET_ATTEMPTS':
+      return { ...state, attemptsOnCurrentQuestion: 0 };
     case 'RESET':
       return initialState;
     default:
@@ -61,6 +66,8 @@ interface InterviewContextType {
   setAssessment: (result: AssessmentResult) => void;
   setStatus: (status: InterviewState['interviewStatus']) => void;
   setFallbackMode: (val: boolean) => void;
+  incrementAttempts: () => void;
+  resetAttempts: () => void;
   reset: () => void;
 }
 
@@ -80,13 +87,15 @@ export function InterviewProvider({ children }: { children: ReactNode }) {
   const setAssessment = useCallback((result: AssessmentResult) => dispatch({ type: 'SET_ASSESSMENT', payload: result }), []);
   const setStatus = useCallback((status: InterviewState['interviewStatus']) => dispatch({ type: 'SET_STATUS', payload: status }), []);
   const setFallbackMode = useCallback((val: boolean) => dispatch({ type: 'SET_FALLBACK_MODE', payload: val }), []);
+  const incrementAttempts = useCallback(() => dispatch({ type: 'INCREMENT_ATTEMPTS' }), []);
+  const resetAttempts = useCallback(() => dispatch({ type: 'RESET_ATTEMPTS' }), []);
   const reset = useCallback(() => dispatch({ type: 'RESET' }), []);
 
   return (
     <InterviewContext.Provider value={{
       state, setCandidate, addMessage, setQuestionIndex, setRecording,
       setAISpeaking, setProcessing, startInterview, completeInterview,
-      setAssessment, setStatus, setFallbackMode, reset,
+      setAssessment, setStatus, setFallbackMode, incrementAttempts, resetAttempts, reset,
     }}>
       {children}
     </InterviewContext.Provider>

@@ -29,6 +29,7 @@ let noSpeechTimer: NodeJS.Timeout | null = null;
 let currentOnResult: SpeechCallback | null = null;
 let currentOnEnd: EndCallback | null = null;
 let currentOnError: ErrorCallback | null = null;
+let isStarting = false; 
 
 export function isSpeechRecognitionSupported(): boolean {
   if (typeof window === 'undefined') return false;
@@ -166,24 +167,42 @@ function initRecognition() {
 }
 
 /**
+ * Cleanup and completely reset recognition
+ */
+function resetRecognition() {
+  if (recognition) {
+    try {
+      recognition.onend = null;
+      recognition.onresult = null;
+      recognition.onerror = null;
+      recognition.stop();
+    } catch (e) {}
+    recognition = null;
+  }
+}
+
+/**
  * Safe start/restart logic
  */
 function startRecognitionInstance() {
   if (!recognition) recognition = initRecognition();
+  if (isStarting) return;
   
+  isStarting = true;
   try {
     recognition.start();
-  } catch (e) {
-    console.warn("[SPEECH] Double start prevention triggered. Stopping then restarting...");
-    try {
-      recognition.stop();
-    } catch {}
+    // Successfully called start, but we should only clear isStarting
+    // when either onstart fires or an error occurs. 
+    // For simplicity, reset after a short delay or in event handlers.
+    recognition.onstart = () => { isStarting = false; };
+  } catch (e: any) {
+    console.warn("[SPEECH] Start conflict:", e.message);
+    isStarting = false;
     
-    setTimeout(() => {
-      if (isListeningActive) {
-        try { recognition.start(); } catch (e2) { console.error("[SPEECH] Fatal restart error:", e2); }
-      }
-    }, 100);
+    if (e.name === 'InvalidStateError') {
+      console.log("[SPEECH] Recognition already running or starting. Cleaning up...");
+      // If it's already running, we're actually okay.
+    }
   }
 }
 
@@ -217,13 +236,14 @@ export async function startListening(
 export function stopListening(): void {
   console.log("[SPEECH] stopListening called.");
   isListeningActive = false;
+  isStarting = false;
   clearTimers();
   
   if (recognition) {
     try {
       recognition.stop();
     } catch (e) {
-      // already stopped
+      // already stopped  
     }
   }
 }
@@ -284,11 +304,21 @@ export function speak(
   utterance.onstart = () => onStart?.();
   utterance.onend = () => onEnd?.();
   utterance.onerror = (e) => {
-    console.error("Speech Synthesis Error:", e);
+    // Silence benign "interrupted" or "canceled" errors
+    if (e.error === 'interrupted' || e.error === 'canceled') {
+      console.log("[SPEECH] Synthesis interrupted (benign)");
+    } else {
+      console.error("Speech Synthesis Error:", e);
+    }
     onEnd?.();
   };
 
-  window.speechSynthesis.speak(utterance);
+  try {
+     window.speechSynthesis.speak(utterance);
+  } catch (err) {
+    console.error("[SPEECH] Synthesis fatal error:", err);
+    onEnd?.();
+  }
 }
 
 export function stopSpeaking(): void {

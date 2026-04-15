@@ -19,7 +19,8 @@ export function InterviewRoom() {
   const router = useRouter()
   const { 
     state, setAISpeaking, setRecording, setProcessing, 
-    addMessage, setQuestionIndex, completeInterview, setStatus 
+    addMessage, setQuestionIndex, completeInterview, setStatus,
+    incrementAttempts, resetAttempts
   } = useInterview()
   
   const [timer, setTimer] = useState(0)
@@ -72,7 +73,8 @@ export function InterviewRoom() {
         body: JSON.stringify({
           message: actualMessage || "",
           history: state.conversationHistory,
-          candidateName: state.candidate?.name
+          candidateName: state.candidate?.name,
+          currentQuestion: state.conversationHistory.length === 0 ? 0 : state.currentQuestionIndex + 1
         }),
       })
 
@@ -82,13 +84,7 @@ export function InterviewRoom() {
         throw new Error(data.error || 'Failed to get response')
       }
 
-      if (data.questionNumber) {
-        if (data.questionNumber === 'DONE') {
-          finishInterview();
-        } else {
-          setQuestionIndex(Math.min(data.questionNumber - 1, TOTAL_QUESTIONS - 1))
-        }
-      }
+      // Navigation is now handled locally in InterviewRoom, logic moved out
 
       addMessage({
         role: "ai",
@@ -96,7 +92,7 @@ export function InterviewRoom() {
         timestamp: new Date().toISOString()
       })
 
-      playAIResponse(data.response)
+      playAIResponse(data.response, data.followUpAsked)
       
     } catch (error: any) {
       console.warn('[INTERVIEW ROOM] Chat error. Auto-retrying in 5 seconds...', error.message)
@@ -107,7 +103,7 @@ export function InterviewRoom() {
     }
   }
 
-  const playAIResponse = (text: string) => {
+  const playAIResponse = (text: string, followUpAsked?: boolean) => {
     setProcessing(false)
     
     if (!state.useFallbackMode) {
@@ -115,11 +111,28 @@ export function InterviewRoom() {
       
       speak(
         text,
-        () => {}, // onStart
+        () => {}, 
         () => {
           setAISpeaking(false)
           const isComplete = checkIfInterviewComplete(text)
-          if (!isComplete && state.interviewStatus !== 'completing') {
+          if (isComplete || state.interviewStatus === 'completing') return;
+
+          // PROGRESSION LOGIC AFTER AI SPEAKS
+          if (state.attemptsOnCurrentQuestion === 1 && followUpAsked === false) {
+            // AI acknowledged but didn't ask a follow-up - move to next question automatically
+            resetAttempts();
+            const nextIdx = state.currentQuestionIndex + 1;
+            
+            if (nextIdx < TOTAL_QUESTIONS) {
+              setQuestionIndex(nextIdx);
+              startChatWithAI(); // Call for next question (QX+1, attempts=0)
+            } else {
+              // Should trigger closing message
+              setQuestionIndex(TOTAL_QUESTIONS);
+              startChatWithAI();
+            }
+          } else {
+            // AI asked a follow-up or it's the first ask - wait for candidate input
             handleStartListening()
           }
         }
@@ -141,7 +154,7 @@ export function InterviewRoom() {
                      lowerText.includes("goodbye")
     );
                       
-    if (isEnding || state.interviewStatus === 'completing') {
+    if (state.currentQuestionIndex >= TOTAL_QUESTIONS || isEnding || state.interviewStatus === 'completing') {
       finishInterview()
       return true
     }
@@ -178,14 +191,16 @@ export function InterviewRoom() {
   }
 
   const handleStartListening = () => {
-    if (state.interviewStatus === 'completing') return;
+    if (state.interviewStatus === 'completing' || state.isRecording) return;
 
-    stopSpeaking()
-    setAISpeaking(false)
-    setRecording(true)
-    setCurrentTranscript("")
-    
-    startListening(
+    // Small buffer allowed for audio hardware to switch modes
+    setTimeout(() => {
+      stopSpeaking()
+      setAISpeaking(false)
+      setRecording(true)
+      setCurrentTranscript("")
+      
+      startListening(
       (result: SpeechRecognitionResult) => {
         setCurrentTranscript(result.transcript)
       }, 
@@ -204,7 +219,8 @@ export function InterviewRoom() {
            setTimeout(handleStartListening, 1000);
         }
       }
-    )
+      )
+    }, 100);
   }
 
   const handleCandidateSpeakingFinished = (transcript: string) => {
@@ -220,7 +236,19 @@ export function InterviewRoom() {
       content: finalTranscript,
       timestamp: new Date().toISOString()
     })
-    startChatWithAI(finalTranscript)
+
+    // PROGRESSION LOGIC - CANDIDATE SIDE
+    if (state.attemptsOnCurrentQuestion === 0) {
+      // First answer to the current question
+      incrementAttempts();
+      startChatWithAI(finalTranscript);
+    } else {
+      // Answer to a follow-up (second attempt) - Always move to next
+      resetAttempts();
+      const nextIdx = state.currentQuestionIndex + 1;
+      setQuestionIndex(nextIdx);
+      startChatWithAI(finalTranscript);
+    }
   }
 
   const handleTextSubmit = (e: React.FormEvent) => {
