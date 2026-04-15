@@ -353,8 +353,8 @@ export function InterviewRoom() {
       )}
       
       {/* Top Header */}
-      <div className="flex items-center justify-between p-3 sm:p-8 glass-header z-20">
-        <div className="flex items-center space-x-2 sm:space-x-4">
+      <div className="flex items-center justify-between p-2.5 sm:p-8 glass-header z-20">
+        <div className="flex items-center space-x-1 sm:space-x-4">
           <Image src="/cuemath-logo.svg" alt="Cuemath" width={80} height={24} className="xs:w-[100px] sm:w-[140px] sm:h-[40px] opacity-90 transition-opacity hover:opacity-100" />
         </div>
         
@@ -363,11 +363,11 @@ export function InterviewRoom() {
             <VoiceAvatar />
           </div>
           <div className={cn(
-            "flex items-center font-mono text-[9px] sm:text-sm tracking-widest bg-muted/50 px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl border border-border whitespace-nowrap transition-all duration-500",
+            "flex items-center font-mono text-[9px] sm:text-sm tracking-widest bg-muted/50 px-1.5 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl border border-border whitespace-nowrap transition-all duration-500",
             timeLeft < 60 ? "text-red-500 animate-pulse-red" : timeLeft < 240 ? "text-brand-amber" : "text-muted-foreground"
           )}>
             <Clock className={cn(
-              "hidden xxs:block w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2",
+              "hidden xxs:block w-2.5 h-2.5 sm:w-4 sm:h-4 mr-1 sm:mr-2",
               timeLeft < 60 ? "text-red-500" : timeLeft < 240 ? "text-brand-amber" : "text-brand-cyan"
             )} />
             {formatTime(timeLeft)}
@@ -404,8 +404,8 @@ export function InterviewRoom() {
       </div>
 
       {/* Modern Progress Bar */}
-      <div className="px-5 sm:px-10 pb-6 -mt-2 animate-in fade-in slide-in-from-top-4 duration-1000 relative z-10">
-        <div className="glass-card p-3 sm:p-4 rounded-xl sm:rounded-2xl border-border/50 bg-background/20">
+      <div className="px-3 sm:px-10 pb-4 -mt-2 animate-in fade-in slide-in-from-top-4 duration-1000 relative z-10">
+        <div className="glass-card p-2.5 sm:p-4 rounded-xl sm:rounded-2xl border-border/50 bg-background/20">
           <div className="flex justify-between items-center mb-2 sm:mb-3">
             <span className="text-[9px] sm:text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] flex items-center">
               <span className="w-1.5 h-1.5 rounded-full bg-brand-amber mr-2 animate-pulse" />

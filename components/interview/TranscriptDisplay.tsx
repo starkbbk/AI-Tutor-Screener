@@ -26,7 +26,7 @@ export function TranscriptDisplay({
   if (messages.length === 0) return null
   
   return (
-    <div className="w-full space-y-8 flex-1 flex flex-col justify-end min-h-[16rem] mb-12 mt-4 relative">
+    <div className="w-full space-y-5 sm:space-y-8 flex-1 flex flex-col justify-end min-h-[16rem] mb-12 mt-4 relative">
       {messages.map((msg, idx) => (
         <div 
           key={idx} 
@@ -51,7 +51,7 @@ export function TranscriptDisplay({
           </div>
           <div 
             className={`
-              inline-block max-w-[85%] sm:max-w-[70%] px-8 py-5 rounded-[2rem] text-[17px] leading-relaxed shadow-xl relative
+              inline-block max-w-[92%] sm:max-w-[70%] px-5 sm:px-8 py-3.5 sm:py-5 rounded-[1.5rem] sm:rounded-[2rem] text-sm sm:text-base lg:text-[17px] leading-relaxed shadow-xl relative
               ${msg.role === 'ai' 
                 ? 'bg-card border border-border text-foreground rounded-tl-none' 
                 : 'bg-brand-amber text-brand-navy font-bold rounded-tr-none shadow-brand-amber/10'
