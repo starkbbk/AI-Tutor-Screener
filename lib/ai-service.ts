@@ -66,6 +66,52 @@ export async function generateAIResponse(messages: Message[], options: AIService
   throw new Error(getRandomFriendlyError());
 }
 
+export async function transcribeAudio(audioBlob: Blob) {
+  let startIndex = lastSuccessfulKeyIndex < GROQ_KEYS.length ? lastSuccessfulKeyIndex : 0;
+  
+  const executionOrder = [];
+  for (let i = 0; i < GROQ_KEYS.length; i++) {
+    const idx = (startIndex + i) % GROQ_KEYS.length;
+    executionOrder.push({ key: GROQ_KEYS[idx], index: idx });
+  }
+
+  let lastError: any = null;
+
+  for (const provider of executionOrder) {
+    try {
+      console.log(`[WHISPER SERVICE] Trying Groq Key ${provider.index + 1}...`);
+      
+      const formData = new FormData();
+      formData.append("file", audioBlob, "audio.webm");
+      formData.append("model", "whisper-large-v3-turbo");
+      formData.append("response_format", "json");
+
+      const response = await fetch("https://api.groq.com/openai/v1/audio/transcriptions", {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${provider.key}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error?.message || `Groq Whisper Error ${response.status}`);
+      }
+
+      const data = await response.json();
+      lastSuccessfulKeyIndex = provider.index;
+      return data.text || "";
+    } catch (error: any) {
+      lastError = error;
+      console.warn(`[WHISPER SERVICE] Groq Key ${provider.index + 1} failed: ${error.message}`);
+      continue;
+    }
+  }
+
+  throw lastError || new Error("All transcription keys failed");
+}
+
 async function callGroq(apiKey: string, messages: Message[], options: AIServiceOptions) {
   const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: 'POST',

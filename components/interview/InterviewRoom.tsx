@@ -225,9 +225,9 @@ export function InterviewRoom() {
       (result: SpeechRecognitionResult) => {
         setCurrentTranscript(result.transcript)
       },
-      (finalTranscript: string) => {
+      (finalTranscript: string, audioBlob?: Blob | null) => {
         setRecording(false)
-        handleCandidateSpeakingFinished(finalTranscript)
+        handleCandidateSpeakingFinished(finalTranscript, audioBlob)
       },
       (err: string) => {
         console.error("[INTERVIEW ROOM] Mic error:", err)
@@ -245,20 +245,54 @@ export function InterviewRoom() {
     }
   }
 
-  const handleCandidateSpeakingFinished = (transcript: string) => {
+  const handleCandidateSpeakingFinished = async (transcript: string, audioBlob?: Blob | null) => {
     setCurrentTranscript("")
-    if (!transcript.trim()) return
+    
+    let finalTranscript = transcript.trim();
+    
+    // FALLBACK TRIGGER: If native speech failed but we have raw audio
+    if (!finalTranscript && audioBlob && audioBlob.size > 2000) { // > 2KB to ignore tap noises
+      console.log("[INTERVIEW ROOM] Native speech failed. Triggering Whisper Fallback...");
+      setProcessing(true);
+      
+      try {
+        const formData = new FormData();
+        formData.append('file', audioBlob);
+        
+        const response = await fetch('/api/transcribe', {
+          method: 'POST',
+          body: formData
+        });
+        
+        const data = await response.json();
+        if (data.text) {
+          finalTranscript = data.text;
+          console.log("[INTERVIEW ROOM] Whisper Fallback Success:", finalTranscript);
+        }
+      } catch (err) {
+        console.error("[INTERVIEW ROOM] Whisper Fallback Failed:", err);
+      } finally {
+        setProcessing(false);
+      }
+    }
+
+    if (!finalTranscript) {
+      console.log("[INTERVIEW ROOM] No transcript after both methods. Restarting...");
+      if (!state.isAISpeaking && !state.isProcessing) {
+        setTimeout(handleStartListening, 1500);
+      }
+      return;
+    }
+
     // Prevent API calls if interview is ending
     if (state.interviewStatus === 'completing') {
       router.push("/report");
       return;
     }
     
-    // Noise & accidental sound filtering: 3 words OR 10 characters minimum
-    const words = transcript.trim().split(/\s+/);
-    if (transcript.length < 10 && words.length < 3) {
-      console.log("[INTERVIEW ROOM] Filtered out short/noisy transcript:", transcript);
-      // Automatically restart listening if we filtered out noise
+    // Noise filtering (relaxed since Whisper is high quality)
+    if (finalTranscript.length < 5 && !audioBlob) {
+      console.log("[INTERVIEW ROOM] Filtered out short noisy transcript:", finalTranscript);
       if (!state.isAISpeaking && !state.isProcessing) {
         setTimeout(handleStartListening, 1000);
       }
@@ -268,11 +302,11 @@ export function InterviewRoom() {
     setRecording(false)
     addMessage({
       role: "candidate",
-      content: transcript,
+      content: finalTranscript,
       timestamp: new Date().toISOString()
     })
     
-    startChatWithAI(transcript)
+    startChatWithAI(finalTranscript)
   }
 
   const handleTextSubmit = (e: React.FormEvent) => {

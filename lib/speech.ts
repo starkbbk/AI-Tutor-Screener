@@ -19,7 +19,7 @@ interface SpeechRecognition extends EventTarget {
 
 type SpeechCallback = (result: SpeechRecognitionResult) => void;
 type ErrorCallback = (error: string) => void;
-type EndCallback = (finalTranscript: string) => void;
+type EndCallback = (finalTranscript: string, audioBlob?: Blob | null) => void;
 
 let recognition: SpeechRecognition | null = null;
 let silenceTimeout: NodeJS.Timeout | null = null;
@@ -30,6 +30,10 @@ let accumulatedTranscript = "";
 let isManualStop = false;
 let isSilenceTimeoutReached = false;
 let lastProgressTime = 0;
+
+// MediaRecorder state
+let mediaRecorder: MediaRecorder | null = null;
+let audioChunks: Blob[] = [];
 
 export function isSpeechRecognitionSupported(): boolean {
   if (typeof window === 'undefined') return false;
@@ -101,7 +105,29 @@ export function startListening(
       if (!audioContext) audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
       if (audioContext.state === 'suspended') await audioContext.resume();
 
-      audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      if (!audioStream) {
+        audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      }
+      
+      // Initialize MediaRecorder if not already running
+      if (!mediaRecorder && audioStream) {
+        const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') 
+          ? 'audio/webm;codecs=opus' 
+          : 'audio/mp4'; 
+        
+        mediaRecorder = new MediaRecorder(audioStream, { mimeType });
+        audioChunks = [];
+        
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0) {
+            audioChunks.push(event.data);
+          }
+        };
+        
+        mediaRecorder.start(1000); // 1-second chunks
+        console.log("MediaRecorder started for Whisper fallback");
+      }
+
       const source = audioContext.createMediaStreamSource(audioStream);
       const analyser = audioContext.createAnalyser();
       analyser.fftSize = 256;
@@ -238,11 +264,11 @@ export function startListening(
 
     newRecognition.onend = () => {
       if (watchdogTimer) clearTimeout(watchdogTimer);
-      stopHardwareMonitor();
       
       const hasContent = accumulatedTranscript.trim().length > 0;
       
       if (!isManualStop && (!isSilenceTimeoutReached || !hasContent)) {
+        // We aren't done yet, just a silent pause or auto-restart
         setTimeout(() => {
           if (!isManualStop && (!isSilenceTimeoutReached || !hasContent)) {
             if (!hasContent) isSilenceTimeoutReached = false;
@@ -253,13 +279,29 @@ export function startListening(
               instance.start();
             } catch (e) {
               console.error("Failed to start mic instance:", e);
-              onEnd(accumulatedTranscript);
+              completeSession();
             }
           }
         }, 100);
       } else {
-        clearTimeouts();
-        onEnd(accumulatedTranscript);
+        completeSession();
+      }
+    };
+
+    const completeSession = () => {
+      clearTimeouts();
+      stopHardwareMonitor();
+      
+      if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+        mediaRecorder.onstop = () => {
+          const audioBlob = new Blob(audioChunks, { type: mediaRecorder?.mimeType });
+          mediaRecorder = null;
+          audioChunks = [];
+          onEnd(accumulatedTranscript, audioBlob);
+        };
+        mediaRecorder.stop();
+      } else {
+        onEnd(accumulatedTranscript, null);
       }
     };
 
