@@ -359,7 +359,26 @@ export function InterviewRoom() {
     stopSpeaking()
     finishInterview()
   }
-
+  const handleManualReplay = (text: string) => {
+    // 1. Force stop everything current
+    stopListening()
+    stopSpeaking()
+    setRecording(false)
+    setAISpeaking(true)
+    
+    // 2. Play the requested text
+    speak(
+      text,
+      () => {}, // onStart
+      () => {
+        // 3. Cleanup and auto-resume listening
+        setAISpeaking(false)
+        if (state.interviewStatus !== 'completing') {
+          handleStartListening()
+        }
+      }
+    )
+  }
 
 
   return (
@@ -427,7 +446,10 @@ export function InterviewRoom() {
         {/* Decorative theme-aware glows */}
         <div className="absolute top-0 left-1/4 w-1/2 h-1/2 bg-brand-cyan/5 dark:bg-brand-cyan/10 rounded-full blur-[80px] sm:blur-[120px] pointer-events-none" />
         
-        <TranscriptDisplay messages={state.conversationHistory} />
+        <TranscriptDisplay 
+          messages={state.conversationHistory} 
+          onReplay={handleManualReplay}
+        />
         
         {/* Hands-Free Instructions (shown before start) */}
         {!hasStarted && (

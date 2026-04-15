@@ -3,7 +3,13 @@ import { Volume2, UserCircle, Bot } from "lucide-react"
 import { ConversationMessage } from "@/lib/types"
 import { speak } from "@/lib/speech"
 
-export function TranscriptDisplay({ messages }: { messages: ConversationMessage[] }) {
+export function TranscriptDisplay({ 
+  messages, 
+  onReplay 
+}: { 
+  messages: ConversationMessage[], 
+  onReplay?: (text: string) => void 
+}) {
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -13,8 +19,8 @@ export function TranscriptDisplay({ messages }: { messages: ConversationMessage[
     }
   }, [messages])
 
-  const handleReplay = (text: string) => {
-    speak(text);
+  const handleReplayClick = (text: string) => {
+    if (onReplay) onReplay(text);
   }
 
   if (messages.length === 0) return null
@@ -32,7 +38,7 @@ export function TranscriptDisplay({ messages }: { messages: ConversationMessage[
                 <Bot className="w-3.5 h-3.5" /> 
                 <span>AI Intelligence</span>
                 <button 
-                  onClick={() => handleReplay(msg.content)}
+                  onClick={() => handleReplayClick(msg.content)}
                   className="ml-2 hover:bg-brand-cyan/20 p-1 rounded-full transition-colors cursor-pointer"
                   title="Replay message"
                 >
