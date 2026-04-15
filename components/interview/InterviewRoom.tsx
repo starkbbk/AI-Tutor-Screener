@@ -496,9 +496,13 @@ export function InterviewRoom() {
                         {currentTranscript || "Waiting for you to speak..."}
                       </p>
                       {inactivityTimer > 15 && !currentTranscript && (
-                        <div className="absolute inset-0 bg-background/90 flex items-center justify-center p-4 animate-in fade-in zoom-in">
-                          <p className="text-xs font-bold text-brand-amber uppercase tracking-widest">
-                            I didn't catch anything. Speak or skip to continue.
+                        <div className="absolute inset-0 bg-background/95 flex flex-col items-center justify-center p-4 animate-in fade-in zoom-in">
+                          <div className="flex items-center space-x-2 mb-2">
+                             <div className="w-2 h-2 rounded-full bg-brand-cyan animate-pulse" />
+                             <p className="text-[10px] font-black text-brand-cyan uppercase tracking-[0.2em]">Secure Capture Active</p>
+                          </div>
+                          <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest text-center">
+                            Continue speaking... we are recording your response safely.
                           </p>
                         </div>
                       )}
