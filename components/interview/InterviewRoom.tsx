@@ -354,6 +354,7 @@ export function InterviewRoom() {
            setTimeout(handleStartListening, 1000);
         }
       }
+      )
     }, 800);
   }
 
