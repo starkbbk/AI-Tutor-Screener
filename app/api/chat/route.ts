@@ -85,8 +85,7 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ 
-      response: cleanResponse, 
-      followUpAsked 
+      response: cleanResponse
     });
 
   } catch (error: any) {
