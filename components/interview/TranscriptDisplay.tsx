@@ -126,7 +126,7 @@ export function TranscriptDisplay({
             ) : msg.role === 'ai' && msg.status === 'speaking' ? (
               <Typewriter 
                 text={msg.content} 
-                duration={msg.audioDuration || 0} 
+                duration={msg.audioDuration && msg.audioDuration > 0 ? msg.audioDuration : (msg.content.split(/\s+/).length / 150) * 60} 
               />
             ) : (
               msg.content

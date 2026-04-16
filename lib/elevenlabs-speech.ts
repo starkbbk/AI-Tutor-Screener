@@ -30,10 +30,22 @@ export async function speakWithElevenLabs(
     
     currentAudio = new Audio(audioUrl);
     
-    currentAudio.onplay = () => {
-      // Provide duration when play starts
-      onStart?.(currentAudio?.duration || 0);
+    // CRITICAL: Ensure duration is available before starting typewriter
+    const handleStart = () => {
+      if (currentAudio) {
+        const duration = currentAudio.duration;
+        // If duration is still NaN, estimate it to avoid instant reveal
+        if (isNaN(duration) || duration <= 0) {
+          const words = text.split(/\s+/).length;
+          onStart?.((words / 150) * 60);
+        } else {
+          onStart?.(duration);
+        }
+      }
     };
+
+    currentAudio.onplay = handleStart;
+    currentAudio.onloadedmetadata = handleStart;
     
     currentAudio.onended = () => {
       onEnd?.();

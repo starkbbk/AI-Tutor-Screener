@@ -24,6 +24,7 @@ let isListeningActive = false;
 let fullTranscript = "";
 let silenceTimer: NodeJS.Timeout | null = null;
 let noSpeechTimer: NodeJS.Timeout | null = null;
+let currentUtterance: SpeechSynthesisUtterance | null = null;
 
 import { speakWithElevenLabs, stopSpeakingElevenLabs } from "./elevenlabs-speech";
 
@@ -306,32 +307,37 @@ function speakNative(
   }
 
   window.speechSynthesis.cancel();
-
-  const utterance = new SpeechSynthesisUtterance(text);
+  
+  // CRITICAL: Global reference to prevent garbage collection on Safari/Chrome
+  currentUtterance = new SpeechSynthesisUtterance(text);
   const voice = getPreferredVoice();
-  if (voice) utterance.voice = voice;
+  if (voice) currentUtterance.voice = voice;
   
-  utterance.lang = 'en-US';
-  utterance.rate = 1.0;
+  currentUtterance.lang = 'en-US';
+  currentUtterance.rate = 1.0;
   
-  utterance.onstart = () => {
+  currentUtterance.onstart = () => {
     // Estimate duration for native fallback: ~150 words per minute
     const words = text.split(/\s+/).length;
     const estimatedDuration = (words / 150) * 60;
     onStart?.(estimatedDuration || 2);
   };
-  utterance.onend = () => onEnd?.();
-  utterance.onerror = (e) => {
+  currentUtterance.onend = () => {
+    onEnd?.();
+    currentUtterance = null;
+  };
+  currentUtterance.onerror = (e) => {
     if (e.error === 'interrupted' || e.error === 'canceled') {
       console.log("[SPEECH] Synthesis interrupted (benign)");
     } else {
       console.error("Speech Synthesis Error:", e);
     }
     onEnd?.();
+    currentUtterance = null;
   };
 
   try {
-     window.speechSynthesis.speak(utterance);
+     window.speechSynthesis.speak(currentUtterance);
   } catch (err) {
     console.error("[SPEECH] Synthesis fatal error:", err);
     onEnd?.();
