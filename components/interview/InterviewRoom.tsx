@@ -116,7 +116,7 @@ export function InterviewRoom() {
         timestamp: new Date().toISOString()
       })
 
-      playAIResponse(data.response, data.followUpAsked)
+      playAIResponse(data.response)
       
     } catch (error: any) {
       console.warn('[INTERVIEW ROOM] Chat error. Auto-retrying in 5 seconds...', error.message)
@@ -128,7 +128,7 @@ export function InterviewRoom() {
     }
   }
 
-  const playAIResponse = (text: string, followUpAsked?: boolean) => {
+  const playAIResponse = (text: string) => {
     if (state.interviewStatus === 'completing' || state.interviewStatus === 'completed') return;
     setProcessing(false)
     

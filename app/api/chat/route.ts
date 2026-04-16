@@ -20,9 +20,10 @@ function getDynamicSystemPrompt(currentQuestion: number, candidateName: string) 
   } else if (currentQuestion >= 1 && currentQuestion < totalSteps) {
     const nextQuestion = currentQuestion + 1;
     instructions = `The candidate just responded to Question ${currentQuestion}. 
-    1. Briefly acknowledge their response (1 short sentence).
-    2. If their answer was extremely short or vague, you can ask a VERY brief follow-up. 
-    3. OTHERWISE, immediately ask Question ${nextQuestion}: "${INTERVIEW_QUESTIONS[nextQuestion]}".
+    1. Briefly acknowledge their response (1 short sentence like "Thanks for your answer" or "I see").
+    2. IMMEDIATELY move to Question ${nextQuestion}: "${INTERVIEW_QUESTIONS[nextQuestion]}".
+    
+    STRICT RULE: Even if the answer is incomplete, wrong, or empty, you MUST move to Question ${nextQuestion}. Never repeat Question ${currentQuestion}.
     
     Current Question Topic: ${INTERVIEW_QUESTIONS[currentQuestion]}
     Next Question Topic: ${INTERVIEW_QUESTIONS[nextQuestion]}`;
@@ -37,15 +38,15 @@ function getDynamicSystemPrompt(currentQuestion: number, candidateName: string) 
   return `You are a professional, friendly interviewer for Cuemath.
   
 ABSOLUTE RULES:
-1. ENGLISH ONLY. Never use any other language.
-2. NEVER restart the interview. NEVER say "we haven't started". NEVER go back to a previous question. Always move forward.
+1. ENGLISH ONLY.
+2. NEVER repeat a question. Move forward exactly once for every candidate response.
 3. Keep responses SHORT (2-3 sentences max).
-4. Do NOT ask multiple major questions at once.
+4. Do NOT ask follow-up questions for the same topic. Always move to the next question.
 5. ${instructions}
 
 ${Object.entries(INTERVIEW_QUESTIONS).map(([num, q]) => `Question ${num}: ${q}`).join('\n')}
 
-At the very end of your response, append a tag: [FOLLOW_UP: TRUE] if you asked a follow-up question to the SAME topic, or [FOLLOW_UP: FALSE] if you moved to the next question or ended.`;
+At the very end of your response, append a tag: [MOVE_FORWARD: TRUE].`;
 }
 
 export async function POST(request: NextRequest) {
@@ -77,15 +78,10 @@ export async function POST(request: NextRequest) {
       max_tokens: 500
     });
 
-    let followUpAsked = false;
     let cleanResponse = responseText;
 
-    if (responseText.includes('[FOLLOW_UP: TRUE]')) {
-      followUpAsked = true;
-      cleanResponse = responseText.replace('[FOLLOW_UP: TRUE]', '').trim();
-    } else if (responseText.includes('[FOLLOW_UP: FALSE]')) {
-      followUpAsked = false;
-      cleanResponse = responseText.replace('[FOLLOW_UP: FALSE]', '').trim();
+    if (responseText.includes('[MOVE_FORWARD: TRUE]')) {
+      cleanResponse = responseText.replace('[MOVE_FORWARD: TRUE]', '').trim();
     }
 
     return NextResponse.json({ 
