@@ -71,11 +71,19 @@ export function InterviewRoom() {
     preloadVoices()
   }, [])
 
-  const startChatWithAI = async (userMessage?: string) => {
+  const startChatWithAI = async (userMessage?: string, forcedQuestionIndex?: number) => {
+    if (state.interviewStatus === 'completing' || state.interviewStatus === 'completed') return;
     if (isProcessingQuestion.current && !userMessage?.includes("__RETRY__")) return; 
     
     const isRetry = userMessage?.includes("__RETRY__");
     const actualMessage = isRetry ? userMessage?.replace("__RETRY__", "") : userMessage;
+
+    // Use forced index if provided, otherwise fallback to current state
+    const targetQIndex = forcedQuestionIndex !== undefined 
+      ? forcedQuestionIndex 
+      : (state.conversationHistory.length === 0 ? 0 : state.currentQuestionIndex);
+
+    console.log(`[INTERVIEW FLOW] Starting chat. Target Question Index: ${targetQIndex}`);
 
     try {
       isProcessingQuestion.current = true;
@@ -88,7 +96,7 @@ export function InterviewRoom() {
           message: actualMessage || "",
           history: state.conversationHistory,
           candidateName: state.candidate?.name,
-          currentQuestion: state.conversationHistory.length === 0 ? 0 : state.currentQuestionIndex + 1
+          currentQuestion: targetQIndex
         }),
       })
 
@@ -121,6 +129,7 @@ export function InterviewRoom() {
   }
 
   const playAIResponse = (text: string, followUpAsked?: boolean) => {
+    if (state.interviewStatus === 'completing' || state.interviewStatus === 'completed') return;
     setProcessing(false)
     
     if (!state.useFallbackMode) {
@@ -134,7 +143,7 @@ export function InterviewRoom() {
           
           // Check for completion first
           const isComplete = checkIfInterviewComplete(text)
-          if (isComplete || state.interviewStatus === 'completing') return;
+          if (isComplete || state.interviewStatus === 'completing' || state.interviewStatus === 'completed') return;
 
           // Check for timeout wrap-up
           if (isTimedOutRef.current) {
@@ -158,16 +167,16 @@ export function InterviewRoom() {
     const lowerText = text.toLowerCase();
     
     // Determine if we reached the end or if AI said goodbye
-    const isEnding = state.currentQuestionIndex >= TOTAL_QUESTIONS && (
+    const isEnding = state.currentQuestionIndex >= TOTAL_QUESTIONS || 
                      lowerText.includes("wraps up") ||
                      lowerText.includes("assessment shortly") ||
                      lowerText.includes("have a great day") ||
                      lowerText.includes("thank you") ||
                      lowerText.includes("goodbye") ||
-                     lowerText.includes("no more questions")
-    );
+                     lowerText.includes("no more questions");
                       
-    if (state.currentQuestionIndex >= TOTAL_QUESTIONS || isEnding || state.interviewStatus === 'completing') {
+    if (isEnding || state.interviewStatus === 'completing' || state.interviewStatus === 'completed') {
+      console.log("[INTERVIEW FLOW] End condition met. Finishing interview.");
       finishInterview()
       return true
     }
@@ -197,8 +206,9 @@ export function InterviewRoom() {
   }
 
   const finishInterview = () => {
-    if (state.interviewStatus === 'completing') return;
+    if (state.interviewStatus === 'completing' || state.interviewStatus === 'completed') return;
     
+    console.log("[INTERVIEW FLOW] Triggering result calculation and navigation.");
     stopSpeaking()
     stopListening()
     
@@ -226,7 +236,7 @@ export function InterviewRoom() {
   }
 
   const handleStartListening = () => {
-    if (state.interviewStatus === 'completing' || state.isRecording) return;
+    if (state.interviewStatus === 'completing' || state.interviewStatus === 'completed' || state.isRecording) return;
 
     // Small buffer allowed for audio hardware to switch modes
     setTimeout(() => {
@@ -275,8 +285,9 @@ export function InterviewRoom() {
 
     // LINEAR PROGRESSION: Move to next question immediately
     const nextIdx = state.currentQuestionIndex + 1;
+    console.log(`[INTERVIEW FLOW] Moving to next question. Prev: ${state.currentQuestionIndex}, Next: ${nextIdx}`);
     setQuestionIndex(nextIdx);
-    startChatWithAI(finalTranscript);
+    startChatWithAI(finalTranscript, nextIdx);
   }
 
   const handleTextSubmit = (e: React.FormEvent) => {
@@ -312,8 +323,9 @@ export function InterviewRoom() {
     })
     
     const nextIdx = state.currentQuestionIndex + 1;
+    console.log(`[INTERVIEW FLOW] Skipping question. Prev: ${state.currentQuestionIndex}, Next: ${nextIdx}`);
     setQuestionIndex(nextIdx);
-    startChatWithAI("I'd like to skip this question. Please ask the next one.")
+    startChatWithAI("I'd like to skip this question. Please ask the next one.", nextIdx)
   }
 
   const handleEndEarly = () => {
@@ -514,7 +526,7 @@ export function InterviewRoom() {
 
       {/* Bottom Controls */}
       <div className="px-4 sm:px-10 py-2 sm:py-4 bg-muted/10 backdrop-blur-2xl border-t border-border relative z-20 flex flex-col items-center">
-        {state.interviewStatus === 'completing' && (
+        {(state.interviewStatus === 'completing' || state.interviewStatus === 'completed') && (
           <div className="w-full py-4 flex flex-col items-center justify-center animate-in fade-in zoom-in duration-500">
             <Loader2 className="w-8 h-8 text-brand-amber animate-spin mb-4" />
             <h3 className="text-xl sm:text-2xl font-black text-foreground tracking-tight mb-2">Interview Complete!</h3>

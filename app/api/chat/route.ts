@@ -12,19 +12,26 @@ const INTERVIEW_QUESTIONS: Record<number, string> = {
 
 function getDynamicSystemPrompt(currentQuestion: number, candidateName: string) {
   const safeName = candidateName || 'Candidate';
+  const totalSteps = 6;
   
   let instructions = "";
   if (currentQuestion === 0) {
     instructions = `Start by warmly greeting ${safeName}. Then ask Question 1: "${INTERVIEW_QUESTIONS[1]}".`;
-  } else if (currentQuestion >= 1 && currentQuestion <= 6) {
-    instructions = `You are currently on Question ${currentQuestion} of 6. If the candidate just answered, briefly acknowledge their response. 
-    IF their answer was too short or unclear, you MUST ask ONE brief follow-up question to help them elaborate. 
-    Otherwise, just say a brief acknowledgment like "Got it" or "I see" and STOP.
-    DO NOT ask the next major question.
+  } else if (currentQuestion >= 1 && currentQuestion < totalSteps) {
+    const nextQuestion = currentQuestion + 1;
+    instructions = `The candidate just responded to Question ${currentQuestion}. 
+    1. Briefly acknowledge their response (1 short sentence).
+    2. If their answer was extremely short or vague, you can ask a VERY brief follow-up. 
+    3. OTHERWISE, immediately ask Question ${nextQuestion}: "${INTERVIEW_QUESTIONS[nextQuestion]}".
     
-    Current Question Topic: ${INTERVIEW_QUESTIONS[currentQuestion]}`;
-  } else if (currentQuestion === 7) {
-    instructions = `The interview is over. Give a warm closing message to ${safeName}, thank them for their time, and tell them they will hear from us soon.`;
+    Current Question Topic: ${INTERVIEW_QUESTIONS[currentQuestion]}
+    Next Question Topic: ${INTERVIEW_QUESTIONS[nextQuestion]}`;
+  } else if (currentQuestion === totalSteps) {
+    instructions = `The interview is over. The candidate has answered all 6 questions. 
+    Give a warm closing message to ${safeName}, thank them for their time, and tell them they will hear from us soon via their dashboard. 
+    Explicitly say that the interview has concluded.`;
+  } else {
+    instructions = `The interview is over. Do not ask any more questions. Redirect them to the results.`;
   }
 
   return `You are a professional, friendly interviewer for Cuemath.
@@ -33,12 +40,12 @@ ABSOLUTE RULES:
 1. ENGLISH ONLY. Never use any other language.
 2. NEVER restart the interview. NEVER say "we haven't started". NEVER go back to a previous question. Always move forward.
 3. Keep responses SHORT (2-3 sentences max).
-4. Do NOT ask multiple questions. 
+4. Do NOT ask multiple major questions at once.
 5. ${instructions}
 
 ${Object.entries(INTERVIEW_QUESTIONS).map(([num, q]) => `Question ${num}: ${q}`).join('\n')}
 
-At the very end of your response, append a tag: [FOLLOW_UP: TRUE] if you asked a follow-up question, or [FOLLOW_UP: FALSE] if you just acknowledged and stopped.`;
+At the very end of your response, append a tag: [FOLLOW_UP: TRUE] if you asked a follow-up question to the SAME topic, or [FOLLOW_UP: FALSE] if you moved to the next question or ended.`;
 }
 
 export async function POST(request: NextRequest) {
