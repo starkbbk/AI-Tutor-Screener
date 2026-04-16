@@ -360,6 +360,7 @@ export function InterviewRoom() {
 
   const handleCandidateSpeakingFinished = (transcript: string) => {
     const finalTranscript = transcript.trim();
+    stopListening() // CRITICAL: Reset the internal engine before processing
     setRecording(false)
     
     const currentIdx = currentQuestionIndexRef.current;
