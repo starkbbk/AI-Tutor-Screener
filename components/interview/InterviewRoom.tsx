@@ -344,15 +344,15 @@ export function InterviewRoom() {
   const handleStartListening = () => {
     if (state.interviewStatus === 'completing' || state.interviewStatus === 'completed' || state.isRecording) return;
 
-    // Buffer for audio hardware to switch modes (increased to 800ms for high resilience)
+    stopSpeaking()
+    setAISpeaking(false)
+    setRecording(true)
+    setCurrentTranscript("")
+    setLastTranscriptUpdate(Date.now()); // Reset timer
+    isProcessingQuestion.current = false
+    
+    // Safety buffer for audio hardware to switch modes (internal)
     setTimeout(() => {
-      stopSpeaking()
-      setAISpeaking(false)
-      setRecording(true)
-      setCurrentTranscript("")
-      setLastTranscriptUpdate(Date.now()); // Reset timer
-      isProcessingQuestion.current = false
-      
       startListening(
       (result: SpeechRecognitionResult) => {
         setCurrentTranscript(result.transcript)
@@ -373,7 +373,7 @@ export function InterviewRoom() {
         }
       }
       )
-    }, 800);
+    }, 300);
   }
 
   const handleCandidateSpeakingFinished = (transcript: string) => {
