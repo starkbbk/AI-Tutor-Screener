@@ -19,6 +19,7 @@ export default function MicTestPage() {
   const [hasTested, setHasTested] = useState(false)
   const [isValidating, setIsValidating] = useState(false)
   const [supported, setSupported] = useState(true)
+  const [lastTranscriptUpdate, setLastTranscriptUpdate] = useState<number>(Date.now())
 
   useEffect(() => {
     // Redirect if no candidate info
@@ -35,6 +36,23 @@ export default function MicTestPage() {
     
     return () => stopListening()
   }, [state.candidate, router, setFallbackMode])
+
+  useEffect(() => {
+    setLastTranscriptUpdate(Date.now());
+  }, [testResult]);
+
+  // Auto-stop on silence during test
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isTesting && testResult.trim().length > 0) {
+      interval = setInterval(() => {
+        if (Date.now() - lastTranscriptUpdate > 3000) {
+          handleStopTest();
+        }
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [isTesting, testResult, lastTranscriptUpdate]);
 
   const handleStartTest = () => {
     setIsTesting(true)
@@ -231,7 +249,7 @@ export default function MicTestPage() {
               hasTested && !isTesting && !isValidating && "pulse-gentle ring-2 ring-brand-amber/20"
             )}
             onClick={handleContinue}
-            disabled={!supported ? false : (!hasTested && !error)}
+            disabled={!supported ? false : (!hasTested && !error && testResult.trim().length === 0)}
           >
             {hasTested ? (
               <span className="flex items-center"><CheckCircle2 className="mr-2 sm:mr-3 w-5 h-5 sm:w-6 sm:h-6" /> I'm Ready — Start</span>
