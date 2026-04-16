@@ -143,12 +143,12 @@ export function InterviewRoom() {
 
   // SAFETY NET: Auto-revive mic if handoff was missed
   useEffect(() => {
-    if (hasStarted && state.interviewStatus === 'active' && 
+    if (hasStarted && state.interviewStatus === 'in_progress' && 
         !state.isAISpeaking && !state.isProcessing && !state.isRecording) {
       
       const timer = setTimeout(() => {
         // Re-check conditions after a delay to avoid false positives during normal transitions
-        if (state.interviewStatus === 'active' && 
+        if (state.interviewStatus === 'in_progress' && 
             !state.isAISpeaking && !state.isProcessing && !state.isRecording) {
             console.log("[SAFETY NET] Detected hang. Reviving microphone...");
             handleStartListening();
