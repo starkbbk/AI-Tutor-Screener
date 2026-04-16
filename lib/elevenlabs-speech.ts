@@ -7,9 +7,9 @@ let currentAudio: HTMLAudioElement | null = null;
 
 export async function speakWithElevenLabs(
   text: string,
-  onStart?: () => void,
+  onStart?: (duration?: number) => void,
   onEnd?: () => void,
-  nativeFallback?: (text: string, onStart?: () => void, onEnd?: () => void) => void
+  nativeFallback?: (text: string, onStart?: (duration?: number) => void, onEnd?: () => void) => void
 ): Promise<void> {
   // Stop any currently playing audio
   stopSpeakingElevenLabs();
