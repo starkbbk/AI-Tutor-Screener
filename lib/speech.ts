@@ -21,18 +21,17 @@ type ErrorCallback = (error: string) => void;
 // Module-level state persistent across sessions and restarts
 let recognition: any = null;
 let isListeningActive = false;
-let fullTranscript = "";
-let silenceTimer: NodeJS.Timeout | null = null;
 let noSpeechTimer: NodeJS.Timeout | null = null;
+let startingGuardTimer: NodeJS.Timeout | null = null;
 let currentUtterance: SpeechSynthesisUtterance | null = null;
 
 import { speakWithElevenLabs, stopSpeakingElevenLabs } from "./elevenlabs-speech";
 
-// Callbacks captured on start
 let currentOnResult: SpeechCallback | null = null;
 let currentOnEnd: EndCallback | null = null;
 let currentOnError: ErrorCallback | null = null;
-let isStarting = false; 
+let isStarting = false;
+let fullTranscript = ""; 
 
 export function isSpeechRecognitionSupported(): boolean {
   if (typeof window === 'undefined') return false;
@@ -48,35 +47,12 @@ export function isSpeechSynthesisSupported(): boolean {
  * Cleanup timers
  */
 function clearTimers() {
-  if (silenceTimer) {
-    clearTimeout(silenceTimer);
-    silenceTimer = null;
-  }
   if (noSpeechTimer) {
     clearTimeout(noSpeechTimer);
     noSpeechTimer = null;
   }
 }
 
-/**
- * Handle success/submission after silence
- */
-function handleSilenceTimeout() {
-  const final = fullTranscript.trim();
-  
-  if (final.length >= 10) {
-    console.log("[SPEECH] Silence detected, submitting answer:", final);
-    stopListening();
-    if (currentOnEnd) currentOnEnd(final);
-  } else {
-    console.log("[SPEECH] Silence detected but text too short. Prompting for more...");
-    if (currentOnResult) {
-      currentOnResult({ transcript: "Could you say a bit more?", isFinal: false });
-    }
-    // Reset timers to keep listening
-    resetTimers();
-  }
-}
 
 /**
  * Handle total lack of speech
@@ -99,10 +75,8 @@ function resetTimers() {
   if (!isListeningActive) return;
 
   // 15s timer for when they haven't said ANYTHING
-  noSpeechTimer = setTimeout(handleNoSpeechTimeout, 15000);
-
-  // 5s timer for when they've finished speaking
-  silenceTimer = setTimeout(handleSilenceTimeout, 5000);
+  // (Optional: can also be handled by the UI timer)
+  // noSpeechTimer = setTimeout(handleNoSpeechTimeout, 15000);
 }
 
 /**
@@ -117,7 +91,8 @@ function initRecognition() {
   rec.lang = 'en-US';
 
   rec.onresult = (event: any) => {
-    resetTimers();
+    // Note: We no longer handle auto-submission timers here.
+    // InterviewRoom handles the silence countdown based on the results we send.
     
     let interimTranscript = '';
     let currentFinalTranscript = '';
@@ -161,8 +136,10 @@ function initRecognition() {
   rec.onend = () => {
     console.log("[SPEECH] Session ended. Active?", isListeningActive);
     if (isListeningActive) {
-      console.log("[SPEECH] Auto-restarting...");
-      startRecognitionInstance();
+      console.log("[SPEECH] Auto-restarting with 500ms delay...");
+      setTimeout(() => {
+         if (isListeningActive) startRecognitionInstance();
+      }, 500); // 500ms delay for mobile stability
     }
   };
 
@@ -189,23 +166,33 @@ function resetRecognition() {
  */
 function startRecognitionInstance() {
   if (!recognition) recognition = initRecognition();
-  if (isStarting) return;
+  if (isStarting) {
+    console.log("[SPEECH] startRecognitionInstance: isStarting is locked.");
+    return;
+  }
   
   isStarting = true;
+  
+  // WATCHDOG: Reset isStarting if onstart doesn't fire within 3 seconds
+  if (startingGuardTimer) clearTimeout(startingGuardTimer);
+  startingGuardTimer = setTimeout(() => {
+    if (isStarting) {
+      console.log("[SPEECH] Watchdog: Resetting isStarting guard.");
+      isStarting = false;
+    }
+  }, 3000);
+
   try {
     recognition.start();
-    // Successfully called start, but we should only clear isStarting
-    // when either onstart fires or an error occurs. 
-    // For simplicity, reset after a short delay or in event handlers.
-    recognition.onstart = () => { isStarting = false; };
+    recognition.onstart = () => { 
+      console.log("[SPEECH] onstart fired.");
+      isStarting = false; 
+      if (startingGuardTimer) clearTimeout(startingGuardTimer);
+    };
   } catch (e: any) {
     console.warn("[SPEECH] Start conflict:", e.message);
     isStarting = false;
-    
-    if (e.name === 'InvalidStateError') {
-      console.log("[SPEECH] Recognition already running or starting. Cleaning up...");
-      // If it's already running, we're actually okay.
-    }
+    if (startingGuardTimer) clearTimeout(startingGuardTimer);
   }
 }
 

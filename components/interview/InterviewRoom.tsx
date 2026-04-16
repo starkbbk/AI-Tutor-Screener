@@ -30,6 +30,7 @@ export function InterviewRoom() {
   const [currentTranscript, setCurrentTranscript] = useState("")
   const [showMenu, setShowMenu] = useState(false)
   const [silenceCountdown, setSilenceCountdown] = useState<number | null>(null)
+  const [lastTranscriptUpdate, setLastTranscriptUpdate] = useState<number>(Date.now())
   
   const isFirstRender = useRef(true)
   const greetingSentRef = useRef(false)
@@ -42,6 +43,10 @@ export function InterviewRoom() {
   useEffect(() => {
     currentQuestionIndexRef.current = state.currentQuestionIndex;
   }, [state.currentQuestionIndex]);
+
+  useEffect(() => {
+    setLastTranscriptUpdate(Date.now());
+  }, [currentTranscript]);
   
   // Timer effect
   useEffect(() => {
@@ -106,23 +111,35 @@ export function InterviewRoom() {
   // Silence timer logic
   useEffect(() => {
     let interval: NodeJS.Timeout;
-    if (state.isRecording && !currentTranscript && !state.isProcessing && !state.isAISpeaking) {
-      // Start/Continue countdown
+    if (state.isRecording && !state.isProcessing && !state.isAISpeaking) {
       interval = setInterval(() => {
-        setSilenceCountdown(prev => {
-          if (prev === null) return 8; // Start at 8 total (3s hidden, 5s visible)
-          if (prev <= 1) {
-            handleSkipQuestion();
-            return null;
-          }
-          return prev - 1;
-        });
+        const timeSinceLastUpdate = Date.now() - lastTranscriptUpdate;
+        
+        // If silent for 3+ seconds
+        if (timeSinceLastUpdate > 3000) {
+           if (!currentTranscript) {
+              // Trigger VISIBLE countdown if absolutely nothing heard
+              setSilenceCountdown(prev => {
+                const current = prev === null ? 5 : prev;
+                if (current <= 1) {
+                  handleSkipQuestion();
+                  return null;
+                }
+                return current - 1;
+              });
+           } else if (timeSinceLastUpdate > 5000) {
+              // AUTO-SUBMIT if we have text but they've stopped for 5s
+              handleCandidateSpeakingFinished(currentTranscript);
+           }
+        } else {
+           setSilenceCountdown(null);
+        }
       }, 1000);
     } else {
       setSilenceCountdown(null);
     }
     return () => clearInterval(interval);
-  }, [state.isRecording, currentTranscript, state.isProcessing, state.isAISpeaking]);
+  }, [state.isRecording, currentTranscript, lastTranscriptUpdate, state.isProcessing, state.isAISpeaking]);
 
   const startChatWithAI = async (userMessage?: string, forcedQuestionIndex?: number) => {
     if (state.interviewStatus === 'completing' || state.interviewStatus === 'completed') return;
@@ -309,13 +326,14 @@ export function InterviewRoom() {
   const handleStartListening = () => {
     if (state.interviewStatus === 'completing' || state.interviewStatus === 'completed' || state.isRecording) return;
 
-    // Small buffer allowed for audio hardware to switch modes
+    // Buffer for audio hardware to switch modes (increased for mobile stability)
     setTimeout(() => {
       stopSpeaking()
       setAISpeaking(false)
       setRecording(true)
       setCurrentTranscript("")
-      isProcessingQuestion.current = false // RELAX GUARD: READY FOR NEXT INPUT
+      setLastTranscriptUpdate(Date.now()); // Reset timer
+      isProcessingQuestion.current = false
       
       startListening(
       (result: SpeechRecognitionResult) => {
