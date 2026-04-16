@@ -89,20 +89,19 @@ export function InterviewRoom() {
     }
   }, [state.conversationHistory]);
 
-  // Active-scroll during AI typewriting
+  // Active-scroll during speech (AI or Candidate)
   useEffect(() => {
     let interval: NodeJS.Timeout;
-    if (state.isAISpeaking) {
+    if (state.isAISpeaking || state.isRecording) {
       interval = setInterval(() => {
         if (scrollContainerRef.current) {
-          // Check if we are already pinned to bottom to avoid over-scrolling
           const container = scrollContainerRef.current;
           container.scrollTop = container.scrollHeight;
         }
       }, 100);
     }
     return () => clearInterval(interval);
-  }, [state.isAISpeaking]);
+  }, [state.isAISpeaking, state.isRecording]);
 
   // Silence timer logic
   useEffect(() => {
