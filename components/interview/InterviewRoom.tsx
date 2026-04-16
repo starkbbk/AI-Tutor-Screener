@@ -116,7 +116,10 @@ export function InterviewRoom() {
       // Note: We don't reset in 'finally' because AI is still speaking
       // We'll reset it once startListening is called again
       
-      const currentMsgIndex = state.conversationHistory.length;
+      // Determine correct index for the AI message we are about to add
+      // If we just added a candidate message in this same event loop (e.g. Skip),
+      // history.length might not be updated yet.
+      const currentMsgIndex = state.conversationHistory.length + (userMessage ? 1 : 0);
       
       addMessage({
         role: "ai",
@@ -353,6 +356,10 @@ export function InterviewRoom() {
     stopSpeaking()
     setRecording(false)
     setAISpeaking(false)
+    
+    // RELAX GUARDS: Allow the skipped question to trigger a new AI response immediately
+    isProcessingQuestion.current = false;
+    
     addMessage({
       role: "candidate",
       content: "[Candidate skipped the question]",
