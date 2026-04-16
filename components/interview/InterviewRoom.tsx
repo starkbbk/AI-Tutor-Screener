@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
-import { Clock, Send, SkipForward, XCircle, Loader2, MoreVertical, Mic, Volume2 } from "lucide-react"
+import { Clock, Send, SkipForward, XCircle, Loader2, MoreVertical, Mic, Volume2, AlertCircle } from "lucide-react"
 
 import { useInterview } from "@/context/InterviewContext"
 import { VoiceAvatar } from "./VoiceAvatar"
@@ -29,6 +29,7 @@ export function InterviewRoom() {
   const [hasStarted, setHasStarted] = useState(false)
   const [currentTranscript, setCurrentTranscript] = useState("")
   const [showMenu, setShowMenu] = useState(false)
+  const [silenceCountdown, setSilenceCountdown] = useState<number | null>(null)
   
   const isFirstRender = useRef(true)
   const greetingSentRef = useRef(false)
@@ -78,7 +79,7 @@ export function InterviewRoom() {
     preloadVoices()
   }, [])
   
-  // Auto-scroll effect
+  // Auto-scroll effect (on status changes)
   useEffect(() => {
     if (scrollContainerRef.current) {
       scrollContainerRef.current.scrollTo({
@@ -86,7 +87,43 @@ export function InterviewRoom() {
         behavior: 'smooth'
       });
     }
-  }, [state.conversationHistory, state.isAISpeaking]);
+  }, [state.conversationHistory]);
+
+  // Active-scroll during AI typewriting
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (state.isAISpeaking) {
+      interval = setInterval(() => {
+        if (scrollContainerRef.current) {
+          // Check if we are already pinned to bottom to avoid over-scrolling
+          const container = scrollContainerRef.current;
+          container.scrollTop = container.scrollHeight;
+        }
+      }, 100);
+    }
+    return () => clearInterval(interval);
+  }, [state.isAISpeaking]);
+
+  // Silence timer logic
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (state.isRecording && !currentTranscript && !state.isProcessing && !state.isAISpeaking) {
+      // Start/Continue countdown
+      interval = setInterval(() => {
+        setSilenceCountdown(prev => {
+          if (prev === null) return 8; // Start at 8 total (3s hidden, 5s visible)
+          if (prev <= 1) {
+            handleSkipQuestion();
+            return null;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } else {
+      setSilenceCountdown(null);
+    }
+    return () => clearInterval(interval);
+  }, [state.isRecording, currentTranscript, state.isProcessing, state.isAISpeaking]);
 
   const startChatWithAI = async (userMessage?: string, forcedQuestionIndex?: number) => {
     if (state.interviewStatus === 'completing' || state.interviewStatus === 'completed') return;
@@ -594,9 +631,18 @@ export function InterviewRoom() {
                     
                     {/* Real-time Transcription feedback */}
                     <div className="w-full min-h-[4rem] px-6 py-4 bg-muted/20 rounded-2xl border border-border/40 text-center relative overflow-hidden flex items-center justify-center">
-                       <p className={`text-sm font-medium italic leading-relaxed ${currentTranscript.includes("Didn't catch") || currentTranscript.includes("Could you say") ? 'text-brand-amber' : 'text-foreground/80'}`}>
-                         {currentTranscript || "Waiting for you to speak..."}
-                       </p>
+                       {silenceCountdown !== null && silenceCountdown <= 5 ? (
+                         <div className="absolute inset-0 bg-brand-amber/10 flex items-center justify-center animate-in fade-in duration-300">
+                           <p className="text-brand-amber font-black tracking-widest uppercase text-xs flex items-center">
+                             <AlertCircle className="w-4 h-4 mr-2 animate-pulse" />
+                             No voice detected... Moving on in {silenceCountdown}
+                           </p>
+                         </div>
+                       ) : (
+                         <p className={`text-sm font-medium italic leading-relaxed ${currentTranscript.includes("Didn't catch") || currentTranscript.includes("Could you say") ? 'text-brand-amber' : 'text-foreground/80'}`}>
+                           {currentTranscript || "Waiting for you to speak..."}
+                         </p>
+                       )}
                     </div>
                  </div>
               ) : state.isProcessing ? (
