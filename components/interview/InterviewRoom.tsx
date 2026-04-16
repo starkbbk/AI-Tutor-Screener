@@ -35,6 +35,7 @@ export function InterviewRoom() {
   const isSkippingRef = useRef(false)
   const isProcessingQuestion = useRef(false)
   const currentQuestionIndexRef = useRef(state.currentQuestionIndex)
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
   
   // Keep Ref in sync with state for use in callbacks (prevents stale closures)
   useEffect(() => {
@@ -76,6 +77,16 @@ export function InterviewRoom() {
   useEffect(() => {
     preloadVoices()
   }, [])
+  
+  // Auto-scroll effect
+  useEffect(() => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTo({
+        top: scrollContainerRef.current.scrollHeight,
+        behavior: 'smooth'
+      });
+    }
+  }, [state.conversationHistory, state.isAISpeaking]);
 
   const startChatWithAI = async (userMessage?: string, forcedQuestionIndex?: number) => {
     if (state.interviewStatus === 'completing' || state.interviewStatus === 'completed') return;
@@ -512,7 +523,10 @@ export function InterviewRoom() {
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col overflow-y-auto overflow-x-hidden p-3 sm:p-10 relative scrollbar-hide">
+      <div 
+        ref={scrollContainerRef}
+        className="flex-1 flex flex-col overflow-y-auto overflow-x-hidden p-3 sm:p-10 relative yellow-scrollbar scroll-smooth"
+      >
         <div className="absolute top-0 left-1/4 w-1/2 h-1/2 bg-brand-cyan/5 dark:bg-brand-cyan/10 rounded-full blur-[80px] sm:blur-[120px] pointer-events-none" />
         
         <TranscriptDisplay 

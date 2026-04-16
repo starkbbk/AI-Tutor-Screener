@@ -43,18 +43,6 @@ export async function generatePDF(elementId: string, filename: string): Promise<
     });
   }));
 
-  // THE FIX: Temporarily force light mode for clean capture
-  const root = document.documentElement;
-  const isDark = root.classList.contains('dark');
-  
-  if (isDark) {
-    root.classList.remove('dark');
-    root.classList.add('light');
-  }
-
-  // Brief delay to allow CSS variables and tailwind classes to re-paint
-  await new Promise(resolve => setTimeout(resolve, 150));
-
   try {
     const canvas = await html2canvas(element, {
       scale: 2,
@@ -64,6 +52,20 @@ export async function generatePDF(elementId: string, filename: string): Promise<
       backgroundColor: '#ffffff',
       windowWidth: element.scrollWidth,
       windowHeight: element.scrollHeight,
+      // CRITICAL: Force light mode inside the capture clone
+      onclone: (clonedDoc) => {
+        const root = clonedDoc.documentElement;
+        root.classList.remove('dark');
+        root.classList.add('light');
+        root.style.colorScheme = 'light';
+        
+        // Find the report container in the clone and ensure it has light bg
+        const reportEl = clonedDoc.getElementById(elementId);
+        if (reportEl) {
+          reportEl.style.background = 'white';
+          reportEl.style.color = '#0A0A0A';
+        }
+      }
     });
 
     const imgData = canvas.toDataURL('image/png', 1.0);
@@ -73,11 +75,8 @@ export async function generatePDF(elementId: string, filename: string): Promise<
 
     pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
     pdf.save(filename);
-  } finally {
-    // Restore original theme context
-    if (isDark) {
-      root.classList.add('dark');
-      root.classList.remove('light');
-    }
+  } catch (error) {
+    console.error("[PDF] Generation failed:", error);
+    throw error;
   }
 }

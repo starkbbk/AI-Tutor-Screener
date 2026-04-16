@@ -94,6 +94,24 @@
     -ms-user-select: none;
     user-select: none;
   }
+
+  /* Custom Yellow Scrollbar */
+  .yellow-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+  .yellow-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .yellow-scrollbar::-webkit-scrollbar-thumb {
+    background: #FFB800; /* brand-amber */
+    border-radius: 10px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+  .yellow-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #FFBA07;
+    background-clip: content-box;
+  }
 }
 
 @layer base {
@@ -195,10 +213,11 @@
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
-  background: #D1D5DB;
+  background: var(--brand-amber);
   border-radius: 3px;
+  opacity: 0.5;
 }
-::-webkit-scrollbar-thumb:hover { background: #9CA3AF; }
+::-webkit-scrollbar-thumb:hover { background: #FFBA07; }
 
 @media print {
   body { 
