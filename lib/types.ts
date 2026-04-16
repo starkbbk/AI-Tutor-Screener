@@ -4,6 +4,7 @@ export interface CandidateInfo {
 }
 
 export interface ConversationMessage {
+  id: string;
   role: 'ai' | 'candidate';
   content: string;
   timestamp: string;
@@ -61,5 +62,5 @@ export type InterviewAction =
   | { type: 'SET_FALLBACK_MODE'; payload: boolean }
   | { type: 'INCREMENT_ATTEMPTS' }
   | { type: 'RESET_ATTEMPTS' }
-  | { type: 'UPDATE_MESSAGE'; payload: { index: number; updates: Partial<ConversationMessage> } }
+  | { type: 'UPDATE_MESSAGE'; payload: { id: string; updates: Partial<ConversationMessage> } }
   | { type: 'RESET' };

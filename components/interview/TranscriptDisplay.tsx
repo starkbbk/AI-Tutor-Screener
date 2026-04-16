@@ -88,9 +88,9 @@ export function TranscriptDisplay({
   
   return (
     <div className="w-full space-y-5 sm:space-y-8 flex-1 flex flex-col justify-end min-h-[16rem] mb-12 mt-4 relative">
-      {messages.map((msg, idx) => (
+      {messages.map((msg) => (
         <div 
-          key={idx} 
+          key={msg.id} 
           className={`flex flex-col w-full ${msg.role === 'candidate' ? 'items-end' : 'items-start'} animate-in fade-in slide-in-from-bottom-4 duration-500`}
         >
           <div className={`flex items-center mb-3 px-3 space-x-2 text-[10px] font-black tracking-[0.2em] uppercase ${msg.role === 'ai' ? 'text-brand-cyan' : 'text-brand-amber'}`}>

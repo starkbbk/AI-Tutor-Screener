@@ -116,19 +116,17 @@ export function InterviewRoom() {
       // Note: We don't reset in 'finally' because AI is still speaking
       // We'll reset it once startListening is called again
       
-      // Determine correct index for the AI message we are about to add
-      // If we just added a candidate message in this same event loop (e.g. Skip),
-      // history.length might not be updated yet.
-      const currentMsgIndex = state.conversationHistory.length + (userMessage ? 1 : 0);
+      const aiMsgId = Date.now().toString();
       
       addMessage({
+        id: aiMsgId,
         role: "ai",
         content: data.response,
         timestamp: new Date().toISOString(),
         status: 'thinking'
       })
 
-      playAIResponse(data.response, currentMsgIndex)
+      playAIResponse(data.response, aiMsgId)
       
     } catch (error: any) {
       console.warn('[INTERVIEW ROOM] Chat error. Auto-retrying in 5 seconds...', error.message)
@@ -140,7 +138,7 @@ export function InterviewRoom() {
     }
   }
 
-  const playAIResponse = (text: string, msgIndex: number) => {
+  const playAIResponse = (text: string, msgId: string) => {
     if (state.interviewStatus === 'completing' || state.interviewStatus === 'completed') return;
     setProcessing(false)
     
@@ -151,11 +149,11 @@ export function InterviewRoom() {
         text,
         (duration) => {
           // SYNC START: Transition from thinking to speaking with duration
-          updateMessage(msgIndex, { status: 'speaking', audioDuration: duration || 0 });
+          updateMessage(msgId, { status: 'speaking', audioDuration: duration || 0 });
         }, 
         () => {
           // SYNC END: Finalize the message
-          updateMessage(msgIndex, { status: 'done' });
+          updateMessage(msgId, { status: 'done' });
           setAISpeaking(false)
           
           // Check for completion first
@@ -175,9 +173,9 @@ export function InterviewRoom() {
       )
     } else {
       // Fallback mode (text only)
-      updateMessage(msgIndex, { status: 'speaking', audioDuration: 2 }); // Brief fake duration
+      updateMessage(msgId, { status: 'speaking', audioDuration: 2 }); // Brief fake duration
       setTimeout(() => {
-        updateMessage(msgIndex, { status: 'done' });
+        updateMessage(msgId, { status: 'done' });
         checkIfInterviewComplete(text)
       }, 2000) 
     }
@@ -208,8 +206,9 @@ export function InterviewRoom() {
     
     const timeOutMessage = "We are running out of time so let us wrap up here. Thank you for your time, you will receive your assessment shortly. Have a great day!";
     
-    const currentMsgIndex = state.conversationHistory.length;
+    const aiMsgId = Date.now().toString();
     addMessage({
+      id: aiMsgId,
       role: "ai",
       content: timeOutMessage,
       timestamp: new Date().toISOString(),
@@ -220,10 +219,10 @@ export function InterviewRoom() {
     speak(
       timeOutMessage,
       (duration) => {
-        updateMessage(currentMsgIndex, { status: 'speaking', audioDuration: duration || 0 });
+        updateMessage(aiMsgId, { status: 'speaking', audioDuration: duration || 0 });
       },
       () => {
-        updateMessage(currentMsgIndex, { status: 'done' });
+        updateMessage(aiMsgId, { status: 'done' });
         setAISpeaking(false)
         finishInterview()
       }
@@ -312,6 +311,7 @@ export function InterviewRoom() {
     setCurrentTranscript("")
     
     addMessage({
+      id: Date.now().toString(),
       role: "candidate",
       content: finalTranscript,
       timestamp: new Date().toISOString()
@@ -338,6 +338,7 @@ export function InterviewRoom() {
     setTextInput("")
     
     addMessage({
+      id: Date.now().toString(),
       role: "candidate",
       content: text,
       timestamp: new Date().toISOString()
@@ -361,6 +362,7 @@ export function InterviewRoom() {
     isProcessingQuestion.current = false;
     
     addMessage({
+      id: Date.now().toString(),
       role: "candidate",
       content: "[Candidate skipped the question]",
       timestamp: new Date().toISOString()
@@ -368,17 +370,22 @@ export function InterviewRoom() {
     
     const currentIdx = currentQuestionIndexRef.current;
     
-    // Check if it's the last question
     if (currentIdx >= TOTAL_QUESTIONS - 1) {
       console.log("[INTERVIEW FLOW] Skip triggered on last question. Finishing.");
       const closingMsg = "Thank you! That wraps up our interview. Redirecting you to the assessment report now...";
+      const aiMsgId = Date.now().toString();
       addMessage({
+        id: aiMsgId,
         role: "ai",
         content: closingMsg,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        status: 'thinking'
       });
       setAISpeaking(true);
-      speak(closingMsg, () => {}, () => {
+      speak(closingMsg, (duration) => {
+        updateMessage(aiMsgId, { status: 'speaking', audioDuration: duration || 0 });
+      }, () => {
+        updateMessage(aiMsgId, { status: 'done' });
         setAISpeaking(false);
         finishInterview();
       });
