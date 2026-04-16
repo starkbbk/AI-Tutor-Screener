@@ -34,6 +34,12 @@ export function InterviewRoom() {
   const greetingSentRef = useRef(false)
   const isSkippingRef = useRef(false)
   const isProcessingQuestion = useRef(false)
+  const currentQuestionIndexRef = useRef(state.currentQuestionIndex)
+  
+  // Keep Ref in sync with state for use in callbacks (prevents stale closures)
+  useEffect(() => {
+    currentQuestionIndexRef.current = state.currentQuestionIndex;
+  }, [state.currentQuestionIndex]);
   
   // Timer effect
   useEffect(() => {
@@ -78,10 +84,10 @@ export function InterviewRoom() {
     const isRetry = userMessage?.includes("__RETRY__");
     const actualMessage = isRetry ? userMessage?.replace("__RETRY__", "") : userMessage;
 
-    // Use forced index if provided, otherwise fallback to current state
+    // Use forced index if provided, otherwise fallback to the Ref's current value
     const targetQIndex = forcedQuestionIndex !== undefined 
       ? forcedQuestionIndex 
-      : (state.conversationHistory.length === 0 ? 0 : state.currentQuestionIndex);
+      : (state.conversationHistory.length === 0 ? 0 : currentQuestionIndexRef.current);
 
     console.log(`[INTERVIEW FLOW] Starting chat. Target Question Index: ${targetQIndex}`);
 
@@ -284,8 +290,11 @@ export function InterviewRoom() {
     })
 
     // LINEAR PROGRESSION: Move to next question immediately
-    const nextIdx = state.currentQuestionIndex + 1;
-    console.log(`[INTERVIEW FLOW] Moving to next question. Prev: ${state.currentQuestionIndex}, Next: ${nextIdx}`);
+    const currentIdx = currentQuestionIndexRef.current;
+    const nextIdx = currentIdx + 1;
+    
+    console.log(`[INTERVIEW FLOW] Candidate finished speaking. Current Index: ${currentIdx}, Moving to: ${nextIdx}`);
+    
     setQuestionIndex(nextIdx);
     startChatWithAI(finalTranscript, nextIdx);
   }
@@ -322,8 +331,11 @@ export function InterviewRoom() {
       timestamp: new Date().toISOString()
     })
     
-    const nextIdx = state.currentQuestionIndex + 1;
-    console.log(`[INTERVIEW FLOW] Skipping question. Prev: ${state.currentQuestionIndex}, Next: ${nextIdx}`);
+    const currentIdx = currentQuestionIndexRef.current;
+    const nextIdx = currentIdx + 1;
+    
+    console.log(`[INTERVIEW FLOW] Skipping question. Current Index: ${currentIdx}, Moving to: ${nextIdx}`);
+    
     setQuestionIndex(nextIdx);
     startChatWithAI("I'd like to skip this question. Please ask the next one.", nextIdx)
   }

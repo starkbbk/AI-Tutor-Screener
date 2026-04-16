@@ -20,13 +20,14 @@ function getDynamicSystemPrompt(currentQuestion: number, candidateName: string) 
   } else if (currentQuestion >= 1 && currentQuestion < totalSteps) {
     const nextQuestion = currentQuestion + 1;
     instructions = `The candidate just responded to Question ${currentQuestion}. 
-    1. Briefly acknowledge their response (1 short sentence like "Thanks for your answer" or "I see").
+    1. Briefly acknowledge their response (1 short sentence max).
     2. IMMEDIATELY move to Question ${nextQuestion}: "${INTERVIEW_QUESTIONS[nextQuestion]}".
     
-    STRICT RULE: Even if the answer is incomplete, wrong, or empty, you MUST move to Question ${nextQuestion}. Never repeat Question ${currentQuestion}.
+    STRICT RULES:
+    - NEVER repeat Question ${currentQuestion} or any related follow-ups.
+    - You MUST move to the topic of Question ${nextQuestion} now.
+    - Even if the candidate's last answer was very short, do not try to improve it. Just move forward.`;
     
-    Current Question Topic: ${INTERVIEW_QUESTIONS[currentQuestion]}
-    Next Question Topic: ${INTERVIEW_QUESTIONS[nextQuestion]}`;
   } else if (currentQuestion === totalSteps) {
     instructions = `The interview is over. The candidate has answered all 6 questions. 
     Give a warm closing message to ${safeName}, thank them for their time, and tell them they will hear from us soon via their dashboard. 
@@ -39,10 +40,9 @@ function getDynamicSystemPrompt(currentQuestion: number, candidateName: string) 
   
 ABSOLUTE RULES:
 1. ENGLISH ONLY.
-2. NEVER repeat a question. Move forward exactly once for every candidate response.
-3. Keep responses SHORT (2-3 sentences max).
-4. Do NOT ask follow-up questions for the same topic. Always move to the next question.
-5. ${instructions}
+2. NEVER repeat a question. Every candidate response MUST lead to the NEXT question topic.
+3. Keep responses SHORT (max 2 sentences).
+4. ${instructions}
 
 ${Object.entries(INTERVIEW_QUESTIONS).map(([num, q]) => `Question ${num}: ${q}`).join('\n')}
 
