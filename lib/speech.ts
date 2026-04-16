@@ -164,21 +164,31 @@ function resetRecognition() {
 /**
  * Safe start/restart logic
  */
-function startRecognitionInstance() {
-  if (!recognition) recognition = initRecognition();
+function startRecognitionInstance(forceRefresh = false) {
+  if (forceRefresh) {
+    console.log("[MIC_ENGINE] Force refreshing recognition object...");
+    resetRecognition();
+  }
+  
+  if (!recognition) {
+    console.log("[MIC_ENGINE] Initializing brand new recognition object.");
+    recognition = initRecognition();
+  }
+
   if (isStarting) {
-    console.log("[SPEECH] startRecognitionInstance: isStarting is locked.");
+    console.log("[MIC_ENGINE] startRecognitionInstance: isStarting is locked.");
     return;
   }
   
   isStarting = true;
   
-  // WATCHDOG: Reset isStarting if onstart doesn't fire within 1.5 seconds
+  // WATCHDOG: Reset isStarting and potentially RE-TRIGGER if stuck
   if (startingGuardTimer) clearTimeout(startingGuardTimer);
   startingGuardTimer = setTimeout(() => {
     if (isStarting) {
-      console.log("[MIC_ENGINE] Watchdog: Resetting stuck isStarting guard (1.5s timeout).");
+      console.log("[MIC_ENGINE] Watchdog: Guard reset (1.5s timeout). Retrying...");
       isStarting = false;
+      startRecognitionInstance(true); // Retry with a fresh object
     }
   }, 1500);
 
@@ -190,9 +200,14 @@ function startRecognitionInstance() {
       if (startingGuardTimer) clearTimeout(startingGuardTimer);
     };
   } catch (e: any) {
-    console.warn("[SPEECH] Start conflict:", e.message);
+    console.warn("[MIC_ENGINE] Start conflict:", e.message);
     isStarting = false;
     if (startingGuardTimer) clearTimeout(startingGuardTimer);
+    
+    // If we hit an InvalidStateError, the object might be 'trashed' - refresh it
+    if (e.name === 'InvalidStateError') {
+      setTimeout(() => startRecognitionInstance(true), 100);
+    }
   }
 }
 
@@ -217,7 +232,8 @@ export async function startListening(
   currentOnError = onError;
 
   resetTimers();
-  startRecognitionInstance();
+  // Always start with a fresh instance for a new request
+  startRecognitionInstance(true); 
 }
 
 /**

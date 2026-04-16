@@ -141,6 +141,24 @@ export function InterviewRoom() {
     return () => clearInterval(interval);
   }, [state.isRecording, currentTranscript, lastTranscriptUpdate, state.isProcessing, state.isAISpeaking]);
 
+  // SAFETY NET: Auto-revive mic if handoff was missed
+  useEffect(() => {
+    if (hasStarted && state.interviewStatus === 'active' && 
+        !state.isAISpeaking && !state.isProcessing && !state.isRecording) {
+      
+      const timer = setTimeout(() => {
+        // Re-check conditions after a delay to avoid false positives during normal transitions
+        if (state.interviewStatus === 'active' && 
+            !state.isAISpeaking && !state.isProcessing && !state.isRecording) {
+            console.log("[SAFETY NET] Detected hang. Reviving microphone...");
+            handleStartListening();
+        }
+      }, 2500); // 2.5s safety window
+      
+      return () => clearTimeout(timer);
+    }
+  }, [state.isAISpeaking, state.isProcessing, state.isRecording, hasStarted, state.interviewStatus]);
+
   const startChatWithAI = async (userMessage?: string, forcedQuestionIndex?: number) => {
     if (state.interviewStatus === 'completing' || state.interviewStatus === 'completed') return;
     if (isProcessingQuestion.current && !userMessage?.includes("__RETRY__")) return; 
