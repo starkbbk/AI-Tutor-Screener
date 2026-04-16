@@ -134,12 +134,12 @@ function initRecognition() {
   };
 
   rec.onend = () => {
-    console.log("[SPEECH] Session ended. Active?", isListeningActive);
+    console.log("[MIC_ENGINE] Session ended. Active?", isListeningActive);
     if (isListeningActive) {
-      console.log("[SPEECH] Auto-restarting with 500ms delay...");
+      console.log("[MIC_ENGINE] Persistent session - Auto-restarting with 500ms delay...");
       setTimeout(() => {
          if (isListeningActive) startRecognitionInstance();
-      }, 500); // 500ms delay for mobile stability
+      }, 500); 
     }
   };
 
@@ -173,19 +173,19 @@ function startRecognitionInstance() {
   
   isStarting = true;
   
-  // WATCHDOG: Reset isStarting if onstart doesn't fire within 3 seconds
+  // WATCHDOG: Reset isStarting if onstart doesn't fire within 1.5 seconds
   if (startingGuardTimer) clearTimeout(startingGuardTimer);
   startingGuardTimer = setTimeout(() => {
     if (isStarting) {
-      console.log("[SPEECH] Watchdog: Resetting isStarting guard.");
+      console.log("[MIC_ENGINE] Watchdog: Resetting stuck isStarting guard (1.5s timeout).");
       isStarting = false;
     }
-  }, 3000);
+  }, 1500);
 
   try {
     recognition.start();
     recognition.onstart = () => { 
-      console.log("[SPEECH] onstart fired.");
+      console.log("[MIC_ENGINE] ON_START: Recognition is now active.");
       isStarting = false; 
       if (startingGuardTimer) clearTimeout(startingGuardTimer);
     };
@@ -224,14 +224,15 @@ export async function startListening(
  * Public function to stop listening
  */
 export function stopListening(): void {
-  console.log("[SPEECH] stopListening called.");
+  console.log("[MIC_ENGINE] REQUEST_STOP: isListeningActive -> false");
   isListeningActive = false;
   isStarting = false;
   clearTimers();
   
   if (recognition) {
     try {
-      recognition.stop();
+      console.log("[MIC_ENGINE] Aborting recognition session...");
+      recognition.abort(); // Use abort for immediate reset on mobile
     } catch (e) {
       // already stopped  
     }

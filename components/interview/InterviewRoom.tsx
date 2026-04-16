@@ -326,7 +326,7 @@ export function InterviewRoom() {
   const handleStartListening = () => {
     if (state.interviewStatus === 'completing' || state.interviewStatus === 'completed' || state.isRecording) return;
 
-    // Buffer for audio hardware to switch modes (increased for mobile stability)
+    // Buffer for audio hardware to switch modes (increased to 800ms for high resilience)
     setTimeout(() => {
       stopSpeaking()
       setAISpeaking(false)
@@ -354,8 +354,7 @@ export function InterviewRoom() {
            setTimeout(handleStartListening, 1000);
         }
       }
-      )
-    }, 100);
+    }, 800);
   }
 
   const handleCandidateSpeakingFinished = (transcript: string) => {
