@@ -25,6 +25,8 @@ let fullTranscript = "";
 let silenceTimer: NodeJS.Timeout | null = null;
 let noSpeechTimer: NodeJS.Timeout | null = null;
 
+import { speakWithElevenLabs, stopSpeakingElevenLabs } from "./elevenlabs-speech";
+
 // Callbacks captured on start
 let currentOnResult: SpeechCallback | null = null;
 let currentOnEnd: EndCallback | null = null;
@@ -286,6 +288,18 @@ export function speak(
   onStart?: () => void,
   onEnd?: () => void
 ): void {
+  // Use ElevenLabs with native fallback
+  speakWithElevenLabs(text, onStart, onEnd, speakNative);
+}
+
+/**
+ * Native Speech Synthesis Fallback
+ */
+function speakNative(
+  text: string,
+  onStart?: () => void,
+  onEnd?: () => void
+): void {
   if (!isSpeechSynthesisSupported()) {
     onEnd?.();
     return;
@@ -293,7 +307,6 @@ export function speak(
 
   window.speechSynthesis.cancel();
 
-  // Handle Chrome silence bug and chunking if needed, but keeping it simple for now
   const utterance = new SpeechSynthesisUtterance(text);
   const voice = getPreferredVoice();
   if (voice) utterance.voice = voice;
@@ -304,7 +317,6 @@ export function speak(
   utterance.onstart = () => onStart?.();
   utterance.onend = () => onEnd?.();
   utterance.onerror = (e) => {
-    // Silence benign "interrupted" or "canceled" errors
     if (e.error === 'interrupted' || e.error === 'canceled') {
       console.log("[SPEECH] Synthesis interrupted (benign)");
     } else {
@@ -322,6 +334,8 @@ export function speak(
 }
 
 export function stopSpeaking(): void {
+  // Stop both ElevenLabs and Native
+  stopSpeakingElevenLabs();
   if (typeof window !== 'undefined') {
     window.speechSynthesis.cancel();
   }
