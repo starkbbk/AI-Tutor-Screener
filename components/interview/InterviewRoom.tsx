@@ -19,7 +19,7 @@ export function InterviewRoom() {
   const router = useRouter()
   const { 
     state, setAISpeaking, setRecording, setProcessing, 
-    addMessage, setQuestionIndex, completeInterview, setStatus,
+    addMessage, updateMessage, setQuestionIndex, completeInterview, setStatus,
     incrementAttempts, resetAttempts, startInterview
   } = useInterview()
   
@@ -116,13 +116,16 @@ export function InterviewRoom() {
       // Note: We don't reset in 'finally' because AI is still speaking
       // We'll reset it once startListening is called again
       
+      const currentMsgIndex = state.conversationHistory.length;
+      
       addMessage({
         role: "ai",
         content: data.response,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        status: 'thinking'
       })
 
-      playAIResponse(data.response)
+      playAIResponse(data.response, currentMsgIndex)
       
     } catch (error: any) {
       console.warn('[INTERVIEW ROOM] Chat error. Auto-retrying in 5 seconds...', error.message)
@@ -134,7 +137,7 @@ export function InterviewRoom() {
     }
   }
 
-  const playAIResponse = (text: string) => {
+  const playAIResponse = (text: string, msgIndex: number) => {
     if (state.interviewStatus === 'completing' || state.interviewStatus === 'completed') return;
     setProcessing(false)
     
@@ -143,8 +146,13 @@ export function InterviewRoom() {
       
       speak(
         text,
-        () => {}, 
+        (duration) => {
+          // SYNC START: Transition from thinking to speaking with duration
+          updateMessage(msgIndex, { status: 'speaking', audioDuration: duration || 0 });
+        }, 
         () => {
+          // SYNC END: Finalize the message
+          updateMessage(msgIndex, { status: 'done' });
           setAISpeaking(false)
           
           // Check for completion first
@@ -163,7 +171,10 @@ export function InterviewRoom() {
         }
       )
     } else {
+      // Fallback mode (text only)
+      updateMessage(msgIndex, { status: 'speaking', audioDuration: 2 }); // Brief fake duration
       setTimeout(() => {
+        updateMessage(msgIndex, { status: 'done' });
         checkIfInterviewComplete(text)
       }, 2000) 
     }
@@ -194,17 +205,22 @@ export function InterviewRoom() {
     
     const timeOutMessage = "We are running out of time so let us wrap up here. Thank you for your time, you will receive your assessment shortly. Have a great day!";
     
+    const currentMsgIndex = state.conversationHistory.length;
     addMessage({
       role: "ai",
       content: timeOutMessage,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      status: 'thinking'
     })
 
     setAISpeaking(true)
     speak(
       timeOutMessage,
-      () => {},
+      (duration) => {
+        updateMessage(currentMsgIndex, { status: 'speaking', audioDuration: duration || 0 });
+      },
       () => {
+        updateMessage(currentMsgIndex, { status: 'done' });
         setAISpeaking(false)
         finishInterview()
       }
@@ -279,6 +295,15 @@ export function InterviewRoom() {
     const finalTranscript = transcript.trim();
     setRecording(false)
     
+    const currentIdx = currentQuestionIndexRef.current;
+
+    // Handle silence/timeout on the last question
+    if (!finalTranscript && currentIdx >= TOTAL_QUESTIONS - 1) {
+      console.log("[INTERVIEW FLOW] Silence on last question. Finishing.");
+      handleSkipQuestion(); // Reuse skip logic to wrap up
+      return;
+    }
+
     if (!finalTranscript) return;
 
     setCurrentTranscript("")
@@ -290,7 +315,6 @@ export function InterviewRoom() {
     })
 
     // LINEAR PROGRESSION: Move to next question immediately
-    const currentIdx = currentQuestionIndexRef.current;
     const nextIdx = currentIdx + 1;
     
     console.log(`[INTERVIEW FLOW] Candidate finished speaking. Current Index: ${currentIdx}, Moving to: ${nextIdx}`);
@@ -316,7 +340,11 @@ export function InterviewRoom() {
       timestamp: new Date().toISOString()
     })
     
-    startChatWithAI(text)
+    const currentIdx = currentQuestionIndexRef.current;
+    const nextIdx = currentIdx + 1;
+    
+    setQuestionIndex(nextIdx);
+    startChatWithAI(text, nextIdx)
   }
 
   const handleSkipQuestion = () => {
@@ -332,8 +360,25 @@ export function InterviewRoom() {
     })
     
     const currentIdx = currentQuestionIndexRef.current;
-    const nextIdx = currentIdx + 1;
     
+    // Check if it's the last question
+    if (currentIdx >= TOTAL_QUESTIONS - 1) {
+      console.log("[INTERVIEW FLOW] Skip triggered on last question. Finishing.");
+      const closingMsg = "Thank you! That wraps up our interview. Redirecting you to the assessment report now...";
+      addMessage({
+        role: "ai",
+        content: closingMsg,
+        timestamp: new Date().toISOString()
+      });
+      setAISpeaking(true);
+      speak(closingMsg, () => {}, () => {
+        setAISpeaking(false);
+        finishInterview();
+      });
+      return;
+    }
+
+    const nextIdx = currentIdx + 1;
     console.log(`[INTERVIEW FLOW] Skipping question. Current Index: ${currentIdx}, Moving to: ${nextIdx}`);
     
     setQuestionIndex(nextIdx);
@@ -352,6 +397,8 @@ export function InterviewRoom() {
     setRecording(false)
     setAISpeaking(true)
     
+    // For replay, we don't necessarily update the transcript status
+    // since it's already visible. Just play audio.
     speak(
       text,
       () => {}, 
@@ -377,7 +424,7 @@ export function InterviewRoom() {
       )}
       
       {/* Top Header */}
-      <div className="flex items-center justify-between p-2.5 sm:p-8 glass-header z-20">
+      <div className="flex items-center justify-between p-2.5 sm:p-8 glass-header z-30">
         <div className="flex items-center space-x-1 sm:space-x-4">
           <Image src="/cuemath-logo.svg" alt="Cuemath" width={80} height={24} className="xs:w-[100px] sm:w-[140px] sm:h-[40px] opacity-90 transition-opacity hover:opacity-100" />
         </div>
@@ -427,8 +474,8 @@ export function InterviewRoom() {
         </div>
       </div>
 
-      {/* Modern Progress Bar */}
-      <div className="px-3 sm:px-10 pb-4 -mt-2 animate-in fade-in slide-in-from-top-4 duration-1000 relative z-10">
+      {/* Modern Progress Bar - Sticky below header */}
+      <div className="px-3 sm:px-10 pb-4 pt-2 animate-in fade-in slide-in-from-top-4 duration-1000 sticky top-[60px] sm:top-[120px] bg-background/50 backdrop-blur-md z-20 border-b border-border/10">
         <div className="glass-card p-2.5 sm:p-4 rounded-xl sm:rounded-2xl border-border/50 bg-background/20">
           <div className="flex justify-between items-center mb-2 sm:mb-3">
             <span className="text-[9px] sm:text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] flex items-center">

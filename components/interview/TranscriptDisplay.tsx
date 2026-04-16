@@ -1,7 +1,68 @@
-import { useEffect, useRef } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Volume2, UserCircle, Bot } from "lucide-react"
 import { ConversationMessage } from "@/lib/types"
-import { speak } from "@/lib/speech"
+
+/**
+ * Animated Thinking Dots
+ */
+function ThinkingDots() {
+  return (
+    <div className="flex space-x-1.5 py-2 px-1">
+      <div className="w-1.5 h-1.5 bg-brand-cyan rounded-full animate-bounce [animation-delay:-0.3s]" />
+      <div className="w-1.5 h-1.5 bg-brand-cyan rounded-full animate-bounce [animation-delay:-0.15s]" />
+      <div className="w-1.5 h-1.5 bg-brand-cyan rounded-full animate-bounce" />
+    </div>
+  )
+}
+
+/**
+ * Typewriter effect synced with audio duration
+ */
+function Typewriter({ text, duration, onComplete }: { text: string; duration: number; onComplete?: () => void }) {
+  const [displayedText, setDisplayedText] = useState("")
+  
+  useEffect(() => {
+    if (!text) return
+    
+    // Safety check: if no duration, show instantly
+    if (!duration || duration <= 0) {
+      setDisplayedText(text)
+      onComplete?.()
+      return
+    }
+
+    let currentText = ""
+    const words = text.split(" ")
+    const totalWords = words.length
+    
+    // Calculate interval to match the spoken duration
+    // We reveal word by word for better "natural" reading speed sync
+    const intervalTime = (duration * 1000) / totalWords
+    
+    let wordIdx = 0
+    const timer = setInterval(() => {
+      if (wordIdx < totalWords) {
+        currentText += (wordIdx === 0 ? "" : " ") + words[wordIdx]
+        setDisplayedText(currentText)
+        wordIdx++
+      } else {
+        clearInterval(timer)
+        onComplete?.()
+      }
+    }, intervalTime)
+
+    return () => clearInterval(timer)
+  }, [text, duration])
+
+  return (
+    <>
+      {displayedText}
+      {displayedText.length < text.length && (
+        <span className="inline-block w-1.5 h-4 ml-1 bg-brand-cyan/40 animate-pulse align-middle" />
+      )}
+    </>
+  )
+}
 
 export function TranscriptDisplay({ 
   messages, 
@@ -37,13 +98,15 @@ export function TranscriptDisplay({
               <>
                 <Bot className="w-3.5 h-3.5" /> 
                 <span>AI Intelligence</span>
-                <button 
-                  onClick={() => handleReplayClick(msg.content)}
-                  className="ml-2 hover:bg-brand-cyan/20 p-1 rounded-full transition-colors cursor-pointer"
-                  title="Replay message"
-                >
-                  <Volume2 className="w-3.5 h-3.5" />
-                </button>
+                {msg.status === 'done' && (
+                  <button 
+                    onClick={() => handleReplayClick(msg.content)}
+                    className="ml-2 hover:bg-brand-cyan/20 p-1 rounded-full transition-colors cursor-pointer"
+                    title="Replay message"
+                  >
+                    <Volume2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </>
             ) : (
               <><span>Respondent</span> <UserCircle className="w-3.5 h-3.5" /></>
@@ -58,10 +121,20 @@ export function TranscriptDisplay({
               }
             `}
           >
-            {msg.content}
-            {/* Show typewriter cursor for the latest AI message */}
-            {msg.role === 'ai' && idx === messages.length - 1 && (
-              <span className="typewriter-cursor inline-block ml-1 opacity-60"></span>
+            {msg.role === 'ai' && msg.status === 'thinking' ? (
+              <ThinkingDots />
+            ) : msg.role === 'ai' && msg.status === 'speaking' ? (
+              <Typewriter 
+                text={msg.content} 
+                duration={msg.audioDuration || 0} 
+              />
+            ) : (
+              msg.content
+            )}
+            
+            {/* Show typewriter cursor for the latest AI message if completed but latest */}
+            {msg.role === 'ai' && msg.status === 'done' && idx === messages.length - 1 && (
+               <span className="typewriter-cursor inline-block ml-1 opacity-60"></span>
             )}
           </div>
         </div>

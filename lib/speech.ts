@@ -285,7 +285,7 @@ export function preloadVoices(): void {
 
 export function speak(
   text: string,
-  onStart?: () => void,
+  onStart?: (duration?: number) => void,
   onEnd?: () => void
 ): void {
   // Use ElevenLabs with native fallback
@@ -297,7 +297,7 @@ export function speak(
  */
 function speakNative(
   text: string,
-  onStart?: () => void,
+  onStart?: (duration?: number) => void,
   onEnd?: () => void
 ): void {
   if (!isSpeechSynthesisSupported()) {
@@ -314,7 +314,12 @@ function speakNative(
   utterance.lang = 'en-US';
   utterance.rate = 1.0;
   
-  utterance.onstart = () => onStart?.();
+  utterance.onstart = () => {
+    // Estimate duration for native fallback: ~150 words per minute
+    const words = text.split(/\s+/).length;
+    const estimatedDuration = (words / 150) * 60;
+    onStart?.(estimatedDuration || 2);
+  };
   utterance.onend = () => onEnd?.();
   utterance.onerror = (e) => {
     if (e.error === 'interrupted' || e.error === 'canceled') {

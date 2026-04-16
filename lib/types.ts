@@ -7,6 +7,8 @@ export interface ConversationMessage {
   role: 'ai' | 'candidate';
   content: string;
   timestamp: string;
+  status?: 'thinking' | 'speaking' | 'done';
+  audioDuration?: number;
 }
 
 export interface DimensionScore {
@@ -59,4 +61,5 @@ export type InterviewAction =
   | { type: 'SET_FALLBACK_MODE'; payload: boolean }
   | { type: 'INCREMENT_ATTEMPTS' }
   | { type: 'RESET_ATTEMPTS' }
+  | { type: 'UPDATE_MESSAGE'; payload: { index: number; updates: Partial<ConversationMessage> } }
   | { type: 'RESET' };

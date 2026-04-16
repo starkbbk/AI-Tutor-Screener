@@ -24,6 +24,15 @@ function interviewReducer(state: InterviewState, action: InterviewAction): Inter
       return { ...state, candidate: action.payload };
     case 'ADD_MESSAGE':
       return { ...state, conversationHistory: [...state.conversationHistory, action.payload] };
+    case 'UPDATE_MESSAGE':
+      const newHistory = [...state.conversationHistory];
+      if (newHistory[action.payload.index]) {
+        newHistory[action.payload.index] = { 
+          ...newHistory[action.payload.index], 
+          ...action.payload.updates 
+        };
+      }
+      return { ...state, conversationHistory: newHistory };
     case 'SET_QUESTION_INDEX':
       return { ...state, currentQuestionIndex: action.payload };
     case 'SET_RECORDING':
@@ -57,6 +66,7 @@ interface InterviewContextType {
   state: InterviewState;
   setCandidate: (info: CandidateInfo) => void;
   addMessage: (msg: ConversationMessage) => void;
+  updateMessage: (index: number, updates: Partial<ConversationMessage>) => void;
   setQuestionIndex: (idx: number) => void;
   setRecording: (val: boolean) => void;
   setAISpeaking: (val: boolean) => void;
@@ -78,6 +88,7 @@ export function InterviewProvider({ children }: { children: ReactNode }) {
 
   const setCandidate = useCallback((info: CandidateInfo) => dispatch({ type: 'SET_CANDIDATE', payload: info }), []);
   const addMessage = useCallback((msg: ConversationMessage) => dispatch({ type: 'ADD_MESSAGE', payload: msg }), []);
+  const updateMessage = useCallback((index: number, updates: Partial<ConversationMessage>) => dispatch({ type: 'UPDATE_MESSAGE', payload: { index, updates } }), []);
   const setQuestionIndex = useCallback((idx: number) => dispatch({ type: 'SET_QUESTION_INDEX', payload: idx }), []);
   const setRecording = useCallback((val: boolean) => dispatch({ type: 'SET_RECORDING', payload: val }), []);
   const setAISpeaking = useCallback((val: boolean) => dispatch({ type: 'SET_AI_SPEAKING', payload: val }), []);
@@ -93,7 +104,7 @@ export function InterviewProvider({ children }: { children: ReactNode }) {
 
   return (
     <InterviewContext.Provider value={{
-      state, setCandidate, addMessage, setQuestionIndex, setRecording,
+      state, setCandidate, addMessage, updateMessage, setQuestionIndex, setRecording,
       setAISpeaking, setProcessing, startInterview, completeInterview,
       setAssessment, setStatus, setFallbackMode, incrementAttempts, resetAttempts, reset,
     }}>

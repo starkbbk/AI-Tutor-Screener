@@ -30,7 +30,11 @@ export async function speakWithElevenLabs(
     
     currentAudio = new Audio(audioUrl);
     
-    currentAudio.onplay = () => onStart?.();
+    currentAudio.onplay = () => {
+      // Provide duration when play starts
+      onStart?.(currentAudio?.duration || 0);
+    };
+    
     currentAudio.onended = () => {
       onEnd?.();
       URL.revokeObjectURL(audioUrl);
@@ -42,6 +46,7 @@ export async function speakWithElevenLabs(
       nativeFallback?.(text, onStart, onEnd);
     };
 
+    // Pre-load metadata if possible or just wait for play
     await currentAudio.play();
   } catch (error) {
     console.error("[ELEVENLABS] Integration error, falling back to native TTS:", error);
