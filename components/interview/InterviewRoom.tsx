@@ -373,7 +373,7 @@ export function InterviewRoom() {
         }
       }
       )
-    }, 300);
+    }, 50);
   }
 
   const handleCandidateSpeakingFinished = (transcript: string) => {
