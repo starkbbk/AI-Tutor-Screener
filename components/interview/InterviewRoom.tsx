@@ -538,22 +538,18 @@ export function InterviewRoom() {
         
         {/* Middle: Integrated Progress Bar */}
         {hasStarted && (
-          <div className="hidden md:flex flex-1 max-w-md flex-col items-center animate-in fade-in duration-1000">
-            <div className="flex justify-between items-center w-full mb-1 px-1">
-               <span className="text-[9px] font-black text-foreground/40 uppercase tracking-[0.15em] flex items-center">
-                  Interview Progress
-               </span>
-               <span className="text-[10px] font-bold text-brand-amber uppercase">
-                  Q{state.currentQuestionIndex + 1} of {TOTAL_QUESTIONS}
-               </span>
+          <div className="flex flex-col items-center flex-1 max-w-[200px] sm:max-w-md mx-4">
+            <div className="flex justify-between w-full mb-1.5 px-1 items-end">
+              <span className="text-[7px] sm:text-[9px] font-black text-foreground uppercase tracking-[0.2em] opacity-40">Interview Progress</span>
+              <span className="text-[8px] sm:text-[10px] font-black text-muted-foreground uppercase opacity-80">
+                {`Q${Math.min(state.currentQuestionIndex + 1, TOTAL_QUESTIONS)} of ${TOTAL_QUESTIONS}`}
+              </span>
             </div>
-            <div className="h-1.5 w-full bg-muted/50 rounded-full overflow-hidden border border-border/20 p-[0.5px]">
+            <div className="w-full h-1 bg-muted/30 rounded-full overflow-hidden border border-border/50">
               <div 
-                className="h-full bg-[#FFBA07] rounded-full transition-all duration-1000 ease-in-out shadow-[0_0_10px_rgba(255,184,7,0.3)] relative overflow-hidden"
-                style={{ width: `${((state.currentQuestionIndex + 1) / TOTAL_QUESTIONS) * 100}%` }}
-              >
-                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer" style={{ backgroundSize: '200% 100%' }} />
-              </div>
+                className="h-full bg-brand-amber transition-all duration-1000 ease-out shadow-[0_0_8px_rgba(255,159,28,0.4)]"
+                style={{ width: `${Math.min(((state.currentQuestionIndex + 1) / TOTAL_QUESTIONS) * 100, 100)}%` }}
+              />
             </div>
           </div>
         )}
@@ -564,7 +560,7 @@ export function InterviewRoom() {
           {hasStarted && (
             <div className="md:hidden flex items-center bg-brand-amber/10 border border-brand-amber/20 px-2 py-1.5 rounded-lg mr-1.5">
               <span className="text-[9px] font-black text-brand-amber whitespace-nowrap">
-                Q{state.currentQuestionIndex + 1}/{TOTAL_QUESTIONS}
+                Q{Math.min(state.currentQuestionIndex + 1, TOTAL_QUESTIONS)}/{TOTAL_QUESTIONS}
               </span>
             </div>
           )}
