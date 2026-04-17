@@ -1,8 +1,12 @@
-"use client"
-
 import { Globe, Compass, Info } from "lucide-react"
+import { usePathname } from "next/navigation"
 
 export function BrowserTip() {
+  const pathname = usePathname();
+  
+  // Hide on interview page to keep it clean
+  if (pathname === '/interview') return null;
+
   return (
     <div className="fixed bottom-6 right-6 z-50 animate-in fade-in slide-in-from-right-6 duration-1000 hidden sm:flex">
       <div className="glass-card px-6 py-4 rounded-[1.5rem] border-brand-cyan/20 flex items-center space-x-4 shadow-2xl shadow-brand-cyan/10 group hover:border-brand-cyan/40 transition-all duration-300 transform hover:scale-[1.02]">
