@@ -125,6 +125,11 @@
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    user-select: none; /* Disable selection globally */
+  }
+
+  input, textarea {
+    user-select: auto; /* Re-enable for inputs so typing still works normally */
   }
 }
 
