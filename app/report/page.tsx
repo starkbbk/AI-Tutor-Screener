@@ -13,7 +13,7 @@ import { DimensionCard } from "@/components/report/DimensionCard"
 import { StrengthsCard } from "@/components/report/StrengthsCard"
 import { TranscriptAccordion } from "@/components/report/TranscriptAccordion"
 import { ThemeToggle } from "@/components/ui/theme-toggle"
-import { formatDuration, formatDate, generatePDF } from "@/lib/utils"
+import { cn, formatDuration, formatDate, generatePDF } from "@/lib/utils"
 import { DIMENSION_LABELS, DIMENSION_ICONS } from "@/lib/constants"
 import { AssessmentResult } from "@/lib/types"
 
@@ -186,10 +186,21 @@ export default function ReportPage() {
               </div>
             </div>
             
-            <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-8 p-4 sm:p-8 bg-background/50 rounded-2xl sm:rounded-[2rem] border border-border text-xs sm:text-sm shadow-inner">
+            <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6 p-4 sm:p-8 bg-background/50 rounded-2xl sm:rounded-[2rem] border border-border text-xs sm:text-sm shadow-inner">
               <div className="space-y-1">
                 <p className="text-muted-foreground uppercase tracking-widest text-[8px] sm:text-[9px] font-black opacity-60">Candidate</p>
                 <p className="font-extrabold text-foreground text-base sm:text-lg tracking-tight">{state.candidate.name}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-muted-foreground uppercase tracking-widest text-[8px] sm:text-[9px] font-black opacity-60">Interview Mode</p>
+                <p className={cn(
+                  "font-black uppercase tracking-wider text-[10px] sm:text-xs px-2 py-0.5 rounded-full border inline-block",
+                  state.useFallbackMode 
+                    ? "bg-brand-cyan/10 text-brand-cyan border-brand-cyan/20" 
+                    : "bg-brand-amber/10 text-brand-amber border-brand-amber/20"
+                )}>
+                  {state.useFallbackMode ? "Interactive Chat" : "Voice Mode"}
+                </p>
               </div>
               <div className="space-y-1">
                 <p className="text-muted-foreground uppercase tracking-widest text-[8px] sm:text-[9px] font-black opacity-60">Authentication</p>
