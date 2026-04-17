@@ -36,12 +36,12 @@ The candidate visits the website → speaks naturally with the AI interviewer �
 |---|---|---|
 | **Availability** | Business hours only | 24/7, any timezone |
 | **Speed** | 3-5 days to schedule | Instant — click and start |
-| **Cost per interview** | ₹200-500 (interviewer salary) | Near-zero marginal cost |
+| **Cost per interview** | Resource-intensive human effort | Near-zero marginal cost |
 | **Daily capacity** | 20-30 candidates | Unlimited |
 | **Consistency** | Varies by interviewer mood | Same standard every time |
 | **Bias** | Unconscious human bias | Objective scoring rubric |
 | **Report generation** | Manual notes, subjective | Auto-generated, evidence-based |
-| **Scaling** | Hire more interviewers | Scale infrastructure horizontally with additional API capacity |
+| **Scaling** | Scale by increasing human resources | Scale infrastructure horizontally with additional API capacity |
 
 ### 💸 The Economics
 > **Traditional screening:**
