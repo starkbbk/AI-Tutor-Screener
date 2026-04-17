@@ -26,7 +26,7 @@ export default function InterviewPage() {
   if (!mounted || !state.candidate) return null
 
   return (
-    <div className="min-h-screen bg-background cuemath-grid p-2 flex items-center justify-center no-select overflow-hidden">
+    <div className="min-h-screen bg-background cuemath-grid p-1.5 sm:p-2 flex items-center justify-center no-select overflow-hidden">
       <div className="w-full h-full flex items-center justify-center relative">
         <div className="absolute top-[10%] left-[10%] w-[40%] h-[40%] bg-brand-cyan/5 rounded-full blur-[150px] pointer-events-none" />
 

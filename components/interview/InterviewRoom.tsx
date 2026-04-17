@@ -519,7 +519,7 @@ export function InterviewRoom() {
 
 
   return (
-    <div className="flex flex-col h-[calc(100dvh-20px)] w-[calc(100vw-80px)] max-w-7xl mx-auto glass-card rounded-[1rem] sm:rounded-[2rem] shadow-2xl overflow-hidden relative ring-1 ring-border mt-0">
+    <div className="flex flex-col h-[calc(100dvh-20px)] w-[calc(100vw-12px)] sm:w-[calc(100vw-80px)] max-w-7xl mx-auto glass-card rounded-[1rem] sm:rounded-[2rem] shadow-2xl overflow-hidden relative ring-1 ring-border mt-0">
       
       {/* Live Indicator */}
       {hasStarted && state.interviewStatus === 'in_progress' && (
@@ -559,7 +559,16 @@ export function InterviewRoom() {
         )}
 
         {/* Right: Tools */}
-        <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
+        <div className="flex items-center space-x-1.5 sm:space-x-4 flex-shrink-0">
+          {/* Mobile-only Progress Badge */}
+          {hasStarted && (
+            <div className="md:hidden flex items-center bg-brand-amber/10 border border-brand-amber/20 px-2 py-1.5 rounded-lg mr-1.5">
+              <span className="text-[9px] font-black text-brand-amber whitespace-nowrap">
+                Q{state.currentQuestionIndex + 1}/{TOTAL_QUESTIONS}
+              </span>
+            </div>
+          )}
+          
           <div className="hidden xs:flex items-center">
             <VoiceAvatar />
           </div>
@@ -617,33 +626,33 @@ export function InterviewRoom() {
         />
         
         {!hasStarted && (
-          <div className="absolute inset-0 z-50 flex items-center justify-center p-4 sm:p-10 bg-background/40 backdrop-blur-md animate-in fade-in duration-500">
-            <div className="glass-card max-w-md w-full p-8 sm:p-12 rounded-[2.5rem] shadow-2xl border-brand-amber/20 flex flex-col items-center text-center">
-              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-brand-cyan/10 rounded-full flex items-center justify-center mb-6 border border-brand-cyan/20">
+          <div className="absolute inset-0 z-50 flex items-center justify-center p-3 sm:p-10 bg-background/40 backdrop-blur-md animate-in fade-in duration-500 overflow-y-auto">
+            <div className="glass-card max-w-md w-full p-6 sm:p-12 rounded-[1.5rem] sm:rounded-[2.5rem] shadow-2xl border-brand-amber/20 flex flex-col items-center text-center">
+              <div className="w-12 h-12 sm:w-20 sm:h-20 bg-brand-cyan/10 rounded-full flex items-center justify-center mb-4 sm:mb-6 border border-brand-cyan/20">
                 {state.useFallbackMode ? (
-                  <Send className="w-8 h-8 sm:w-10 sm:h-10 text-brand-cyan" />
+                  <Send className="w-6 h-6 sm:w-10 sm:h-10 text-brand-cyan" />
                 ) : (
-                  <Volume2 className="w-8 h-8 sm:w-10 sm:h-10 text-brand-cyan" />
+                  <Volume2 className="w-6 h-6 sm:w-10 sm:h-10 text-brand-cyan" />
                 )}
               </div>
               
-              <h2 className="text-2xl sm:text-3xl font-black text-foreground tracking-tight mb-4 uppercase">
+              <h2 className="text-xl sm:text-3xl font-black text-foreground tracking-tight mb-2 sm:mb-4 uppercase">
                 {state.useFallbackMode ? "Interactive Chat" : "Phone Call Mode"}
               </h2>
-              <p className="text-sm sm:text-base text-muted-foreground font-medium mb-8 leading-relaxed">
+              <p className="text-xs sm:text-base text-muted-foreground font-medium mb-6 sm:mb-8 leading-relaxed max-w-[280px] sm:max-w-none">
                 {state.useFallbackMode 
                   ? "This interview works like a real-time chat. The AI will send questions, and you can type your responses naturally."
                   : "This interview works like a real call. The AI will speak, and you just talk back naturally. No buttons to press."
                 }
               </p>
               
-              <div className="w-full space-y-3 mb-10">
-                <div className="flex items-center text-[10px] font-bold text-muted-foreground uppercase tracking-widest bg-muted/30 p-3 rounded-xl border border-border">
-                  <div className="w-2 h-2 rounded-full bg-brand-cyan mr-3 animate-pulse" />
+              <div className="w-full space-y-2 sm:space-y-3 mb-8 sm:mb-10">
+                <div className="flex items-center text-[9px] sm:text-[10px] font-bold text-muted-foreground uppercase tracking-widest bg-muted/30 p-2.5 sm:p-3 rounded-lg sm:rounded-xl border border-border">
+                  <div className="w-2 h-2 rounded-full bg-brand-cyan mr-2.5 sm:mr-3 animate-pulse" />
                   AI sends questions
                 </div>
-                <div className="flex items-center text-[10px] font-bold text-muted-foreground uppercase tracking-widest bg-muted/30 p-3 rounded-xl border border-border">
-                  <div className="w-2 h-2 rounded-full bg-red-500 mr-3 animate-pulse" />
+                <div className="flex items-center text-[9px] sm:text-[10px] font-bold text-muted-foreground uppercase tracking-widest bg-muted/30 p-2.5 sm:p-3 rounded-lg sm:rounded-xl border border-border">
+                  <div className="w-2 h-2 rounded-full bg-red-500 mr-2.5 sm:mr-3 animate-pulse" />
                   You respond {state.useFallbackMode ? "via text" : "next"}
                 </div>
               </div>

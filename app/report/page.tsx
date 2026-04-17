@@ -186,10 +186,10 @@ export default function ReportPage() {
               </div>
             </div>
             
-            <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6 p-4 sm:p-8 bg-background/50 rounded-2xl sm:rounded-[2rem] border border-border text-xs sm:text-sm shadow-inner">
+            <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-y-6 gap-x-4 sm:gap-6 p-5 sm:p-8 bg-background/50 rounded-2xl sm:rounded-[2rem] border border-border text-xs sm:text-sm shadow-inner">
               <div className="space-y-1">
                 <p className="text-muted-foreground uppercase tracking-widest text-[8px] sm:text-[9px] font-black opacity-60">Candidate</p>
-                <p className="font-extrabold text-foreground text-base sm:text-lg tracking-tight">{state.candidate.name}</p>
+                <p className="font-extrabold text-foreground text-sm sm:text-lg tracking-tight truncate">{state.candidate.name}</p>
               </div>
               <div className="space-y-1">
                 <p className="text-muted-foreground uppercase tracking-widest text-[8px] sm:text-[9px] font-black opacity-60">Interview Mode</p>
