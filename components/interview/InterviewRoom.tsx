@@ -525,17 +525,41 @@ export function InterviewRoom() {
       )}
       
       {/* Top Header */}
-      <div className="flex items-center justify-between p-2.5 sm:p-8 glass-header z-30">
-        <div className="flex items-center space-x-1 sm:space-x-4">
-          <Image src="/cuemath-logo.svg" alt="Cuemath" width={80} height={24} className="xs:w-[100px] sm:w-[140px] sm:h-[40px] opacity-90 transition-opacity hover:opacity-100" />
+      <div className="flex items-center justify-between p-2.5 sm:p-6 glass-header z-30 space-x-4">
+        {/* Left: Logo */}
+        <div className="flex-shrink-0">
+          <Image src="/cuemath-logo.svg" alt="Cuemath" width={80} height={24} className="xs:w-[80px] sm:w-[120px] sm:h-[32px] opacity-90" />
         </div>
         
-        <div className="flex items-center space-x-2 sm:space-x-4">
+        {/* Middle: Integrated Progress Bar */}
+        {hasStarted && (
+          <div className="hidden md:flex flex-1 max-w-md flex-col items-center animate-in fade-in duration-1000">
+            <div className="flex justify-between items-center w-full mb-1 px-1">
+               <span className="text-[9px] font-black text-foreground/40 uppercase tracking-[0.15em] flex items-center">
+                  Interview Progress
+               </span>
+               <span className="text-[10px] font-bold text-brand-amber uppercase">
+                  Q{state.currentQuestionIndex + 1} of {TOTAL_QUESTIONS}
+               </span>
+            </div>
+            <div className="h-1.5 w-full bg-muted/50 rounded-full overflow-hidden border border-border/20 p-[0.5px]">
+              <div 
+                className="h-full bg-[#FFBA07] rounded-full transition-all duration-1000 ease-in-out shadow-[0_0_10px_rgba(255,184,7,0.3)] relative overflow-hidden"
+                style={{ width: `${((state.currentQuestionIndex + 1) / TOTAL_QUESTIONS) * 100}%` }}
+              >
+                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer" style={{ backgroundSize: '200% 100%' }} />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Right: Tools */}
+        <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
           <div className="hidden xs:flex items-center">
             <VoiceAvatar />
           </div>
           <div className={cn(
-            "flex items-center font-mono text-[9px] sm:text-sm tracking-widest bg-muted/50 px-1.5 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl border border-border whitespace-nowrap transition-all duration-500",
+            "flex items-center font-mono text-[9px] sm:text-sm tracking-widest bg-muted/50 px-1.5 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl border border-border whitespace-nowrap",
             timeLeft < 60 ? "text-red-500 animate-pulse-red" : timeLeft < 240 ? "text-brand-amber" : "text-muted-foreground"
           )}>
             <Clock className={cn(
@@ -571,29 +595,6 @@ export function InterviewRoom() {
                 </button>
               </div>
             )}
-          </div>
-        </div>
-      </div>
-
-      {/* Modern Progress Bar - Sticky below header */}
-      <div className="px-3 sm:px-10 pb-4 pt-2 animate-in fade-in slide-in-from-top-4 duration-1000 sticky top-[60px] sm:top-[120px] bg-background/50 backdrop-blur-md z-20 border-b border-border/10">
-        <div className="glass-card p-2.5 sm:p-4 rounded-xl sm:rounded-2xl border-border/50 bg-background/20">
-          <div className="flex justify-between items-center mb-2 sm:mb-3">
-            <span className="text-[9px] sm:text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] flex items-center">
-              <span className="w-1.5 h-1.5 rounded-full bg-brand-amber mr-2 animate-pulse" />
-              Interview Progress
-            </span>
-            <span className="text-[10px] sm:text-xs font-bold text-brand-amber uppercase tracking-tight">
-              Question <span className="text-foreground">{Math.min(state.currentQuestionIndex + 1, TOTAL_QUESTIONS)}</span> of {TOTAL_QUESTIONS}
-            </span>
-          </div>
-          <div className="h-1.5 sm:h-2 w-full bg-muted/50 rounded-full overflow-hidden border border-border/20 p-[1px]">
-            <div 
-              className="h-full bg-[#FFBA07] rounded-full transition-all duration-1000 ease-in-out shadow-[0_0_15px_rgba(255,184,7,0.4)] relative overflow-hidden"
-              style={{ width: `${((state.currentQuestionIndex + 1) / TOTAL_QUESTIONS) * 100}%` }}
-            >
-               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer" style={{ backgroundSize: '200% 100%' }} />
-            </div>
           </div>
         </div>
       </div>
