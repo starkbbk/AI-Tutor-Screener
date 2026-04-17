@@ -45,13 +45,13 @@ The candidate visits the website → speaks naturally with the AI interviewer �
 
 ### 💸 The Economics
 > **Traditional screening:**
-> 500 candidates/month × ~₹200–₹500 per interview ≈ **₹1–2.5 lakh/month**
+> Involves significant human effort and coordination, making it time-consuming and harder to scale as candidate volume increases.
 
 > **AI-powered screening:**
-> Near-zero marginal cost per interview
+> Enables near-instant interviews with minimal marginal cost per candidate.
 
 > **Result:**
-> **~99%+ cost reduction with infinite scalability**
+> A more scalable, consistent, and operationally efficient screening process.
 
 ---
 
