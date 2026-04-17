@@ -530,7 +530,7 @@ export function InterviewRoom() {
       )}
       
       {/* Top Header */}
-      <div className="flex items-center justify-between p-2.5 sm:p-6 glass-header z-30 space-x-4">
+      <div className="flex items-center justify-between p-2.5 sm:p-6 glass-header z-[60] space-x-4">
         {/* Left: Logo */}
         <div className="flex-shrink-0">
           <Image src="/cuemath-logo.svg" alt="Cuemath" width={80} height={24} className="xs:w-[80px] sm:w-[120px] sm:h-[32px] opacity-90" />
