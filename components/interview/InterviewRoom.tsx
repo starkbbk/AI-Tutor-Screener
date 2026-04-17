@@ -730,7 +730,7 @@ export function InterviewRoom() {
           </div>
         )}
         
-        {state.interviewStatus !== 'completing' && state.useFallbackMode && (
+        {state.interviewStatus !== 'completing' && state.useFallbackMode && hasStarted && (
            <form onSubmit={handleTextSubmit} className="flex space-x-2 sm:space-x-4 max-w-3xl w-full mx-auto my-4">
               <Input 
                 value={textInput}
