@@ -6,8 +6,9 @@ import { usePathname } from "next/navigation"
 export function BrowserTip() {
   const pathname = usePathname();
   
-  // Hide on interview page to keep it clean
-  if (pathname === '/interview') return null;
+  // Only show on landing page and mic-test page
+  const allowedPaths = ['/', '/mic-test'];
+  if (!allowedPaths.includes(pathname)) return null;
 
   return (
     <div className="fixed bottom-6 right-6 z-50 animate-in fade-in slide-in-from-right-6 duration-1000 hidden sm:flex">
