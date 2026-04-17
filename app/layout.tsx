@@ -3,6 +3,7 @@ import { Lexend } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { InterviewProvider } from "@/context/InterviewContext";
+import { MobileNotice } from "@/components/ui/MobileNotice";
 import "./globals.css";
 
 const lexend = Lexend({
@@ -38,6 +39,7 @@ export default function RootLayout({
           storageKey="cuemath-theme"
         >
           <InterviewProvider>
+            <MobileNotice />
             {children}
           </InterviewProvider>
 
