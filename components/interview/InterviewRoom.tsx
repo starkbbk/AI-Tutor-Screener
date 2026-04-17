@@ -514,7 +514,7 @@ export function InterviewRoom() {
 
 
   return (
-    <div className="flex flex-col h-[calc(100dvh-120px)] sm:h-[calc(100vh-140px)] max-w-5xl mx-auto glass-card rounded-[1.5rem] sm:rounded-[3rem] shadow-2xl overflow-hidden relative ring-1 ring-border mt-2 sm:mt-4">
+    <div className="flex flex-col h-dvh w-full glass-card rounded-none border-none shadow-none overflow-hidden relative z-40">
       
       {/* Live Indicator */}
       {hasStarted && state.interviewStatus === 'in_progress' && (
