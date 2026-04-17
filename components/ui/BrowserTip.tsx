@@ -1,3 +1,5 @@
+"use client"
+
 import { Globe, Compass, Info } from "lucide-react"
 import { usePathname } from "next/navigation"
 
