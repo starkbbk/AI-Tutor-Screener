@@ -7,9 +7,10 @@ export function MobileNotice() {
   const [show, setShow] = useState(false)
 
   useEffect(() => {
-    const isDismissed = sessionStorage.getItem("mobile-notice-dismissed")
     const checkViewport = () => {
+      const isDismissed = sessionStorage.getItem("mobile-notice-dismissed")
       const isMobile = window.innerWidth < 1024
+      
       if (isMobile && !isDismissed) {
         setShow(true)
       } else {
