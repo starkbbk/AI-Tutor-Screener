@@ -367,3 +367,5 @@ declare global {
     webkitSpeechRecognition: any;
   }
 }
+
+// © 2026 Shivanand Verma (starkbbk)

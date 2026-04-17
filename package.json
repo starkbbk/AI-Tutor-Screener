@@ -1,5 +1,6 @@
 {
   "name": "cuemath-screener",
+  "author": "Shivanand Verma (starkbbk)",
   "version": "0.1.0",
   "private": true,
   "scripts": {

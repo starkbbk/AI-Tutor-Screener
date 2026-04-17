@@ -134,3 +134,6 @@ export function getRecommendationColor(rec: string) {
     default: return SCORE_COLORS.average;
   }
 }
+
+// © 2026 Shivanand Verma (starkbbk)
+

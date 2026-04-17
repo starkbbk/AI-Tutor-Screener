@@ -141,3 +141,6 @@ async function callGroq(apiKey: string, messages: Message[], options: AIServiceO
 function getRandomFriendlyError() {
   return FRIENDLY_ERROR_MESSAGES[Math.floor(Math.random() * FRIENDLY_ERROR_MESSAGES.length)];
 }
+
+// © 2026 Shivanand Verma (starkbbk)
+
