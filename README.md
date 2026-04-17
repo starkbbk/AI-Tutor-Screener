@@ -6,6 +6,12 @@
 
 🔗 **Live Demo:** [ai-tutor-screener-tau.vercel.app](https://ai-tutor-screener-tau.vercel.app)
 
+## 🚀 Quick Demo
+
+![Demo](./public/demo.gif)
+
+Landing → Mic Test → AI Interview → Report
+
 ---
 
 ## 🎯 The Problem
