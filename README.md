@@ -368,6 +368,7 @@ Built by **Shivanand Verma** as part of the **Cuemath AI Builder Challenge** —
 
 ---
 
-## 📄 License
-
-MIT License. Built for Cuemath Tutor Screening.
+## ⚠️ License
+This project is protected under a custom license.
+Unauthorized copying or reuse of this code is strictly prohibited.
+© 2026 Shivanand Verma
