@@ -4,6 +4,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { InterviewProvider } from "@/context/InterviewContext";
 import { MobileNotice } from "@/components/ui/MobileNotice";
+import { BrowserTip } from "@/components/ui/BrowserTip";
 import "./globals.css";
 
 const lexend = Lexend({
@@ -40,6 +41,7 @@ export default function RootLayout({
         >
           <InterviewProvider>
             <MobileNotice />
+            <BrowserTip />
             {children}
           </InterviewProvider>
 
