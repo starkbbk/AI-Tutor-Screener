@@ -736,6 +736,9 @@ export function InterviewRoom() {
                 value={textInput}
                 onChange={(e) => setTextInput(e.target.value)}
                 placeholder="Type your response..."
+                onPaste={(e) => e.preventDefault()}
+                onCopy={(e) => e.preventDefault()}
+                onCut={(e) => e.preventDefault()}
                 className="flex-1 bg-background border-border h-12 sm:h-16 rounded-xl sm:rounded-[1.5rem] text-base sm:text-lg px-4 sm:px-8 focus:ring-2 focus:ring-brand-amber/30 transition-all font-light"
                 disabled={state.isProcessing || state.isAISpeaking}
               />
