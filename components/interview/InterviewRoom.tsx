@@ -615,22 +615,31 @@ export function InterviewRoom() {
           <div className="absolute inset-0 z-50 flex items-center justify-center p-4 sm:p-10 bg-background/40 backdrop-blur-md animate-in fade-in duration-500">
             <div className="glass-card max-w-md w-full p-8 sm:p-12 rounded-[2.5rem] shadow-2xl border-brand-amber/20 flex flex-col items-center text-center">
               <div className="w-16 h-16 sm:w-20 sm:h-20 bg-brand-cyan/10 rounded-full flex items-center justify-center mb-6 border border-brand-cyan/20">
-                <Volume2 className="w-8 h-8 sm:w-10 sm:h-10 text-brand-cyan" />
+                {state.useFallbackMode ? (
+                  <Send className="w-8 h-8 sm:w-10 sm:h-10 text-brand-cyan" />
+                ) : (
+                  <Volume2 className="w-8 h-8 sm:w-10 sm:h-10 text-brand-cyan" />
+                )}
               </div>
               
-              <h2 className="text-2xl sm:text-3xl font-black text-foreground tracking-tight mb-4 uppercase">Phone Call Mode</h2>
+              <h2 className="text-2xl sm:text-3xl font-black text-foreground tracking-tight mb-4 uppercase">
+                {state.useFallbackMode ? "Interactive Chat" : "Phone Call Mode"}
+              </h2>
               <p className="text-sm sm:text-base text-muted-foreground font-medium mb-8 leading-relaxed">
-                This interview works like a real call. The AI will speak, and you just talk back naturally. No buttons to press.
+                {state.useFallbackMode 
+                  ? "This interview works like a real-time chat. The AI will send questions, and you can type your responses naturally."
+                  : "This interview works like a real call. The AI will speak, and you just talk back naturally. No buttons to press."
+                }
               </p>
               
               <div className="w-full space-y-3 mb-10">
                 <div className="flex items-center text-[10px] font-bold text-muted-foreground uppercase tracking-widest bg-muted/30 p-3 rounded-xl border border-border">
                   <div className="w-2 h-2 rounded-full bg-brand-cyan mr-3 animate-pulse" />
-                  AI speaks first
+                  AI sends questions
                 </div>
                 <div className="flex items-center text-[10px] font-bold text-muted-foreground uppercase tracking-widest bg-muted/30 p-3 rounded-xl border border-border">
                   <div className="w-2 h-2 rounded-full bg-red-500 mr-3 animate-pulse" />
-                  You speak next
+                  You respond {state.useFallbackMode ? "via text" : "next"}
                 </div>
               </div>
               
