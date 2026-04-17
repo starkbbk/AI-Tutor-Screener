@@ -30,5 +30,4 @@ export default function InterviewPage() {
       <InterviewRoom />
     </div>
   )
-  )
 }
