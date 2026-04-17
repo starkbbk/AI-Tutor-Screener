@@ -351,7 +351,10 @@ export function InterviewRoom() {
     setLastTranscriptUpdate(Date.now()); // Reset timer
     isProcessingQuestion.current = false
     
-    // Safety buffer for audio hardware to switch modes (internal)
+    // Adaptive safety buffer: 500ms for mobile hardware stability, 10ms for instant desktop feel
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 1024;
+    const handoffDelay = isMobile ? 500 : 10;
+    
     setTimeout(() => {
       startListening(
       (result: SpeechRecognitionResult) => {
@@ -373,7 +376,7 @@ export function InterviewRoom() {
         }
       }
       )
-    }, 500);
+    }, handoffDelay);
   }
 
   const handleCandidateSpeakingFinished = (transcript: string) => {
