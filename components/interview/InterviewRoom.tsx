@@ -259,6 +259,7 @@ export function InterviewRoom() {
       updateMessage(msgId, { status: 'speaking', audioDuration: 2 }); // Brief fake duration
       setTimeout(() => {
         updateMessage(msgId, { status: 'done' });
+        isProcessingQuestion.current = false; // CRITICAL: Reset guard for next question
         checkIfInterviewComplete(text)
       }, 2000) 
     }
