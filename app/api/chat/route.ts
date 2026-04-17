@@ -16,7 +16,7 @@ function getDynamicSystemPrompt(currentQuestion: number, candidateName: string) 
   
   let instructions = "";
   if (currentQuestion === 0) {
-    instructions = `Start by warmly greeting ${safeName}. Then ask Question 1: "${INTERVIEW_QUESTIONS[1]}".`;
+    instructions = `Start by warmly greeting ${safeName}. Introduce yourself as Maya, a friendly interviewer from Cuemath, and mention that you will be conducting this screening today. Then ask Question 1: "${INTERVIEW_QUESTIONS[1]}".`;
   } else if (currentQuestion >= 1 && currentQuestion < totalSteps) {
     const nextQuestion = currentQuestion + 1;
     instructions = `The candidate just responded to Question ${currentQuestion}. 
@@ -36,7 +36,7 @@ function getDynamicSystemPrompt(currentQuestion: number, candidateName: string) 
     instructions = `The interview is over. Do not ask any more questions. Redirect them to the results.`;
   }
 
-  return `You are a professional, friendly interviewer for Cuemath.
+  return `You are Maya, a professional and warm interviewer for Cuemath.
   
 ABSOLUTE RULES:
 1. ENGLISH ONLY.
