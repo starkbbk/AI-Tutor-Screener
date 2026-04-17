@@ -111,7 +111,8 @@ export function InterviewRoom() {
   // Silence timer logic
   useEffect(() => {
     let interval: NodeJS.Timeout;
-    if (state.isRecording && !state.isProcessing && !state.isAISpeaking) {
+    // CRITICAL: Disable silence timer in fallback/text mode
+    if (state.isRecording && !state.isProcessing && !state.isAISpeaking && !state.useFallbackMode) {
       interval = setInterval(() => {
         const timeSinceLastUpdate = Date.now() - lastTranscriptUpdate;
         
@@ -139,7 +140,7 @@ export function InterviewRoom() {
       setSilenceCountdown(null);
     }
     return () => clearInterval(interval);
-  }, [state.isRecording, currentTranscript, lastTranscriptUpdate, state.isProcessing, state.isAISpeaking]);
+  }, [state.isRecording, currentTranscript, lastTranscriptUpdate, state.isProcessing, state.isAISpeaking, state.useFallbackMode]);
 
   // SAFETY NET: Auto-revive mic if handoff was missed
   useEffect(() => {
@@ -343,6 +344,9 @@ export function InterviewRoom() {
 
   const handleStartListening = () => {
     if (state.interviewStatus === 'completing' || state.interviewStatus === 'completed' || state.isRecording) return;
+    
+    // CRITICAL: Never turn on mic in fallback/text mode
+    if (state.useFallbackMode) return;
 
     stopSpeaking()
     setAISpeaking(false)
@@ -655,7 +659,7 @@ export function InterviewRoom() {
         )}
 
         {/* Real-time Status Area */}
-        {hasStarted && state.interviewStatus !== 'completing' && (
+        {hasStarted && state.interviewStatus !== 'completing' && !state.useFallbackMode && (
           <div className="mt-auto pt-10 pb-2 flex flex-col items-center animate-in fade-in slide-in-from-bottom-5 duration-500">
              {state.isAISpeaking ? (
                 <div className="flex flex-col items-center">
