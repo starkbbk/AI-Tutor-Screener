@@ -16,12 +16,15 @@ function getDynamicSystemPrompt(currentQuestion: number, candidateName: string) 
   
   let instructions = "";
   if (currentQuestion === 0) {
-    instructions = `Start by warmly greeting ${safeName}. Introduce yourself as Maya, a friendly interviewer from Cuemath, and mention that you will be conducting this screening today. Then ask Question 1: "${INTERVIEW_QUESTIONS[1]}".`;
+    instructions = `Start by warmly greeting ${safeName}. Introduce yourself as Maya, a friendly interviewer from Cuemath, and mention that you will be conducting this screening today. 
+    Then, say: "Let's start with your first question," and ask Question 1: "${INTERVIEW_QUESTIONS[1]}".`;
   } else if (currentQuestion >= 1 && currentQuestion < totalSteps) {
     const nextQuestion = currentQuestion + 1;
+    const transition = nextQuestion === 6 ? "Lastly, for our final question..." : "Moving to our next question...";
+    
     instructions = `The candidate just responded to Question ${currentQuestion}. 
     1. Briefly acknowledge their response (1 short sentence max).
-    2. IMMEDIATELY move to Question ${nextQuestion}: "${INTERVIEW_QUESTIONS[nextQuestion]}".
+    2. Then, use this transition: "${transition}" and immediately ask Question ${nextQuestion}: "${INTERVIEW_QUESTIONS[nextQuestion]}".
     
     STRICT RULES:
     - NEVER repeat Question ${currentQuestion} or any related follow-ups.
