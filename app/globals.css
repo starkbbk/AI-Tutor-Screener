@@ -14,7 +14,7 @@
   --card-foreground: #0A0A0A;
   
   --border: #E5E7EB;
-  --grid-color: rgba(0, 33, 71, 0.05); /* Navy grid for light mode */
+  --grid-color: rgba(0, 33, 71, 0.15); /* Darker navy grid for light mode */
   --glass-bg: rgba(255, 255, 255, 0.7);
   --glass-border: rgba(0, 33, 71, 0.1);
 }
@@ -27,7 +27,7 @@
   --card-foreground: #ffffff;
   
   --border: #1F2937;
-  --grid-color: rgba(255, 255, 255, 0.03); /* White grid for dark mode */
+  --grid-color: rgba(255, 255, 255, 0.13); /* Brighter white grid for dark mode */
   --glass-bg: rgba(255, 255, 255, 0.03);
   --glass-border: rgba(255, 255, 255, 0.1);
 }
@@ -54,12 +54,12 @@
     background-image: 
       linear-gradient(var(--grid-color) 1px, transparent 1px),
       linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
-    background-size: 40px 40px;
+    background-size: 100px 100px;
   }
   
   @media (max-width: 640px) {
     .cuemath-grid {
-      background-size: 25px 25px;
+      background-size: 50px 50px;
     }
   }
   
