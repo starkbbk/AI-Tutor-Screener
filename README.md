@@ -320,8 +320,7 @@ Open [http://localhost:3000](http://localhost:3000)
 6. **Multi-language support** — Hindi and regional languages
 7. **Analytics dashboard** — completion rates, average scores, drop-off analysis
 8. **Audio recording** — store voice recordings alongside transcripts
-9. **Streaming TTS** — ElevenLabs streaming for even faster response
-10. **Candidate comparison** — compare two candidates side-by-side
+9. **Candidate comparison** — compare two candidates side-by-side
 
 ---
 
