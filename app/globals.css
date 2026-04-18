@@ -15,7 +15,6 @@
   
   --border: #E5E7EB;
   --grid-color: rgba(0, 33, 71, 0.15); /* Darker navy grid for light mode */
-  --sub-grid-color: rgba(0, 33, 71, 0.03); /* Subtle sub-grid */
   --glass-bg: rgba(255, 255, 255, 0.7);
   --glass-border: rgba(0, 33, 71, 0.1);
 }
@@ -29,7 +28,6 @@
   
   --border: #1F2937;
   --grid-color: rgba(255, 255, 255, 0.13); /* Brighter white grid for dark mode */
-  --sub-grid-color: rgba(255, 255, 255, 0.02); /* Subtle sub-grid */
   --glass-bg: rgba(255, 255, 255, 0.03);
   --glass-border: rgba(255, 255, 255, 0.1);
 }
@@ -54,19 +52,14 @@
 @layer utilities {
   .cuemath-grid {
     background-image: 
-      /* Main Grid */
       linear-gradient(var(--grid-color) 1px, transparent 1px),
-      linear-gradient(90deg, var(--grid-color) 1px, transparent 1px),
-      /* Micro Grid */
-      linear-gradient(var(--sub-grid-color) 1px, transparent 1px),
-      linear-gradient(90deg, var(--sub-grid-color) 1px, transparent 1px);
-    background-size: 60px 60px, 60px 60px, 15px 15px, 15px 15px;
-    background-attachment: fixed;
+      linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+    background-size: 60px 60px;
   }
   
   @media (max-width: 640px) {
     .cuemath-grid {
-      background-size: 40px 40px, 40px 40px, 10px 10px, 10px 10px;
+      background-size: 30px 30px;
     }
   }
   
