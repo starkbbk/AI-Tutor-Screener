@@ -638,7 +638,7 @@ export function InterviewRoom() {
               <p className="text-xs sm:text-base text-muted-foreground font-medium mb-6 sm:mb-8 leading-relaxed max-w-[280px] sm:max-w-none">
                 {state.useFallbackMode 
                   ? "This interview works like a real-time chat. The AI will send questions, and you can type your responses naturally."
-                  : "This interview works like a real call. The AI will speak, and you just talk back naturally. No buttons to press."
+                  : "This interview works like a real call. The AI will speak, and you just talk back naturally. Your answers will be submitted automatically after 5 seconds of silence."
                 }
               </p>
               
