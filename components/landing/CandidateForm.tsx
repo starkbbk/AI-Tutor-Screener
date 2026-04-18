@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useInterview } from "@/context/InterviewContext"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -13,6 +13,12 @@ export function CandidateForm() {
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [error, setError] = useState("")
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // Clear error when user starts typing
+  useEffect(() => {
+    if (error) setError("")
+  }, [name, email])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -46,7 +52,7 @@ export function CandidateForm() {
       </CardHeader>
       
       <CardContent className="px-6 sm:px-10 pb-10 sm:pb-16">
-        <form onSubmit={handleSubmit} className="space-y-6 pt-2 sm:pt-4">
+        <form onSubmit={handleSubmit} noValidate className="space-y-6 pt-2 sm:pt-4">
           <div className="relative group/field">
             <Input
               id="name"
