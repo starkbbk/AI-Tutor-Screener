@@ -1,6 +1,6 @@
 # 🎭 Cuemath AI Tutor Screener
 
-> **An AI-powered voice interview platform that screens tutor candidates in 8 minutes — replacing expensive, slow human screening calls with intelligent, scalable automation.**
+> **An AI-powered voice interview platform that screens tutor candidates in around 10 minutes — replacing expensive, slow human screening calls with intelligent, scalable automation.**
 
 > ⚡ Built to simulate a production-grade AI screening system using only free-tier resources.
 
