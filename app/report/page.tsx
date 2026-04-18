@@ -266,8 +266,8 @@ export default function ReportPage() {
               </div>
             </div>
 
-            {/* Transcript Accordion */}
-            <div className="html2canvas-ignore pt-8 sm:pt-12 border-t border-border mt-6 sm:mt-10">
+            {/* Transcript Accordion - Now included in PDF */}
+            <div className="pt-8 sm:pt-12 border-t border-border mt-6 sm:mt-10">
                <TranscriptAccordion history={state.conversationHistory} />
             </div>
           </div>

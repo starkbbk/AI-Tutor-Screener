@@ -136,10 +136,10 @@ function initRecognition() {
   rec.onend = () => {
     console.log("[MIC_ENGINE] Session ended. Active?", isListeningActive);
     if (isListeningActive) {
-      console.log("[MIC_ENGINE] Persistent session - Auto-restarting with 500ms delay...");
+      console.log("[MIC_ENGINE] Persistent session - Auto-restarting with 50ms delay...");
       setTimeout(() => {
          if (isListeningActive) startRecognitionInstance();
-      }, 500); 
+      }, 50); 
     }
   };
 

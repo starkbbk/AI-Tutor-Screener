@@ -357,9 +357,8 @@ export function InterviewRoom() {
     setLastTranscriptUpdate(Date.now()); // Reset timer
     isProcessingQuestion.current = false
     
-    // Adaptive safety buffer: 500ms for mobile hardware stability, 10ms for instant desktop feel
-    const isMobile = typeof window !== 'undefined' && window.innerWidth < 1024;
-    const handoffDelay = isMobile ? 500 : 10;
+    // Zero-latency handoff for instant microphone activation
+    const handoffDelay = 0;
     
     setTimeout(() => {
       startListening(
@@ -691,7 +690,8 @@ export function InterviewRoom() {
                     
                     {/* Real-time Transcription feedback */}
                     <div className="w-full min-h-[4rem] px-6 py-4 bg-muted/20 rounded-2xl border border-border/40 text-center relative overflow-hidden flex items-center justify-center">
-                       {silenceCountdown !== null && silenceCountdown <= 5 ? (
+                    {/* Show countdown only if there's no active speech detected */}
+                    {silenceCountdown !== null && silenceCountdown <= 5 && !currentTranscript ? (
                          <div className="absolute inset-0 bg-brand-amber/10 flex items-center justify-center animate-in fade-in duration-300">
                            <p className="text-brand-amber font-black tracking-widest uppercase text-xs flex items-center">
                              <AlertCircle className="w-4 h-4 mr-2 animate-pulse" />
