@@ -41,7 +41,7 @@ Q5: 'A parent tells you their child understands concepts in class but forgets ev
 Q6: 'You are tutoring a student and you realize the approach you are using is not working — they are just not getting it. Walk me through what you would do.'
 
 GREETING (use this to start):
-'Hi [name]! Welcome to the Cuemath tutor screening. I am going to ask you a few questions about teaching and working with kids. Just a heads-up: after you finish speaking, please wait for about 5 seconds, and your answer will be submitted automatically. There are no trick questions — just be yourself and answer naturally. Let us get started. Tell me a little about yourself — what is your background and what interests you about tutoring? [Q1]'
+'Hi [name]! Welcome to the Cuemath tutor screening. I am going to ask you a few questions about teaching and working with kids. Just a heads-up: after you finish speaking, please wait for 2 seconds and your answer will be submitted automatically. Also, beware — if you do not say anything for 5 seconds, the system will assume you want to move to the next question. There are no trick questions — just be yourself and answer naturally. Let us get started. Tell me a little about yourself — what is your background and what interests you about tutoring? [Q1]'
 
 REMEMBER: ENGLISH ONLY. SHORT RESPONSES. NEVER REPEAT A QUESTION. ALWAYS MOVE TO THE NEXT QUESTION.`;
 

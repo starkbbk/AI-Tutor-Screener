@@ -116,24 +116,25 @@ export function InterviewRoom() {
       interval = setInterval(() => {
         const timeSinceLastUpdate = Date.now() - lastTranscriptUpdate;
         
-        // If silent for 3+ seconds
-        if (timeSinceLastUpdate > 3000) {
-           if (!currentTranscript) {
-              // Trigger VISIBLE countdown if absolutely nothing heard
-              setSilenceCountdown(prev => {
-                const current = prev === null ? 5 : prev;
-                if (current <= 1) {
-                  handleSkipQuestion();
-                  return null;
-                }
-                return current - 1;
-              });
-           } else if (timeSinceLastUpdate > 5000) {
-              // AUTO-SUBMIT if we have text but they've stopped for 5s
-              handleCandidateSpeakingFinished(currentTranscript);
-           }
+        if (currentTranscript) {
+          // AUTO-SUBMIT: If we have text, submit after 2s of silence
+          if (timeSinceLastUpdate > 2000) {
+            handleCandidateSpeakingFinished(currentTranscript);
+          }
         } else {
-           setSilenceCountdown(null);
+          // INACTIVITY: If silent for 2s, start a 3-second countdown (total 5s)
+          if (timeSinceLastUpdate > 2000) {
+            setSilenceCountdown(prev => {
+              const current = prev === null ? 3 : prev;
+              if (current <= 1) {
+                handleSkipQuestion();
+                return null;
+              }
+              return current - 1;
+            });
+          } else {
+            setSilenceCountdown(null);
+          }
         }
       }, 1000);
     } else {
@@ -638,7 +639,7 @@ export function InterviewRoom() {
               <p className="text-xs sm:text-base text-muted-foreground font-medium mb-6 sm:mb-8 leading-relaxed max-w-[280px] sm:max-w-none">
                 {state.useFallbackMode 
                   ? "This interview works like a real-time chat. The AI will send questions, and you can type your responses naturally."
-                  : "This interview works like a real call. The AI will speak, and you just talk back naturally. Your answers will be submitted automatically after 5 seconds of silence."
+                  : "This interview works like a real call. The AI will speak, and you just talk back naturally. Answers submit after 2s of silence. If you stay silent for 5s, the system move to the next question."
                 }
               </p>
               
