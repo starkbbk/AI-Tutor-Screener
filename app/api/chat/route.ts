@@ -17,7 +17,7 @@ function getDynamicSystemPrompt(currentQuestion: number, candidateName: string) 
   let instructions = "";
   if (currentQuestion === 0) {
     instructions = `Start by warmly greeting ${safeName}. Introduce yourself as Maya, a friendly interviewer from Cuemath, and mention that you will be conducting this screening today. 
-    Then, tell them: "Just a heads-up: after you finish speaking, please wait for 5 seconds and your answer will be submitted automatically. Also, beware — if you do not say anything for 10 seconds, the system will assume you want to move to the next question."
+    Then, tell them: "Just a heads-up: after you finish speaking, please wait for 2 seconds and your answer will be submitted automatically. Also, beware — if you do not say anything for 5 seconds, the system will assume you want to move to the next question."
     Finally, say: "Let's start with your first question," and ask Question 1: "${INTERVIEW_QUESTIONS[1]}".`;
   } else if (currentQuestion >= 1 && currentQuestion < totalSteps) {
     const nextQuestion = currentQuestion + 1;

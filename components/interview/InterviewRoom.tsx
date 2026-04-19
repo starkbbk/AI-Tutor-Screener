@@ -117,15 +117,15 @@ export function InterviewRoom() {
         const timeSinceLastUpdate = Date.now() - lastTranscriptUpdate;
         
         if (currentTranscript) {
-          // AUTO-SUBMIT: If we have text, submit after 5s of silence
-          if (timeSinceLastUpdate > 5000) {
+          // AUTO-SUBMIT: If we have text, submit after 2s of silence
+          if (timeSinceLastUpdate > 2000) {
             handleCandidateSpeakingFinished(currentTranscript);
           }
         } else {
-          // INACTIVITY: If silent for 5s, start a 5-second countdown (total 10s)
-          if (timeSinceLastUpdate > 5000) {
+          // INACTIVITY: If silent for 2s, start a 3-second countdown (total 5s)
+          if (timeSinceLastUpdate > 2000) {
             setSilenceCountdown(prev => {
-              const current = prev === null ? 5 : prev;
+              const current = prev === null ? 3 : prev;
               if (current <= 1) {
                 handleSkipQuestion();
                 return null;
@@ -638,7 +638,7 @@ export function InterviewRoom() {
               <p className="text-[11px] sm:text-base text-muted-foreground font-medium mb-6 sm:mb-8 leading-relaxed max-w-[280px] sm:max-w-none px-2">
                 {state.useFallbackMode 
                   ? "This interview works like a real-time chat. The AI will send questions, and you can type your responses naturally."
-                  : "This interview works like a real call. The AI will speak, and you just talk back naturally. Answers submit after 5s of silence. If you stay silent for 10s, the system move to the next question."
+                  : "This interview works like a real call. The AI will speak, and you just talk back naturally. Answers submit after 2s of silence. If you stay silent for 5s, the system move to the next question."
                 }
               </p>
               
