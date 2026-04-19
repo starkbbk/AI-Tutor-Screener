@@ -231,7 +231,7 @@ export function InterviewRoom() {
       
       speak(
         text,
-        (duration) => {
+        (duration?: number) => {
           // SYNC START: Transition from thinking to speaking with duration
           updateMessage(msgId, { status: 'speaking', audioDuration: duration || 0 });
         }, 
@@ -303,7 +303,7 @@ export function InterviewRoom() {
     setAISpeaking(true)
     speak(
       timeOutMessage,
-      (duration) => {
+      (duration?: number) => {
         updateMessage(aiMsgId, { status: 'speaking', audioDuration: duration || 0 });
       },
       () => {
@@ -474,7 +474,7 @@ export function InterviewRoom() {
         status: 'thinking'
       });
       setAISpeaking(true);
-      speak(closingMsg, (duration) => {
+      speak(closingMsg, (duration?: number) => {
         updateMessage(aiMsgId, { status: 'speaking', audioDuration: duration || 0 });
       }, () => {
         updateMessage(aiMsgId, { status: 'done' });
