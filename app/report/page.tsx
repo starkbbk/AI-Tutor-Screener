@@ -590,7 +590,7 @@ export default function ReportPage() {
                           </div>
                         </div>
                         <p className="text-[14px] leading-relaxed text-[#0A0A0A] font-semibold grow">
-                          {data.reasoning || "Detailed assessment data for this dimension is being processed."}
+                          {data.explanation || "Detailed assessment data for this dimension is being processed."}
                         </p>
                       </div>
                     ))}
