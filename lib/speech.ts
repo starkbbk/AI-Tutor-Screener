@@ -6,7 +6,7 @@
  * 2. Auto-Restart watchdog to handle unexpected browser stops.
  * 3. Accumulated transcript across multiple recognition sessions.
  * 4. Custom silence detection for intelligent auto-submission.
- * 5. Robust error handling and double-start prevention.
+ * 5. Device-Aware logic for mobile "Always On" capability.
  */
 
 export interface SpeechRecognitionResult {
@@ -18,9 +18,10 @@ type SpeechCallback = (result: SpeechRecognitionResult) => void;
 type EndCallback = (finalTranscript: string) => void;
 type ErrorCallback = (error: string) => void;
 
-// Module-level state persistent across sessions and restarts
+// Module-level state
 let recognition: any = null;
 let isListeningActive = false;
+let interviewActive = false; // "Always On" flag for mobile
 let noSpeechTimer: NodeJS.Timeout | null = null;
 let startingGuardTimer: NodeJS.Timeout | null = null;
 let currentUtterance: SpeechSynthesisUtterance | null = null;
@@ -33,6 +34,21 @@ let currentOnError: ErrorCallback | null = null;
 let isStarting = false;
 let fullTranscript = ""; 
 
+/**
+ * Simple mobile detection
+ */
+const isMobile = () => {
+  if (typeof window === 'undefined') return false;
+  return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+};
+
+export const setInterviewActive = (active: boolean) => {
+  console.log(`[MIC_ENGINE] interviewActive set to: ${active}`);
+  interviewActive = active;
+};
+
+export const isInterfaceActive = () => interviewActive;
+
 export function isSpeechRecognitionSupported(): boolean {
   if (typeof window === 'undefined') return false;
   return !!(window.SpeechRecognition || window.webkitSpeechRecognition);
@@ -43,9 +59,6 @@ export function isSpeechSynthesisSupported(): boolean {
   return !!window.speechSynthesis;
 }
 
-/**
- * Cleanup timers
- */
 function clearTimers() {
   if (noSpeechTimer) {
     clearTimeout(noSpeechTimer);
@@ -53,35 +66,11 @@ function clearTimers() {
   }
 }
 
-
-/**
- * Handle total lack of speech
- */
-function handleNoSpeechTimeout() {
-  if (!fullTranscript.trim()) {
-    console.log("[SPEECH] No speech detected for 15s.");
-    if (currentOnResult) {
-      currentOnResult({ transcript: "I did not hear anything. Please speak your answer.", isFinal: false });
-    }
-    resetTimers();
-  }
-}
-
-/**
- * Reset timers on every piece of speech
- */
 function resetTimers() {
   clearTimers();
   if (!isListeningActive) return;
-
-  // 15s timer for when they haven't said ANYTHING
-  // (Optional: can also be handled by the UI timer)
-  // noSpeechTimer = setTimeout(handleNoSpeechTimeout, 15000);
 }
 
-/**
- * Initialize recognition object
- */
 function initRecognition() {
   const SpeechRecognitionConstructor = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
   const rec = new SpeechRecognitionConstructor();
@@ -91,52 +80,50 @@ function initRecognition() {
   rec.lang = 'en-US';
 
   rec.onresult = (event: any) => {
-    // Note: We no longer handle auto-submission timers here.
-    // InterviewRoom handles the silence countdown based on the results we send.
-    
     let interimTranscript = '';
     let currentFinalTranscript = '';
 
     for (let i = event.resultIndex; i < event.results.length; i++) {
-      const result = event.results[i];
-      if (result.isFinal) {
-        currentFinalTranscript += result[0].transcript;
-      } else {
-        interimTranscript += result[0].transcript;
-      }
+        const result = event.results[i];
+        if (result.isFinal) {
+            currentFinalTranscript += result[0].transcript;
+        } else {
+            interimTranscript += result[0].transcript;
+        }
     }
 
     if (currentFinalTranscript) {
-      fullTranscript = (fullTranscript + " " + currentFinalTranscript).trim();
+        fullTranscript = (fullTranscript + " " + currentFinalTranscript).trim();
     }
 
     const displayTranscript = (fullTranscript + " " + interimTranscript).trim();
     if (currentOnResult) {
-      currentOnResult({ transcript: displayTranscript, isFinal: false });
+        currentOnResult({ transcript: displayTranscript, isFinal: false });
     }
   };
 
   rec.onerror = (event: any) => {
     console.warn("[SPEECH] Recognition error:", event.error);
     
-    const errorMap: Record<string, string> = {
-      'audio-capture': "Microphone not available. Please check your mic.",
-      'not-allowed': "Microphone permission denied. Please allow microphone access.",
-    };
-
-    if (errorMap[event.error]) {
+    if (event.error === 'not-allowed') {
       isListeningActive = false;
-      if (currentOnError) currentOnError(errorMap[event.error]);
-    } else {
-      // For no-speech, network, etc. - restart silently in onend
-      console.log("[SPEECH] Persistent error or silence, will auto-restart if active.");
+      if (currentOnError) currentOnError("Microphone permission denied.");
     }
   };
 
   rec.onend = () => {
-    console.log("[MIC_ENGINE] Session ended. Active?", isListeningActive);
+    console.log("[MIC_ENGINE] Session ended. Active?", isListeningActive, "Mobile?", isMobile(), "InterviewActive?", interviewActive);
+    
+    // Always restart on mobile if interview is active
+    if (isMobile() && interviewActive) {
+      console.log("[MIC_ENGINE] Mobile Always-On: Re-triggering recognition...");
+      setTimeout(() => {
+        startRecognitionInstance(true);
+      }, 50);
+      return;
+    }
+
     if (isListeningActive) {
-      console.log("[MIC_ENGINE] Persistent session - Auto-restarting with 50ms delay...");
       setTimeout(() => {
          if (isListeningActive) startRecognitionInstance();
       }, 50); 
@@ -146,9 +133,6 @@ function initRecognition() {
   return rec;
 }
 
-/**
- * Cleanup and completely reset recognition
- */
 function resetRecognition() {
   if (recognition) {
     try {
@@ -161,59 +145,41 @@ function resetRecognition() {
   }
 }
 
-/**
- * Safe start/restart logic
- */
 function startRecognitionInstance(forceRefresh = false) {
   if (forceRefresh) {
-    console.log("[MIC_ENGINE] Force refreshing recognition object...");
     resetRecognition();
   }
   
   if (!recognition) {
-    console.log("[MIC_ENGINE] Initializing brand new recognition object.");
     recognition = initRecognition();
   }
 
-  if (isStarting) {
-    console.log("[MIC_ENGINE] startRecognitionInstance: isStarting is locked.");
-    return;
-  }
-  
+  if (isStarting) return;
   isStarting = true;
   
-  // WATCHDOG: Reset isStarting and potentially RE-TRIGGER if stuck
   if (startingGuardTimer) clearTimeout(startingGuardTimer);
   startingGuardTimer = setTimeout(() => {
     if (isStarting) {
-      console.log("[MIC_ENGINE] Watchdog: Guard reset (1.5s timeout). Retrying...");
       isStarting = false;
-      startRecognitionInstance(true); // Retry with a fresh object
+      startRecognitionInstance(true);
     }
   }, 1500);
 
   try {
     recognition.start();
     recognition.onstart = () => { 
-      console.log("[MIC_ENGINE] ON_START: Recognition is now active.");
       isStarting = false; 
       if (startingGuardTimer) clearTimeout(startingGuardTimer);
     };
   } catch (e: any) {
-    console.warn("[MIC_ENGINE] Start conflict:", e.message);
     isStarting = false;
     if (startingGuardTimer) clearTimeout(startingGuardTimer);
-    
-    // If we hit an InvalidStateError, the object might be 'trashed' - refresh it
     if (e.name === 'InvalidStateError') {
       setTimeout(() => startRecognitionInstance(true), 100);
     }
   }
 }
 
-/**
- * Public function to start listening
- */
 export async function startListening(
   onResult: SpeechCallback,
   onEnd: EndCallback,
@@ -224,7 +190,6 @@ export async function startListening(
     return;
   }
 
-  // Reset module state
   isListeningActive = true;
   fullTranscript = "";
   currentOnResult = onResult;
@@ -232,14 +197,16 @@ export async function startListening(
   currentOnError = onError;
 
   resetTimers();
-  // Always start with a fresh instance for a new request
   startRecognitionInstance(true); 
 }
 
-/**
- * Public function to stop listening
- */
 export function stopListening(): void {
+  // MOBILE FIX: If mobile and interview is still active, DO NOT stop.
+  if (isMobile() && interviewActive) {
+    console.log("[MIC_ENGINE] Mobile Always-On: Ignoring stopListening() request.");
+    return;
+  }
+
   console.log("[MIC_ENGINE] REQUEST_STOP: isListeningActive -> false");
   isListeningActive = false;
   isStarting = false;
@@ -247,39 +214,10 @@ export function stopListening(): void {
   
   if (recognition) {
     try {
-      console.log("[MIC_ENGINE] Aborting recognition session...");
-      recognition.abort(); // Use abort for immediate reset on mobile
-    } catch (e) {
-      // already stopped  
-    }
+      recognition.abort();
+    } catch (e) {}
   }
 }
-
-// Re-export correct name for compatibility if needed
-export { startListening as startListeningFinal };
-export { startListening as startListeningStandard };
-
-// --- SPEECH SYNTHESIS ---
-
-export const getPreferredVoice = (): SpeechSynthesisVoice | null => {
-  if (typeof window === 'undefined') return null;
-  const voices = window.speechSynthesis.getVoices();
-  
-  const preferredVoices = [
-    'Google UK English Female',
-    'Google US English Female', 
-    'Samantha',
-    'Microsoft Jenny',
-    'en-US-Female',
-  ];
-  
-  for (const name of preferredVoices) {
-    const voice = voices.find(v => v.name.includes(name));
-    if (voice) return voice;
-  }
-  
-  return voices.find(v => v.lang.startsWith('en')) || voices[0] || null;
-};
 
 export function preloadVoices(): void {
   if (typeof window !== 'undefined') {
@@ -288,18 +226,25 @@ export function preloadVoices(): void {
   }
 }
 
+export const getPreferredVoice = (): SpeechSynthesisVoice | null => {
+  if (typeof window === 'undefined') return null;
+  const voices = window.speechSynthesis.getVoices();
+  const preferred = ['Google UK English Female', 'Google US English Female', 'Samantha', 'en-US-Female'];
+  for (const name of preferred) {
+    const voice = voices.find(v => v.name.includes(name));
+    if (voice) return voice;
+  }
+  return voices.find(v => v.lang.startsWith('en')) || voices[0] || null;
+};
+
 export function speak(
   text: string,
   onStart?: (duration?: number) => void,
   onEnd?: () => void
 ): void {
-  // Use ElevenLabs with native fallback
   speakWithElevenLabs(text, onStart, onEnd, speakNative);
 }
 
-/**
- * Native Speech Synthesis Fallback
- */
 function speakNative(
   text: string,
   onStart?: (duration?: number) => void,
@@ -311,31 +256,20 @@ function speakNative(
   }
 
   window.speechSynthesis.cancel();
-  
-  // CRITICAL: Global reference to prevent garbage collection on Safari/Chrome
   currentUtterance = new SpeechSynthesisUtterance(text);
   const voice = getPreferredVoice();
   if (voice) currentUtterance.voice = voice;
-  
   currentUtterance.lang = 'en-US';
-  currentUtterance.rate = 1.0;
   
   currentUtterance.onstart = () => {
-    // Estimate duration for native fallback: ~150 words per minute
     const words = text.split(/\s+/).length;
-    const estimatedDuration = (words / 150) * 60;
-    onStart?.(estimatedDuration || 2);
+    onStart?.((words / 150) * 60);
   };
   currentUtterance.onend = () => {
     onEnd?.();
     currentUtterance = null;
   };
-  currentUtterance.onerror = (e) => {
-    if (e.error === 'interrupted' || e.error === 'canceled') {
-      console.log("[SPEECH] Synthesis interrupted (benign)");
-    } else {
-      console.error("Speech Synthesis Error:", e);
-    }
+  currentUtterance.onerror = () => {
     onEnd?.();
     currentUtterance = null;
   };
@@ -343,13 +277,11 @@ function speakNative(
   try {
      window.speechSynthesis.speak(currentUtterance);
   } catch (err) {
-    console.error("[SPEECH] Synthesis fatal error:", err);
     onEnd?.();
   }
 }
 
 export function stopSpeaking(): void {
-  // Stop both ElevenLabs and Native
   stopSpeakingElevenLabs();
   if (typeof window !== 'undefined') {
     window.speechSynthesis.cancel();
@@ -357,10 +289,14 @@ export function stopSpeaking(): void {
 }
 
 export function unlockMic(): void {
-  // Keeping as placeholder for compatibility
+  // Explicitly for mobile compliance
+  if (typeof window !== 'undefined' && 'AudioContext' in window) {
+      const ctx = new ((window as any).AudioContext || (window as any).webkitAudioContext)();
+      if (ctx.state === 'suspended') ctx.resume();
+  }
 }
 
-// Add global types
+// Global types
 declare global {
   interface Window {
     SpeechRecognition: any;
@@ -368,4 +304,5 @@ declare global {
   }
 }
 
-// © 2025 Shivanand Verma (starkbbk)
+export { startListening as startListeningFinal };
+export { startListening as startListeningStandard };

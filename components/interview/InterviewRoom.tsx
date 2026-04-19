@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input"
 import { ThemeToggle } from "@/components/ui/theme-toggle"
 import { formatTime, cn } from "@/lib/utils"
 import { TOTAL_QUESTIONS } from "@/lib/constants"
-import { speak, startListening, stopListening, stopSpeaking, SpeechRecognitionResult, preloadVoices } from "@/lib/speech-adapter"
+import { speak, startListening, stopListening, stopSpeaking, SpeechRecognitionResult, preloadVoices, setInterviewActive } from "@/lib/speech-adapter"
 
 export function InterviewRoom() {
   const router = useRouter()
@@ -75,6 +75,7 @@ export function InterviewRoom() {
     if (hasStarted && isFirstRender.current && state.conversationHistory.length === 0 && !greetingSentRef.current) {
       greetingSentRef.current = true
       isFirstRender.current = false
+      setInterviewActive(true) // Enable mobile always-on mic
       startInterview()
       startChatWithAI()
     }
@@ -318,6 +319,7 @@ export function InterviewRoom() {
     if (state.interviewStatus === 'completing' || state.interviewStatus === 'completed') return;
     
     console.log("[INTERVIEW FLOW] Triggering result calculation and navigation.");
+    setInterviewActive(false) // Disable mobile always-on mic so it can finally stop
     stopSpeaking()
     stopListening()
     

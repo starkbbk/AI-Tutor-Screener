@@ -1,22 +1,19 @@
 /**
  * Speech Adapter
  * 
- * Delegates speech recognition and synthesis to either:
- * - standard engine (speech.ts) for desktop
- * - mobile-optimized engine (speech-mobile.ts) for iOS/Android
+ * Unified interface for speech recognition and synthesis.
+ * Now primarily delegates to the patched core engine (speech.ts)
+ * which handles both desktop (standard) and mobile (always-on) logic.
  */
 
-import * as desktopSpeech from './speech';
-import * as mobileSpeech from './speech-mobile';
+import * as coreSpeech from './speech';
 import { getDeviceType } from './speech-factory';
 
 const device = getDeviceType();
 const isMobile = device.isMobile;
-const engine = isMobile ? mobileSpeech : desktopSpeech;
 const logPrefix = isMobile ? "[Mobile]" : "[Desktop]";
 
 console.log(`[Speech Adapter] ENVIRONMENT: ${isMobile ? 'MOBILE' : 'DESKTOP'}`);
-console.log(`[Speech Adapter] OS: ${device.isIOS ? 'iOS' : device.isAndroid ? 'Android' : 'Other'}`);
 
 // Export types
 export type { SpeechRecognitionResult } from './speech';
@@ -24,47 +21,53 @@ export type { SpeechRecognitionResult } from './speech';
 // Export unified functions with logging
 export const isSpeechRecognitionSupported = () => {
     console.log(`${logPrefix} isSpeechRecognitionSupported called`);
-    return engine.isSpeechRecognitionSupported();
+    return coreSpeech.isSpeechRecognitionSupported();
 };
 
 export const isSpeechSynthesisSupported = () => {
     console.log(`${logPrefix} isSpeechSynthesisSupported called`);
-    return engine.isSpeechSynthesisSupported();
+    return coreSpeech.isSpeechSynthesisSupported();
 };
 
 export const startListening = (...args: any[]) => {
     console.log(`${logPrefix} startListening called`);
-    return (engine.startListening as any)(...args);
+    return (coreSpeech.startListening as any)(...args);
 };
 
 export const stopListening = () => {
     console.log(`${logPrefix} stopListening called`);
-    return engine.stopListening();
+    return coreSpeech.stopListening();
 };
 
 export const speak = (...args: any[]) => {
     console.log(`${logPrefix} speak called`);
-    return (engine.speak as any)(...args);
+    return (coreSpeech.speak as any)(...args);
 };
 
 export const stopSpeaking = () => {
     console.log(`${logPrefix} stopSpeaking called`);
-    return engine.stopSpeaking();
+    return coreSpeech.stopSpeaking();
 };
 
 export const preloadVoices = () => {
     console.log(`${logPrefix} preloadVoices called`);
-    return engine.preloadVoices();
+    return coreSpeech.preloadVoices();
 };
 
 export const getPreferredVoice = () => {
     console.log(`${logPrefix} getPreferredVoice called`);
-    return engine.getPreferredVoice();
+    return coreSpeech.getPreferredVoice();
 };
 
 export const unlockMic = () => {
     console.log(`${logPrefix} unlockMic called`);
-    return engine.unlockMic();
+    return coreSpeech.unlockMic();
+};
+
+// New functions for "Always On" mobile logic
+export const setInterviewActive = (active: boolean) => {
+    console.log(`${logPrefix} setInterviewActive called: ${active}`);
+    return coreSpeech.setInterviewActive(active);
 };
 
 // Export legacy names for compatibility
