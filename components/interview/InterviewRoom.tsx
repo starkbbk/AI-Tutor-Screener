@@ -117,15 +117,15 @@ export function InterviewRoom() {
         const timeSinceLastUpdate = Date.now() - lastTranscriptUpdate;
         
         if (currentTranscript) {
-          // AUTO-SUBMIT: If we have text, submit after 2s of silence
-          if (timeSinceLastUpdate > 2000) {
+          // AUTO-SUBMIT: If we have text, submit after 5s of silence
+          if (timeSinceLastUpdate > 5000) {
             handleCandidateSpeakingFinished(currentTranscript);
           }
         } else {
-          // INACTIVITY: If silent for 2s, start a 3-second countdown (total 5s)
-          if (timeSinceLastUpdate > 2000) {
+          // INACTIVITY: If silent for 5s, start a 5-second countdown
+          if (timeSinceLastUpdate > 5000) {
             setSilenceCountdown(prev => {
-              const current = prev === null ? 3 : prev;
+              const current = prev === null ? 5 : prev;
               if (current <= 1) {
                 handleSkipQuestion();
                 return null;
