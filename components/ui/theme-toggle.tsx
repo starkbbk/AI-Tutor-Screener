@@ -3,6 +3,7 @@
 import * as React from "react"
 import { Moon, Sun } from "lucide-react"
 import { useTheme } from "next-themes"
+import { flushSync } from "react-dom"
 
 export function ThemeToggle() {
   const { setTheme, resolvedTheme } = useTheme()
@@ -13,12 +14,69 @@ export function ThemeToggle() {
     setMounted(true)
   }, [])
 
+  const handleThemeChange = (newTheme: string, e: React.MouseEvent) => {
+    if (newTheme === resolvedTheme) return
+
+    // Fallback for browsers that don't support View Transitions
+    if (
+      !document.startViewTransition ||
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
+      setTheme(newTheme)
+      return
+    }
+
+    const isReverse = newTheme === "light"
+    if (isReverse) {
+      document.documentElement.classList.add("theme-transition-reverse")
+    }
+
+    const { clientX: x, clientY: y } = e
+    const transition = document.startViewTransition(() => {
+      flushSync(() => {
+        setTheme(newTheme)
+      })
+    })
+
+    transition.ready.then(() => {
+      const radius = Math.hypot(
+        Math.max(x, window.innerWidth - x),
+        Math.max(y, window.innerHeight - y)
+      )
+
+      document.documentElement.animate(
+        {
+          clipPath: isReverse
+            ? [
+                `circle(${radius}px at ${x}px ${y}px)`,
+                `circle(0px at ${x}px ${y}px)`,
+              ]
+            : [
+                `circle(0px at ${x}px ${y}px)`,
+                `circle(${radius}px at ${x}px ${y}px)`,
+              ],
+        },
+        {
+          duration: 700,
+          easing: "cubic-bezier(0.4, 0, 0.2, 1)",
+          pseudoElement: isReverse
+            ? "::view-transition-old(root)"
+            : "::view-transition-new(root)",
+        }
+      )
+    })
+
+    transition.finished.finally(() => {
+      document.documentElement.classList.remove("theme-transition-reverse")
+    })
+  }
+
   if (!mounted) return null
 
   return (
     <div className="flex items-center bg-muted/90 p-1 rounded-xl border border-border/80 shadow-[inset_0_2px_4px_rgba(0,0,0,0.08)] backdrop-blur-sm transition-all duration-500">
       <button
-        onClick={() => setTheme("light")}
+        onClick={(e) => handleThemeChange("light", e)}
         className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-300 relative z-10 ${
           resolvedTheme === "light" 
             ? "text-brand-navy" 
@@ -33,7 +91,7 @@ export function ThemeToggle() {
       </button>
 
       <button
-        onClick={() => setTheme("dark")}
+        onClick={(e) => handleThemeChange("dark", e)}
         className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-300 relative z-10 ${
           resolvedTheme === "dark" 
             ? "text-white" 

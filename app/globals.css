@@ -118,7 +118,6 @@
   html, body {
     background-color: var(--background) !important;
     color: var(--foreground) !important;
-    transition: background-color 0.3s ease, color 0.3s ease;
   }
   
   body {
@@ -282,4 +281,27 @@
 
 .animate-shine {
   animation: shine 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Theme Reveal Animation */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+::view-transition-old(root) {
+  z-index: 1;
+}
+
+::view-transition-new(root) {
+  z-index: 9999;
+}
+
+.theme-transition-reverse::view-transition-old(root) {
+  z-index: 9999;
+}
+
+.theme-transition-reverse::view-transition-new(root) {
+  z-index: 1;
 }

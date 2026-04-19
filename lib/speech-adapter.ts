@@ -16,7 +16,7 @@ const logPrefix = isMobile ? "[Mobile]" : "[Desktop]";
 console.log(`[Speech Adapter] ENVIRONMENT: ${isMobile ? 'MOBILE' : 'DESKTOP'}`);
 
 // Export types
-export type { SpeechRecognitionResult } from './speech';
+export type { SpeechRecognitionResult }     from './speech';
 
 // Export unified functions with logging
 export const isSpeechRecognitionSupported = () => {
