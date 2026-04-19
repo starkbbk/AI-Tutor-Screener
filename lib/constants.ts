@@ -135,5 +135,5 @@ export function getRecommendationColor(rec: string) {
   }
 }
 
-// © 2026 Shivanand Verma (starkbbk)
+// © 2025 Shivanand Verma (starkbbk)
 

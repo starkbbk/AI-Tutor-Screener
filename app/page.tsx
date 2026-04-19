@@ -1,6 +1,7 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
+import { motion } from "framer-motion"
 import { Hero } from "@/components/landing/Hero"
 import { CandidateForm } from "@/components/landing/CandidateForm"
 import { InfoCards } from "@/components/landing/InfoCards"
@@ -9,6 +10,7 @@ import { useInterview } from "@/context/InterviewContext"
 
 export default function LandingPage() {
   const { reset } = useInterview()
+  const [activeStep, setActiveStep] = useState(1)
 
   // Reset any previous interview state when visiting the landing page
   useEffect(() => {
@@ -17,25 +19,42 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background cuemath-grid selection:bg-brand-amber selection:text-foreground">
-      <header className="w-full max-w-7xl mx-auto px-4 sm:px-10 py-2 sm:py-4 flex items-center justify-between relative z-20">
-        <img src="/cuemath-logo.svg" alt="Cuemath" className="h-6 sm:h-8 opacity-90" />
+      <header className="w-full max-w-7xl mx-auto px-4 sm:px-10 py-3 sm:py-6 flex items-center justify-between relative z-20">
+        <img src="/cuemath-logo.svg" alt="Cuemath" className="h-5 sm:h-8 opacity-90" />
         <ThemeToggle />
       </header>
 
-      <main className="flex-1 flex flex-col items-center justify-start p-4 sm:p-10 w-full max-w-7xl mx-auto pt-8 sm:pt-4 pb-10 sm:pb-20 relative">
+      <main className="flex-1 flex flex-col items-center justify-start px-4 sm:px-10 w-full max-w-7xl mx-auto pt-6 sm:pt-4 pb-10 sm:pb-20 relative overflow-x-hidden">
         {/* Abstract background glows */}
-        <div className="absolute top-[10%] left-[10%] w-[30%] h-[30%] bg-brand-amber/5 rounded-full blur-[80px] sm:blur-[120px] pointer-events-none" />
-        <div className="absolute bottom-[20%] right-[10%] w-[25%] h-[25%] bg-brand-cyan/5 rounded-full blur-[70px] sm:blur-[100px] pointer-events-none" />
+        <div className="absolute top-[10%] left-[10%] w-[50%] sm:w-[30%] h-[30%] bg-brand-amber/5 rounded-full blur-[60px] sm:blur-[120px] pointer-events-none" />
+        <div className="absolute bottom-[20%] right-[10%] w-[40%] sm:w-[25%] h-[25%] bg-brand-cyan/5 rounded-full blur-[50px] sm:blur-[100px] pointer-events-none" />
         
-        <Hero />
+        {activeStep === 1 ? (
+          <Hero />
+        ) : activeStep === 2 ? (
+          <motion.div 
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center mb-6 sm:mb-12"
+          >
+            <h1 className="text-xl sm:text-3xl font-black tracking-tight text-foreground/90 mb-2 uppercase">
+              Complete your application
+            </h1>
+            <p className="text-muted-foreground text-xs sm:text-base font-medium opacity-80">
+              Please fill in your details below to proceed
+            </p>
+          </motion.div>
+        ) : null}
         
         <div className="w-full relative z-10">
-          <CandidateForm />
+          <CandidateForm onStepChange={setActiveStep} />
         </div>
         
-        <div className="w-full">
-          <InfoCards />
-        </div>
+        {activeStep === 1 && (
+          <div className="w-full">
+            <InfoCards />
+          </div>
+        )}
       </main>
       
       <footer className="py-10 text-center text-sm text-gray-500 border-t border-white/5 mt-20">

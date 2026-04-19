@@ -519,7 +519,7 @@ export function InterviewRoom() {
 
 
   return (
-    <div className="flex flex-col h-[calc(100dvh-20px)] w-[calc(100vw-12px)] sm:w-[calc(100vw-80px)] max-w-7xl mx-auto glass-card rounded-[1rem] sm:rounded-[2rem] shadow-2xl overflow-hidden relative ring-1 ring-border mt-0">
+    <div className="flex flex-col h-[calc(100dvh-12px)] w-[calc(100vw-8px)] sm:w-[calc(100vw-80px)] max-w-7xl mx-auto glass-card rounded-[1rem] sm:rounded-[2rem] shadow-2xl overflow-hidden relative ring-1 ring-border mt-0">
       
       {/* Live Indicator */}
       {hasStarted && state.interviewStatus === 'in_progress' && (
@@ -530,15 +530,15 @@ export function InterviewRoom() {
       )}
       
       {/* Top Header */}
-      <div className="flex items-center justify-between p-2.5 sm:p-6 glass-header z-[60] space-x-4">
+      <div className="flex items-center justify-between p-2.5 sm:p-6 glass-header z-[60] space-x-2 sm:space-x-4">
         {/* Left: Logo */}
         <div className="flex-shrink-0">
-          <Image src="/cuemath-logo.svg" alt="Cuemath" width={80} height={24} className="xs:w-[80px] sm:w-[120px] sm:h-[32px] opacity-90" />
+          <Image src="/cuemath-logo.svg" alt="Cuemath" width={80} height={24} className="w-[70px] xs:w-[80px] sm:w-[120px] sm:h-[32px] opacity-90" />
         </div>
         
         {/* Middle: Integrated Progress Bar */}
         {hasStarted && (
-          <div className="flex flex-col items-center flex-1 max-w-[200px] sm:max-w-md mx-4">
+          <div className="hidden xxs:flex flex-col items-center flex-1 max-w-[120px] sm:max-w-md mx-2 sm:mx-4">
             <div className="flex justify-between w-full mb-1.5 px-1 items-end">
               <span className="text-[7px] sm:text-[9px] font-black text-foreground uppercase tracking-[0.2em] opacity-40">Interview Progress</span>
               <span className="text-[8px] sm:text-[10px] font-black text-muted-foreground uppercase opacity-80">
@@ -635,7 +635,7 @@ export function InterviewRoom() {
               <h2 className="text-xl sm:text-3xl font-black text-foreground tracking-tight mb-2 sm:mb-4 uppercase">
                 {state.useFallbackMode ? "Interactive Chat" : "Phone Call Mode"}
               </h2>
-              <p className="text-xs sm:text-base text-muted-foreground font-medium mb-6 sm:mb-8 leading-relaxed max-w-[280px] sm:max-w-none">
+              <p className="text-[11px] sm:text-base text-muted-foreground font-medium mb-6 sm:mb-8 leading-relaxed max-w-[280px] sm:max-w-none px-2">
                 {state.useFallbackMode 
                   ? "This interview works like a real-time chat. The AI will send questions, and you can type your responses naturally."
                   : "This interview works like a real call. The AI will speak, and you just talk back naturally. Answers submit after 2s of silence. If you stay silent for 5s, the system move to the next question."
@@ -727,7 +727,7 @@ export function InterviewRoom() {
           </div>
         )}
         
-        {state.interviewStatus !== 'completing' && state.useFallbackMode && hasStarted && (
+        {state.interviewStatus === 'in_progress' && state.useFallbackMode && hasStarted && (
            <form onSubmit={handleTextSubmit} className="flex space-x-2 sm:space-x-4 max-w-3xl w-full mx-auto my-4">
               <Input 
                 value={textInput}
@@ -754,5 +754,5 @@ export function InterviewRoom() {
   )
 }
 
-// © 2026 Shivanand Verma (starkbbk)
+// © 2025 Shivanand Verma (starkbbk)
 

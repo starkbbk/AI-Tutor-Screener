@@ -1,6 +1,16 @@
 export interface CandidateInfo {
   name: string;
   email: string;
+  // Screener answers
+  residesInIndia?: boolean;
+  graduationStatus?: 'graduate' | 'pursuing';
+  canCommit24hrs?: boolean;
+  degree?: string;
+  fieldOfStudy?: string;
+  mathDegreeType?: string;
+  gradePreference?: string;
+  regionPreference?: string;
+  gender?: 'male' | 'female';
 }
 
 export interface ConversationMessage {

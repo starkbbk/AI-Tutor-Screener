@@ -33,62 +33,63 @@ export async function generatePDF(elementId: string, filename: string): Promise<
   const element = document.getElementById(elementId);
   if (!element) throw new Error("Target element not found");
 
-  // Wait for images to be loaded
+  // Wait for images to be loaded (with a safety timeout)
   const images = Array.from(element.getElementsByTagName('img'));
-  await Promise.all(images.map(img => {
+  const imagePromises = images.map(img => {
     if (img.complete) return Promise.resolve();
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       img.onload = resolve;
-      img.onerror = reject;
+      img.onerror = resolve; // resolve on error too
     });
-  }));
+  });
+
+  // Safety timeout of 5 seconds for image loading
+  await Promise.race([
+    Promise.all(imagePromises),
+    new Promise(resolve => setTimeout(resolve, 5000))
+  ]);
 
   try {
-    const canvas = await html2canvas(element, {
-      scale: 2,
-      useCORS: true,
-      allowTaint: true,
-      logging: false,
-      backgroundColor: '#ffffff',
-      windowWidth: element.scrollWidth,
-      windowHeight: element.scrollHeight,
-      // CRITICAL: Force light mode inside the capture clone
-      onclone: (clonedDoc) => {
-        const root = clonedDoc.documentElement;
-        root.classList.remove('dark');
-        root.classList.add('light');
-        root.style.colorScheme = 'light';
-        
-        // Find the report container in the clone and ensure it has light bg
-        const reportEl = clonedDoc.getElementById(elementId);
-        if (reportEl) {
-          reportEl.style.background = 'white';
-          reportEl.style.color = '#0A0A0A';
-        }
-      }
-    });
-
-    const imgData = canvas.toDataURL('image/png', 1.0);
     const pdf = new jsPDF('p', 'mm', 'a4');
     const pdfWidth = pdf.internal.pageSize.getWidth();
     const pdfHeight = pdf.internal.pageSize.getHeight();
+    const margin = 15; // 15mm margins
+    const contentWidth = pdfWidth - (margin * 2);
     
-    const imgWidth = pdfWidth;
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
-    
-    let heightLeft = imgHeight;
-    let position = 0;
+    // Find all sections marked for individual capture
+    const sections = Array.from(element.querySelectorAll('[data-pdf-section]'));
+    let currentY = margin;
 
-    // First page
-    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-    heightLeft -= pdfHeight;
+    // Capture sections one by one
+    for (const section of sections) {
+      const sectionCanvas = await html2canvas(section as HTMLElement, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        logging: false,
+        backgroundColor: '#ffffff',
+        // Still use onclone to ensure light mode styles are applied during capture
+        onclone: (clonedDoc) => {
+          const root = clonedDoc.documentElement;
+          root.classList.remove('dark');
+          root.classList.add('light');
+          root.style.colorScheme = 'light';
+        }
+      });
 
-    // Add additional pages if content is longer than one A4 page
-    while (heightLeft > 0) {
-      position = position - pdfHeight; // Push the image up for the next section
-      pdf.addPage();
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pdfHeight;
+      const sectionImgData = sectionCanvas.toDataURL('image/png', 1.0);
+      const sectionImgWidth = contentWidth;
+      const sectionImgHeight = (sectionCanvas.height * sectionImgWidth) / sectionCanvas.width;
+
+      // Check if we need to start a new page
+      if (currentY + sectionImgHeight > pdfHeight - margin) {
+        pdf.addPage();
+        currentY = margin;
+      }
+
+      // Add the section to the current page
+      pdf.addImage(sectionImgData, 'PNG', margin, currentY, sectionImgWidth, sectionImgHeight);
+      currentY += sectionImgHeight + 5; // 5mm spacing between sections
     }
 
     pdf.save(filename);

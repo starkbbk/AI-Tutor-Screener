@@ -1,8 +1,10 @@
+![Made with Next.js](https://img.shields.io/badge/Next.js-15-black)
+![AI Powered](https://img.shields.io/badge/AI-Groq%20%2B%20ElevenLabs-blue)
+![Status](https://img.shields.io/badge/Status-Production--Ready-success)
+
 # 🎭 Cuemath AI Tutor Screener
-
-> **An AI-powered voice interview platform that screens tutor candidates in around 10 minutes — replacing expensive, slow human screening calls with intelligent, scalable automation.**
-
-> ⚡ Built to simulate a production-grade AI screening system using only free-tier resources.
+> 🚀 AI interviewer that screens tutor candidates in ~10 minutes — no human calls, no scheduling, no delays.
+> ⚡ Built using free-tier tools to simulate a real-world scalable hiring system.
 
 🔗 **Live Demo:** [ai-tutor-screener-tau.vercel.app](https://ai-tutor-screener-tau.vercel.app)
 
@@ -10,7 +12,17 @@
 
 ![Demo](./public/demo.gif)
 
-Landing → Mic Test → AI Interview → Report
+## 🖼️ Screenshots
+### Landing
+![Landing](./public/landing.png)
+### Application
+![Application](./public/application.png)
+### Mic Test
+![Mic Test](./public/mic-test.png)
+### Interview 
+![Interview](./public/interview.png)
+### Report
+![Report](./public/report.png)
 
 ---
 
@@ -24,6 +36,12 @@ This process is:
 - **Hard to scale** — one interviewer can only handle 20-30 candidates per day
 - **Inconsistent** — different interviewers, different standards
 
+## 📈 Impact
+- ⏱️ Reduced screening time from **3–5 days → ~10 minutes**
+- 💰 Eliminates dependency on human interviewers
+- 📊 Consistent, bias-free evaluation across all candidates
+- ⚡ Scales to **unlimited candidates simultaneously**
+
 ---
 
 ## 💡 The Solution
@@ -36,79 +54,60 @@ The candidate visits the website → speaks naturally with the AI interviewer �
 
 ---
 
-## 🚀 Why This Works Better Than a Human Screener
-
+## 🚀 Why This Scales
 | | Human Screener | AI Screener |
 |---|---|---|
-| **Availability** | Business hours only | 24/7, any timezone |
-| **Speed** | 3-5 days to schedule | Instant — click and start |
-| **Cost per interview** | Resource-intensive human effort | Near-zero marginal cost |
-| **Daily capacity** | 20-30 candidates | Unlimited |
-| **Consistency** | Varies by interviewer mood | Same standard every time |
-| **Bias** | Unconscious human bias | Objective scoring rubric |
-| **Report generation** | Manual notes, subjective | Auto-generated, evidence-based |
-| **Scaling** | Scale by increasing human resources | Scale infrastructure horizontally with additional API capacity |
-
-### 💸 The Economics
-> **Traditional screening:**
-> Involves significant human effort and coordination, making it time-consuming and harder to scale as candidate volume increases.
-
-> **AI-powered screening:**
-> Enables near-instant interviews with minimal marginal cost per candidate.
-
-> **Result:**
-> A more scalable, consistent, and operationally efficient screening process.
+| **Availability** | Business hours only | 24/7 |
+| **Speed** | 3–5 days | Instant |
+| **Cost** | High | Near-zero |
+| **Capacity** | 20–30/day | Unlimited |
+| **Consistency** | Varies | Standardized |
 
 ---
+
+## ⚡ TL;DR
+- 🎙️ Real-time AI voice interview (not chatbot)
+- 🧠 Intelligent interviewer (Maya)
+- 📊 Auto scoring + detailed report
+- 📄 One-click PDF export
+- ⚡ Fully automated pipeline
 
 ## ✨ Key Features
 
 ### 🎙️ Human-Like Voice Interview
-- **ElevenLabs TTS integration** — AI speaks with a natural, human-like voice (configurable voice profile)
-- **Not a robotic voice** — candidates feel like they're talking to a real person
-- **Multi-key ElevenLabs fallback system** — rotates across multiple API keys to ensure uninterrupted voice generation
-- **Automatic browser TTS fallback** — if all ElevenLabs keys exhaust, seamlessly switches to browser voice
-- Real-time speech recognition captures candidate responses
-- Automatic silence detection (5 seconds) seamlessly moves the conversation forward
-- Text appears in sync with voice — no text spoilers before AI finishes speaking
+- **ElevenLabs TTS integration** — AI speaks with a natural voice profile
+- **Multi-key fallback system** — rotates API keys to ensure uninterrupted service
+- **Automatic browser TTS fallback** — seamless backup when quotas exhaust
+- **Real-time speech recognition** captures candidate responses with zero-lag character-by-character feedback
+- **Automatic silence detection** moves the conversation forward naturally
 
 ### 🤖 Intelligent AI Interviewer (Maya)
-- Powered by **Llama 3.3 70B** via Groq — fast, intelligent, and free
-- **Persona: Maya** — a warm, friendly Cuemath interviewer who sounds human
-- **One question per turn** — clean, focused, linear interview flow
-- **Strict question tracking** — frontend controls question order, AI cannot repeat or skip questions
-- **Nonsense detection** — catches irrelevant answers and politely redirects
-- **Auto-completion** — interview ends automatically after all 6 questions (answer, skip, or timeout)
-- Natural acknowledgments — varies responses like a real human ("Hmm okay...", "Right, got it...")
-- **Maintains a consistent interviewer persona throughout the session**
+- Powered by **Llama 3.3 70B** via Groq — ultra-fast, intelligent inference
+- **One question per turn** — linear, bulletproof interview flow
+- **Strict question tracking** — AI cannot repeat or skip questions
+- **Nonsense detection** — catches irrelevant answers and redirects politely
+- **Auto-completion** — interview ends automatically after all 6 questions
 
 ### 📊 Comprehensive Assessment Report
 - **Overall score** out of 100 with color-coded progress ring
 - **Recommendation level**: Strong Recommend / Recommend / Maybe / Not Recommended
-- **5-dimension scoring** (each 0-20):
-  - 💬 Communication Clarity
-  - 🤗 Warmth & Patience
-  - 🧩 Simplification Ability
-  - 🗣️ English Fluency
-  - 🎓 Teaching Instinct
+- **5-dimension scoring**: Clarity, Warmth, Simplification, Fluency, and Teaching Instinct
 - **Evidence-based** — each dimension includes a direct quote from the interview
-- **Strengths & Areas for Improvement** — actionable insights
 - **Full interview transcript** with timestamps
 
-### 📥 PDF Export
-- One-click professional PDF report generation
-- Clean formatting suitable for HR review and filing
-- Includes all scores, dimensions, evidence quotes, and transcript
+### 📥 Smart PDF Pagination Engine
+- **Granular Page Capture** — renders content block-by-block to prevent text slicing
+- **Section Grouping** — headings and associated items always stay together
+- **High-Contrast Print Support** — automatically adapts themes for professional copies
 
-### 🎨 Premium UI/UX
-- **Dark/Light mode** with smooth transitions
-- **Glassmorphism aesthetics** — frosted glass cards, subtle gradients
-- **Interview progress bar** — visual question tracker (1/6 → 6/6)
-- **Typing indicator** — shows thinking state while AI generates response
-- **Responsive layout with mobile compatibility**
-- **Cuemath brand alignment** — professional, trustworthy, welcoming
-- **Pre-interview mic test** — builds candidate confidence before the real interview
-- **Dynamic Device Notice** — recommends laptop for stable environment without blocking mobile access
+### 💎 The "Liquid Glass" Design System
+- **Cinematic Wide Layout** — spacious `max-w-5xl` container for a "command-center" feel
+- **Glass Shine Effects** — sleek light-sweep animations on cards
+- **Spring Physics** — ultra-responsive, tactile motion system
+- **Pixel-Perfect Theme Continuity** — adaptive colors that look great in light and dark modes
+
+### 🗺️ Selection Journey
+Landing → Application → Mic Test → AI Interview → Report → PDF
 
 ---
 
@@ -116,76 +115,50 @@ The candidate visits the website → speaks naturally with the AI interviewer �
 
 | Layer | Technology | Why |
 |-------|-----------|-----|
-| **Framework** | Next.js 15 (App Router) | Full-stack in one project, easy Vercel deployment |
-| **Language** | TypeScript | Type safety, better developer experience |
-| **AI Model** | Llama 3.3 70B (via Groq) | Free tier, ultra-fast inference, excellent quality |
-| **Voice (TTS)** | ElevenLabs API | Human-like natural voice, configurable voice profile |
-| **Voice Fallback** | Browser SpeechSynthesis | Free backup when ElevenLabs quota exhausts |
-| **Speech-to-Text** | Web Speech API | Free, built-in, no server processing needed |
-| **Styling** | Tailwind CSS + Custom CSS | Rapid development with premium custom touches |
-| **Animations** | CSS Animations + Framer Motion | Smooth, performant transitions |
-| **State Management** | React Context + Hooks | Lightweight, no extra dependencies |
-| **PDF Generation** | html2canvas-pro + jsPDF | Client-side PDF with print fallback |
-| **Deployment** | Vercel | Zero-config, automatic deployments, free tier |
+| **Framework** | Next.js 15 (App Router) | Full-stack simplicity, App Router performance |
+| **Language** | TypeScript | Type safety and developer experience |
+| **AI Model** | Llama 3.3 70B (via Groq) | Ultra-fast inference, high-quality reasoning |
+| **Voice (TTS)** | ElevenLabs API | Industry-leading natural voice synthesis |
+| **Speech-to-Text** | Web Speech API | Free, built-in, instant browser-side processing |
+| **Styling** | Tailwind CSS | Rapid development with premium custom touches |
+| **Animations** | Framer Motion | Smooth, performant transitions |
+
+## 🧩 What Makes This Different
+- Not a chatbot — a **structured interview system**
+- Frontend-controlled question flow (no LLM randomness)
+- Multi-API fallback (Groq + ElevenLabs)
+- Handles real-world failures (timeouts, silence, nonsense input)
+- Designed like a **production system**, not a demo
 
 ---
 
-## 🧠 Engineering Challenges & How I Solved Them
+## 🧠 Real Engineering Problems I Solved
 
 ### 1. AI Getting Stuck in Loops
-**Problem:** LLM would sometimes repeat the same question, skip questions, or ask question 7 that doesn't exist.
-
-**Solution:** Frontend owns the question state. The AI only generates acknowledgment + receives the next question to ask from the system prompt. Question index is tracked client-side and passed to the API on every turn. AI cannot deviate.
+**Problem:** LLM would sometimes repeat questions or deviate from the screening goals.
+**Solution:** Frontend owns the question state. The AI only generates acknowledgment and receives the specific next question from the system prompt. Deterministic flow.
 
 ### 2. Robotic Voice Killing the Experience
-**Problem:** Browser SpeechSynthesis sounds like a robot. Candidates immediately know it's not human, breaking the immersion.
-
-**Solution:** Integrated ElevenLabs TTS API with a natural voice profile. Built a multi-key fallback system — when one key's quota runs out, it silently switches to the next. If all keys exhaust, gracefully falls back to browser TTS so the app never breaks.
+**Problem:** Browser SpeechSynthesis sounds artificial, breaking candidate immersion.
+**Solution:** Integrated ElevenLabs TTS with a natural voice profile and a multi-key rotation system for zero downtime on free quotas.
 
 ### 3. Text Appearing Before Voice
-**Problem:** AI response text would show up on screen instantly, but voice took 1-2 seconds to load from ElevenLabs. Candidate could read the answer before hearing it — felt unnatural.
+**Problem:** AI response text appearing instantly while audio loads feels unnatural.
+**Solution:** Added a "thinking..." state; text is only revealed once the audio buffer is ready to play. Perfect synchronization.
 
-**Solution:** Show a "thinking..." indicator while TTS audio loads. Only render the text message AFTER the audio starts playing. Text and voice now appear in sync.
+### 4. Free Tier API Rate Limits
+**Problem:** Single keys are easily exhausted during high-traffic testing.
+**Solution:** Sequential multi-key rotation for Groq and ElevenLabs ensures 100% availability.
 
-### 4. Interview Not Ending After Last Question
-**Problem:** After question 6, the system would try to fetch question 7, hang, and never redirect to the report page.
-
-**Solution:** Added explicit end-of-interview detection in three places — answer handler, skip handler, and silence timeout handler. All three check: if `currentQuestion >= 6`, trigger closing message → TTS → auto-redirect to report.
-
-### 5. Free Tier API Rate Limits
-**Problem:** Groq free tier allows 100K tokens/day. ElevenLabs free tier allows 10K chars/month. A single key runs out quickly during testing.
-
-**Solution:** Built a multi-key rotation system for BOTH services. 4 Groq keys = 400K tokens/day. Multiple ElevenLabs keys for extended TTS capacity. Each API route tries keys sequentially with automatic fallback. Users experience zero downtime.
-
-### 6. Mobile Audio & Handoff Delay
-**Problem:** Mobile browsers (especially Safari) have inconsistent audio context behavior. Switching from AI speaker to candidate mic too fast (under 100ms) would often crash the session or fail to record.
-
-**Solution:** Implemented **Adaptive Handoff Delay**. Laptops use an instant-on 10ms delay, while mobile devices use a 500ms safety buffer. Combined with an aggressive "Auto-Revive" safety net, the microphone maintains 100% reliability across all devices.
-
-> These solutions ensure a **deterministic, production-grade interview flow** rather than a typical unpredictable LLM chat experience.
-
----
-
-## 🛡️ Edge Case Handling
-
-| Edge Case | What Happens |
-|-----------|-------------|
-| Candidate gives one-word answer | AI acknowledges briefly, moves to next question |
-| Candidate speaks off-topic or gibberish | AI politely redirects: "Hmm, I think I wasn't clear..." |
-| Candidate stays silent for 5+ seconds | Auto-submits silence, moves forward |
-| Candidate skips all 6 questions | Interview still completes, report generates with low scores |
-| ElevenLabs API key quota exhausted | Auto-rotates to next key, then falls back to browser TTS |
-| Groq API key rate limited | Auto-rotates to next key (4 keys available) |
-| All API keys fail | Graceful error message, no crash |
-| Browser doesn't support speech recognition | Text input box appears automatically |
-| Candidate refreshes mid-interview | Interview state preserved in localStorage |
-| Slow internet connection | Loading indicators shown, TTS buffers before playing |
-| Question 6 answered/skipped/timed out | Interview auto-ends in ALL three scenarios |
-| Candidate tries to go back to previous question | Not possible — linear flow enforced |
+### 5. Mobile Audio Context Handoff
+**Problem:** Mobile Safari crashes if microphone activates immediately after the speaker.
+**Solution:** Implemented Adaptive Handoff Delays and an Auto-Revive safety net for 100% mobile reliability.
 
 ---
 
 ## 🏗️ Architecture
+
+> Designed as a fault-tolerant system with multi-key API fallback and deterministic interview flow.
 
 ```
 ┌─────────────────────────────────────────────────┐
@@ -201,173 +174,53 @@ The candidate visits the website → speaks naturally with the AI interviewer �
             │  /api/assess        │ ← Assessment generation
             └──────────┬──────────┘
                        │
-         ┌─────────────┼─────────────┐
-         │             │             │
-    ┌────┴────┐  ┌─────┴─────┐  ┌───┴───┐
-    │  Groq   │  │ ElevenLabs│  │Browser│
-    │  API    │  │ TTS API   │  │TTS    │
-    │(LLM)   │  │(Voice)    │  │(Fallback)
-    │Key 1→4 │  │Multi-key │  │       │
-    └─────────┘  └───────────┘  └───────┘
-```
-
-### Interview Flow
-```
-Candidate enters name/email
-        ↓
-Microphone test (hardware check)
-        ↓
-"Begin Interview" tap
-        ↓
-AI (Maya) greets candidate → asks Q1
-        ↓
-Candidate speaks → AI listens (5s silence = auto-submit)
-        ↓
-AI acknowledges → moves to next question
-        ↓
-(Repeat for 6 questions — one question per turn)
-        ↓
-Question 6 answered/skipped/timed out → auto-end
-        ↓
-AI closing message → auto-redirect to report
-        ↓
-Full transcript sent to Groq for assessment
-        ↓
-Detailed report with 5-dimension scoring
-        ↓
-PDF download available
+           ┌─────────────┼─────────────┐
+           │             │             │
+      ┌────┴────┐  ┌─────┴─────┐  ┌────┴────┐
+      │  Groq   │  │ElevenLabs │  │ Browser │
+      │   API   │  │  TTS API  │  │   TTS   │
+      │  (LLM)  │  │ (Voice)   │  │(Fallback)│
+      │ Key 1-4 │  │ Multi-key │  │         │
+      └─────────┘  └───────────┘  └─────────┘
 ```
 
 ---
 
 ## ⚙️ Setup & Installation
 
-### Prerequisites
-- Node.js 18+
-- npm or yarn
-- Groq API key ([console.groq.com](https://console.groq.com))
-- ElevenLabs API key ([elevenlabs.io](https://elevenlabs.io))
-
-### 1. Clone the repository
+### 1. Clone & Install
 ```bash
 git clone https://github.com/starkbbk/AI-Tutor-Screener.git
 cd AI-Tutor-Screener
-```
-
-### 2. Install dependencies
-```bash
 npm install
 ```
 
-### 3. Configure environment variables
-Create a `.env.local` file in the root:
+### 2. Configure Env
+Create `.env.local`:
 ```env
-# Groq API Keys (LLM - multi-key fallback)
-GROQ_API_KEY_1=gsk_your_first_key
-GROQ_API_KEY_2=gsk_your_second_key
-GROQ_API_KEY_3=gsk_your_third_key
-GROQ_API_KEY_4=gsk_your_fourth_key
-
-# ElevenLabs API Keys (TTS - multi-key fallback)
-ELEVENLABS_API_KEY_1=sk_your_first_key
-ELEVENLABS_API_KEY_2=sk_your_second_key
-ELEVENLABS_API_KEY_3=sk_your_third_key
-ELEVENLABS_API_KEY_4=sk_your_fourth_key
-ELEVENLABS_API_KEY_5=sk_your_fifth_key
-ELEVENLABS_API_KEY_6=sk_your_sixth_key
+# Multi-key rotation support
+GROQ_API_KEY_1=...
+ELEVENLABS_API_KEY_1=...
 ```
 
-### 4. Run locally
+### 3. Run
 ```bash
 npm run dev
 ```
-Open [http://localhost:3000](http://localhost:3000)
 
 ---
 
-## 🚀 Deployment (Vercel)
+## 👨‍💻 About the Builder
+**Shivanand Verma**  
+CS (AI/ML) student building real-world AI systems with a strong focus on product thinking and scalability.
 
-1. **Push to GitHub**
-2. **Import to Vercel**: Connect your GitHub repository
-3. **Set environment variables**: Add all `GROQ_API_KEY_*` and `ELEVENLABS_API_KEY_*` variables
-4. **Deploy**: Vercel automatically builds and deploys
-
----
-
-## 🎯 Design Decisions & Tradeoffs
-
-| Decision | Why | Tradeoff |
-|----------|-----|----------|
-| **ElevenLabs over Browser TTS** | Human-like voice makes interview feel real | Limited free chars/month — solved with multi-key rotation |
-| **Multi-key fallback (Groq + ElevenLabs)** | Zero downtime on free tiers | Requires multiple accounts |
-| **Groq over OpenAI/Gemini** | Free tier with 100K tokens/day, ultra-fast | Llama 3.3 slightly less capable than GPT-4, but excellent here |
-| **Web Speech API over Whisper** | Free, instant, no server cost | Chrome/Safari only — text fallback for others |
-| **One question per turn** | Clean focused flow, no confusion | Less conversational, but more reliable |
-| **Text synced with voice** | Natural feel — real conversation | Slight delay while TTS audio loads |
-| **Frontend question tracking** | Prevents AI loops and stuck states | Less flexible, but bulletproof reliability |
-| **localStorage over database** | Zero cost, instant deployment | Not persistent across devices |
-| **Adaptive Device Optimization** | Ensures stability on mobile without blocking access | Slightly more complex code, but far better UX |
-
----
-
-## 🔮 Future Roadmap
-
-1. **PostgreSQL database** — persist all interviews, enable search and analytics
-2. **HR Admin Dashboard** — view all candidates, filter by score, compare side-by-side
-3. **Whisper API** — better transcription for Indian English accents
-4. **Email notifications** — auto-email results to HR team
-5. **Customizable question sets** — different questions for different roles
-6. **Multi-language support** — Hindi and regional languages
-7. **Analytics dashboard** — completion rates, average scores, drop-off analysis
-8. **Audio recording** — store voice recordings alongside transcripts
-9. **Candidate comparison** — compare two candidates side-by-side
-
----
-
-## 🧪 Testing
-
-### Good Candidate Test (Expected: 80-90 score)
-Give detailed, thoughtful answers about teaching philosophy, use real examples, show patience and creativity.
-
-### Average Candidate Test (Expected: 50-65 score)
-Give short but relevant answers.
-
-### Poor Candidate Test (Expected: 20-35 score)
-Give one-word answers or irrelevant responses. AI catches this and scores accordingly.
-
----
-
-## 📂 Project Structure
-
-```
-├── app/
-│   ├── page.tsx              # Landing page
-│   ├── mic-test/page.tsx     # Microphone test
-│   ├── interview/page.tsx    # Interview room
-│   ├── report/page.tsx       # Assessment report
-│   ├── api/
-│   │   ├── chat/route.ts     # AI conversation endpoint
-│   │   ├── tts/route.ts      # ElevenLabs TTS endpoint
-│   │   └── assess/route.ts   # Assessment generation endpoint
-│   ├── layout.tsx            # Root layout
-│   └── globals.css           # Global styles
-├── components/               # Reusable UI components
-├── context/                  # React Context providers
-├── lib/                      # Utilities, constants, types
-├── public/                   # Static assets
-├── .env.local                # API keys (not in repo)
-└── README.md                 # This file
-```
-
----
-
-## 👨💻 Author
-
-Built by **Shivanand Verma** as part of the **Cuemath AI Builder Challenge** — a take-home build challenge for the AI Builder role on Cuemath's Product Team.
+This project demonstrates:
+- **AI System Design** (not just API usage)
+- **Real-time Voice Interaction** handling
+- **Production-grade Edge Case** handling
+- **Strong UX + Product Execution**
 
 ---
 
 ## ⚠️ License
-This project is protected under a custom license.
-Unauthorized copying or reuse of this code is strictly prohibited.
-© 2026 Shivanand Verma
+© 2025 Shivanand Verma. Unauthorized copying or reuse of this code is strictly prohibited.

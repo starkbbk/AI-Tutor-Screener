@@ -101,5 +101,5 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// © 2026 Shivanand Verma (starkbbk)
+// © 2025 Shivanand Verma (starkbbk)
 
