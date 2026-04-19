@@ -3,7 +3,30 @@
  * Provides natural-sounding TTS with a native fallback.
  */
 
-let currentAudio: HTMLAudioElement | null = null;
+let currentAudioSingleton: HTMLAudioElement | null = null;
+let currentUrl: string | null = null;
+
+// Initialize the singleton as early as possible
+if (typeof window !== 'undefined') {
+    currentAudioSingleton = new Audio();
+}
+
+/**
+ * Prime the audio system on a user gesture.
+ * Required for iOS/Safari to allow subsequent automatic playbacks.
+ */
+export function unlockAudio(): void {
+    if (!currentAudioSingleton) return;
+    
+    console.log("[ELEVENLABS] Unlocking audio singleton...");
+    currentAudioSingleton.play().then(() => {
+        currentAudioSingleton?.pause();
+        console.log("[ELEVENLABS] Audio system UNLOCKED.");
+    }).catch(() => {
+        // This is expected if no user gesture has occurred yet
+        console.log("[ELEVENLABS] Waiting for user gesture to unlock audio.");
+    });
+}
 
 export async function speakWithElevenLabs(
   text: string,
@@ -11,9 +34,15 @@ export async function speakWithElevenLabs(
   onEnd?: () => void,
   nativeFallback?: (text: string, onStart?: (duration?: number) => void, onEnd?: () => void) => void
 ): Promise<void> {
-  // Stop any currently playing audio
+  // 1. Stop and cleanup previous
   stopSpeakingElevenLabs();
+  if (currentUrl) {
+    try {
+        URL.revokeObjectURL(currentUrl);
+    } catch(e) {}
+  }
 
+  // 2. Fetch and prepare new audio
   try {
     const response = await fetch('/api/tts', {
       method: 'POST',
@@ -21,45 +50,43 @@ export async function speakWithElevenLabs(
       body: JSON.stringify({ text }),
     });
 
-    if (!response.ok) {
-      throw new Error('TTS API failed');
-    }
+    if (!response.ok) throw new Error('TTS API failed');
 
     const audioBlob = await response.blob();
-    const audioUrl = URL.createObjectURL(audioBlob);
+    currentUrl = URL.createObjectURL(audioBlob);
     
-    currentAudio = new Audio(audioUrl);
+    if (!currentAudioSingleton) {
+        currentAudioSingleton = new Audio();
+    }
+
+    const audio = currentAudioSingleton;
+    audio.src = currentUrl;
     
-    // CRITICAL: Ensure duration is available before starting typewriter
     const handleStart = () => {
-      if (currentAudio) {
-        const duration = currentAudio.duration;
-        // If duration is still NaN, estimate it to avoid instant reveal
+        const duration = audio.duration;
         if (isNaN(duration) || duration <= 0) {
           const words = text.split(/\s+/).length;
           onStart?.((words / 150) * 60);
         } else {
           onStart?.(duration);
         }
-      }
     };
 
-    currentAudio.onplay = handleStart;
-    currentAudio.onloadedmetadata = handleStart;
+    audio.onplay = handleStart;
+    audio.onloadedmetadata = handleStart;
     
-    currentAudio.onended = () => {
+    audio.onended = () => {
       onEnd?.();
-      URL.revokeObjectURL(audioUrl);
-      currentAudio = null;
+      currentUrl = null;
     };
     
-    currentAudio.onerror = () => {
+    audio.onerror = () => {
       console.error("[ELEVENLABS] Audio playback error, falling back...");
       nativeFallback?.(text, onStart, onEnd);
     };
 
-    // Pre-load metadata if possible or just wait for play
-    await currentAudio.play();
+    // 3. Play via the already-unlocked singleton
+    await audio.play();
   } catch (error) {
     console.error("[ELEVENLABS] Integration error, falling back to native TTS:", error);
     if (nativeFallback) {
@@ -71,9 +98,9 @@ export async function speakWithElevenLabs(
 }
 
 export function stopSpeakingElevenLabs(): void {
-  if (currentAudio) {
-    currentAudio.pause();
-    currentAudio.currentTime = 0;
-    currentAudio = null;
+  if (currentAudioSingleton) {
+    currentAudioSingleton.pause();
+    currentAudioSingleton.currentTime = 0;
+    // Don't nullify the singleton, just pause it
   }
 }

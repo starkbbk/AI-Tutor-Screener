@@ -13,7 +13,8 @@ import { Input } from "@/components/ui/input"
 import { ThemeToggle } from "@/components/ui/theme-toggle"
 import { formatTime, cn } from "@/lib/utils"
 import { TOTAL_QUESTIONS } from "@/lib/constants"
-import { speak, startListening, stopListening, stopSpeaking, SpeechRecognitionResult, preloadVoices, setInterviewActive } from "@/lib/speech-adapter"
+import { speak, startListening, stopListening, stopSpeaking, SpeechRecognitionResult, preloadVoices, setInterviewActive, unlockMic } from "@/lib/speech-adapter"
+import { unlockAudio } from "@/lib/elevenlabs-speech"
 
 export function InterviewRoom() {
   const router = useRouter()
@@ -427,7 +428,7 @@ export function InterviewRoom() {
         console.log("[MOBILE_MIC] Instance ENDED.");
         // If interview is still active and Mayo isn't speaking, restart immediately
         if (state.interviewStatus === 'in_progress') {
-            const restartDelay = 200;
+            const restartDelay = 500; // Increased for extra mobile stability
             console.log(`[MOBILE_MIC] Auto-restarting in ${restartDelay}ms...`);
             setTimeout(startLocalMobileRecognition, restartDelay);
         } else {
@@ -782,7 +783,11 @@ export function InterviewRoom() {
               </div>
               
               <Button 
-                onClick={() => setHasStarted(true)}
+                onClick={() => {
+                  unlockAudio();
+                  unlockMic();
+                  setHasStarted(true);
+                }}
                 className="w-full h-14 sm:h-16 rounded-2xl sm:rounded-[1.2rem] font-black tracking-widest uppercase amber-button shadow-2xl shadow-brand-amber/20 text-sm sm:text-base group"
               >
                 Begin Interview 
