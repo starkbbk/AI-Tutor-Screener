@@ -147,11 +147,11 @@ export function CandidateForm({ onStepChange }: { onStepChange?: (step: number) 
   }, [step])
 
   // Auto-scroll to grading section (Q5) only when the last education step is completed
-  useEffect(() => {
+  /* useEffect(() => {
     if (mathDegreeType) {
       scrollToQuestion('q5')
     }
-  }, [mathDegreeType])
+  }, [mathDegreeType]) */
 
   // Notify parent of step changes
   useEffect(() => {
@@ -553,8 +553,8 @@ export function CandidateForm({ onStepChange }: { onStepChange?: (step: number) 
                     What is your gender? <span className="text-red-400">*</span>
                   </p>
                   <div className="flex gap-2">
-                    <Pill active={gender === 'male'} onClick={() => { setGender('male'); scrollToQuestion('q1') }}>Male</Pill>
-                    <Pill active={gender === 'female'} onClick={() => { setGender('female'); scrollToQuestion('q1') }}>Female</Pill>
+                    <Pill active={gender === 'male'} onClick={() => { setGender('male'); /* scrollToQuestion('q1') */ }}>Male</Pill>
+                    <Pill active={gender === 'female'} onClick={() => { setGender('female'); /* scrollToQuestion('q1') */ }}>Female</Pill>
                   </div>
                 </motion.div>
 
@@ -564,8 +564,8 @@ export function CandidateForm({ onStepChange }: { onStepChange?: (step: number) 
                     Are you currently residing in India? <span className="text-red-400">*</span>
                   </p>
                   <div className="flex gap-2">
-                    <Pill active={residesInIndia === true} onClick={() => { setResidesInIndia(true); scrollToQuestion('q2') }}>Yes</Pill>
-                    <Pill active={residesInIndia === false} onClick={() => { setResidesInIndia(false); scrollToQuestion('q2') }}>No</Pill>
+                    <Pill active={residesInIndia === true} onClick={() => { setResidesInIndia(true); /* scrollToQuestion('q2') */ }}>Yes</Pill>
+                    <Pill active={residesInIndia === false} onClick={() => { setResidesInIndia(false); /* scrollToQuestion('q2') */ }}>No</Pill>
                   </div>
                 </motion.div>
 
@@ -575,8 +575,8 @@ export function CandidateForm({ onStepChange }: { onStepChange?: (step: number) 
                     College graduation status <span className="text-red-400">*</span>
                   </p>
                   <div className="flex flex-wrap gap-2">
-                    <Pill active={graduationStatus === "graduate"} onClick={() => { setGraduationStatus("graduate"); scrollToQuestion('q3') }}>I'm already a graduate</Pill>
-                    <Pill active={graduationStatus === "pursuing"} onClick={() => { setGraduationStatus("pursuing"); scrollToQuestion('q3') }}>I'm still pursuing graduation</Pill>
+                    <Pill active={graduationStatus === "graduate"} onClick={() => { setGraduationStatus("graduate"); /* scrollToQuestion('q3') */ }}>I'm already a graduate</Pill>
+                    <Pill active={graduationStatus === "pursuing"} onClick={() => { setGraduationStatus("pursuing"); /* scrollToQuestion('q3') */ }}>I'm still pursuing graduation</Pill>
                   </div>
                 </motion.div>
 
@@ -586,8 +586,8 @@ export function CandidateForm({ onStepChange }: { onStepChange?: (step: number) 
                     Can you commit to a minimum of 24 hours per week? <span className="text-red-400">*</span>
                   </p>
                   <div className="flex gap-2">
-                    <Pill active={canCommit === true} onClick={() => { setCanCommit(true); scrollToQuestion('q4') }}>Yes</Pill>
-                    <Pill active={canCommit === false} onClick={() => { setCanCommit(false); scrollToQuestion('q4') }}>No</Pill>
+                    <Pill active={canCommit === true} onClick={() => { setCanCommit(true); /* scrollToQuestion('q4') */ }}>Yes</Pill>
+                    <Pill active={canCommit === false} onClick={() => { setCanCommit(false); /* scrollToQuestion('q4') */ }}>No</Pill>
                   </div>
                 </motion.div>
 
@@ -639,7 +639,7 @@ export function CandidateForm({ onStepChange }: { onStepChange?: (step: number) 
                         type="button"
                         whileHover={{ scale: 1.01 }}
                         whileTap={{ scale: 0.99 }}
-                        onClick={() => { setGradePreference(g.label); scrollToQuestion('q6') }}
+                        onClick={() => { setGradePreference(g.label); /* scrollToQuestion('q6') */ }}
                         className={cn(
                           "w-full text-left p-4 rounded-xl border transition-all duration-300",
                           gradePreference === g.label
