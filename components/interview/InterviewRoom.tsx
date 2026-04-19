@@ -346,11 +346,25 @@ export function InterviewRoom() {
     }, 4000)
   }
 
-  const handleStartListening = () => {
+  const handleStartListening = async () => {
     if (state.interviewStatus === 'completing' || state.interviewStatus === 'completed' || state.isRecording) return;
     
     // CRITICAL: Never turn on mic in fallback/text mode
     if (state.useFallbackMode) return;
+
+    // Fresh mic permission trick for mobile
+    const isMobileStatus = typeof window !== 'undefined' && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    if (isMobileStatus) {
+      console.log("[MIC HANDOFF] Mobile detected: Requesting fresh permission...");
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        stream.getTracks().forEach(t => t.stop());
+        await new Promise(r => setTimeout(r, 300));
+        console.log("[MIC HANDOFF] Permissions refreshed.");
+      } catch (e) {
+        console.warn("[MIC HANDOFF] Permission refresh failed:", e);
+      }
+    }
 
     stopSpeaking()
     setAISpeaking(false)

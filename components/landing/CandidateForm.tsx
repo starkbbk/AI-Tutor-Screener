@@ -55,6 +55,28 @@ export function CandidateForm({ onStepChange }: { onStepChange?: (step: number) 
   const router = useRouter()
   const { setCandidate, setFallbackMode } = useInterview()
   const [step, setStep] = useState(1)
+  
+  // Mobile detection for timing workarounds
+  const isMobileDevice = typeof window !== 'undefined' && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+  /**
+   * Hardware-level Microphone Release
+   */
+  const releaseMicHardware = async () => {
+    console.log("[MIC CLEANUP] Releasing hardware tracks...");
+    stopListening();
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true }).catch(() => null);
+      if (stream) {
+        stream.getTracks().forEach(track => {
+            track.stop();
+            console.log("[MIC CLEANUP] Track stopped:", track.label);
+        });
+      }
+    } catch (e) {
+      console.warn("[MIC CLEANUP] Release error:", e);
+    }
+  };
 
   // ── Step 1 state ──────────────────────────────────────────────────────────────
   const [name, setName] = useState("")
@@ -167,7 +189,12 @@ export function CandidateForm({ onStepChange }: { onStepChange?: (step: number) 
       }
       preloadVoices()
     }
-    return () => { if (step === 3) stopListening() }
+    return () => { 
+      if (step === 3) {
+        console.log("[MIC CLEANUP] Component unmounting, forcing release.");
+        releaseMicHardware();
+      }
+    }
   }, [step, setFallbackMode])
 
   // Auto-stop mic on silence
@@ -220,8 +247,10 @@ export function CandidateForm({ onStepChange }: { onStepChange?: (step: number) 
 
   const handleStopTest = () => { stopListening(); setIsTesting(false) }
 
-  const submitAndStart = (useFallback = false) => {
-    stopListening()
+  const submitAndStart = async (useFallback = false) => {
+    // 1. Release Mic Immediately
+    await releaseMicHardware();
+    
     if (useFallback) setFallbackMode(true)
     setCandidate({
       name, email,
@@ -230,7 +259,16 @@ export function CandidateForm({ onStepChange }: { onStepChange?: (step: number) 
       canCommit24hrs: canCommit ?? undefined,
       degree, fieldOfStudy, mathDegreeType, gradePreference, regionPreference, gender: gender ?? undefined,
     })
-    router.push("/interview")
+
+    // 2. Mobile-specific handoff delay
+    if (isMobileDevice) {
+      console.log("[MIC CLEANUP] Mobile detected: Waiting 500ms for hardware release...");
+      setTimeout(() => {
+        router.push("/interview");
+      }, 500);
+    } else {
+      router.push("/interview");
+    }
   }
 
   // ── Field of study options ────────────────────────────────────────────────────
