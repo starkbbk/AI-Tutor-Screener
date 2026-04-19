@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input"
 import { ThemeToggle } from "@/components/ui/theme-toggle"
 import { formatTime, cn } from "@/lib/utils"
 import { TOTAL_QUESTIONS } from "@/lib/constants"
-import { speak, startListening, stopListening, stopSpeaking, SpeechRecognitionResult, preloadVoices } from "@/lib/speech"
+import { speak, startListening, stopListening, stopSpeaking, SpeechRecognitionResult, preloadVoices } from "@/lib/speech-adapter"
 
 export function InterviewRoom() {
   const router = useRouter()
