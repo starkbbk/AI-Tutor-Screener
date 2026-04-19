@@ -403,12 +403,20 @@ export function InterviewRoom() {
     };
 
     rec.onresult = (event: any) => {
-        let transcript = '';
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-            transcript += event.results[i][0].transcript;
+        // ECHO GATE: Ignore input while Maya is speaking
+        if (state.isAISpeaking) {
+            console.log("[MOBILE_MIC] Echo Gate active: Ignoring input during AI speech.");
+            return;
         }
-        if (transcript) {
-            setCurrentTranscript(prev => (prev + " " + transcript).trim());
+
+        let fullTranscript = '';
+        // Standard continuous re-build to prevent duplication
+        for (let i = 0; i < event.results.length; i++) {
+            fullTranscript += event.results[i][0].transcript;
+        }
+        
+        if (fullTranscript.trim()) {
+            setCurrentTranscript(fullTranscript.trim());
             setLastTranscriptUpdate(Date.now());
         }
     };
