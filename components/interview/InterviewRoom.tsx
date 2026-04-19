@@ -530,84 +530,102 @@ export function InterviewRoom() {
       )}
       
       {/* Top Header */}
-      <div className="flex items-center justify-between p-2.5 sm:p-6 glass-header z-[60] space-x-2 sm:space-x-4">
-        {/* Left: Logo */}
-        <div className="flex-shrink-0">
-          <Image src="/cuemath-logo.svg" alt="Cuemath" width={80} height={24} className="w-[70px] xs:w-[80px] sm:w-[120px] sm:h-[32px] opacity-90" />
-        </div>
-        
-        {/* Middle: Integrated Progress Bar */}
-        {hasStarted && (
-          <div className="flex-1 flex flex-col items-center px-2 sm:px-8 max-w-xl mx-auto animate-in slide-in-from-top-2 duration-700">
-            <div className="flex justify-between w-full mb-1 sm:mb-2 items-end px-0.5">
-              <span className="text-[7px] sm:text-[9px] font-black text-foreground uppercase tracking-[0.2em] opacity-30">Interview Progress</span>
-              <span className="text-[8px] sm:text-[11px] font-black text-brand-amber uppercase tracking-wider">
-                {`Stage ${Math.min(state.currentQuestionIndex + 1, TOTAL_QUESTIONS)} / ${TOTAL_QUESTIONS}`}
-              </span>
-            </div>
-            <div className="w-full h-1 sm:h-1.5 bg-muted/30 rounded-full overflow-hidden border border-border/40 relative">
-              <div 
-                className="h-full bg-brand-amber transition-all duration-1000 ease-out shadow-[0_0_12px_rgba(255,184,0,0.4)] relative z-10"
-                style={{ width: `${Math.min(((state.currentQuestionIndex + 1) / TOTAL_QUESTIONS) * 100, 100)}%` }}
-              />
-              <div className="absolute inset-0 bg-brand-amber/5 animate-pulse" />
-            </div>
+      <div className="flex flex-col glass-header z-[60]">
+        <div className="flex items-center justify-between p-2.5 sm:p-6 space-x-2 sm:space-x-4">
+          {/* Left: Logo */}
+          <div className="flex-shrink-0">
+            <Image src="/cuemath-logo.svg" alt="Cuemath" width={80} height={24} className="w-[70px] xs:w-[80px] sm:w-[120px] sm:h-[32px] opacity-90" />
           </div>
-        )}
-
-        {/* Right: Tools */}
-        <div className="flex items-center space-x-1.5 sm:space-x-4 flex-shrink-0">
-          {/* Mobile-only Progress Badge */}
+          
+          {/* Middle: Integrated Progress Bar (Hidden on Mobile, shown on SM+) */}
           {hasStarted && (
-            <div className="md:hidden flex items-center bg-brand-amber/10 border border-brand-amber/20 px-2 py-1.5 rounded-lg mr-1.5">
-              <span className="text-[9px] font-black text-brand-amber whitespace-nowrap">
-                Q{Math.min(state.currentQuestionIndex + 1, TOTAL_QUESTIONS)}/{TOTAL_QUESTIONS}
-              </span>
+            <div className="hidden md:flex flex-1 flex-col items-center px-4 sm:px-8 max-w-xl mx-auto animate-in slide-in-from-top-2 duration-700">
+              <div className="flex justify-between w-full mb-1 sm:mb-2 items-end px-0.5">
+                <span className="text-[7px] sm:text-[9px] font-black text-foreground uppercase tracking-[0.2em] opacity-30">Interview Progress</span>
+                <span className="text-[8px] sm:text-[11px] font-black text-brand-amber uppercase tracking-wider">
+                  {`Stage ${Math.min(state.currentQuestionIndex + 1, TOTAL_QUESTIONS)} / ${TOTAL_QUESTIONS}`}
+                </span>
+              </div>
+              <div className="w-full h-1 sm:h-1.5 bg-muted/30 rounded-full overflow-hidden border border-border/40 relative">
+                <div 
+                  className="h-full bg-brand-amber transition-all duration-1000 ease-out shadow-[0_0_12px_rgba(255,184,0,0.4)] relative z-10"
+                  style={{ width: `${Math.min(((state.currentQuestionIndex + 1) / TOTAL_QUESTIONS) * 100, 100)}%` }}
+                />
+                <div className="absolute inset-0 bg-brand-amber/5 animate-pulse" />
+              </div>
             </div>
           )}
-          
-          <div className="hidden xs:flex items-center">
-            <VoiceAvatar />
-          </div>
-          <div className={cn(
-            "flex items-center font-mono text-[9px] sm:text-sm tracking-widest bg-muted/50 px-1.5 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl border border-border whitespace-nowrap",
-            timeLeft < 60 ? "text-red-500 animate-pulse-red" : timeLeft < 240 ? "text-brand-amber" : "text-muted-foreground"
-          )}>
-            <Clock className={cn(
-              "hidden xxs:block w-2.5 h-2.5 sm:w-4 sm:h-4 mr-1 sm:mr-2",
-              timeLeft < 60 ? "text-red-500" : timeLeft < 240 ? "text-brand-amber" : "text-brand-cyan"
-            )} />
-            {formatTime(timeLeft)}
-          </div>
-          <ThemeToggle />
-          
-          <div className="relative">
-            <button 
-              onClick={() => setShowMenu(!showMenu)}
-              className="p-2 hover:bg-muted rounded-full transition-colors"
-            >
-              <MoreVertical className="w-5 h-5 text-muted-foreground" />
-            </button>
-            
-            {showMenu && (
-              <div className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-xl shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in duration-200">
-                <button 
-                  onClick={() => { setShowMenu(false); handleSkipQuestion(); }}
-                  className="w-full text-left px-4 py-3 text-xs font-bold uppercase tracking-wider hover:bg-muted flex items-center"
-                >
-                  <SkipForward className="w-4 h-4 mr-3" /> Skip Question
-                </button>
-                <div className="border-t border-border/50" />
-                <button 
-                  onClick={() => { setShowMenu(false); handleEndEarly(); }}
-                  className="w-full text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-red-500 hover:bg-red-500/10 flex items-center"
-                >
-                  <XCircle className="w-4 h-4 mr-3" /> Exit Session
-                </button>
+
+          {/* Right: Tools */}
+          <div className="flex items-center space-x-1.5 sm:space-x-4 flex-shrink-0">
+            {/* Mobile-only Progress Badge */}
+            {hasStarted && (
+              <div className="md:hidden flex items-center bg-brand-amber/10 border border-brand-amber/20 px-2 py-1.5 rounded-lg">
+                <span className="text-[9px] font-black text-brand-amber whitespace-nowrap">
+                  Q{Math.min(state.currentQuestionIndex + 1, TOTAL_QUESTIONS)}/{TOTAL_QUESTIONS}
+                </span>
               </div>
             )}
+            
+            <div className="hidden xs:flex items-center">
+              <VoiceAvatar />
+            </div>
+
+            {/* Timer */}
+            <div className={cn(
+              "flex items-center font-mono text-[9px] sm:text-sm tracking-widest bg-muted/50 px-1.5 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl border border-border whitespace-nowrap",
+              timeLeft < 60 ? "text-red-500 animate-pulse-red" : timeLeft < 240 ? "text-brand-amber" : "text-muted-foreground"
+            )}>
+              <Clock className={cn(
+                "hidden xxs:block w-2.5 h-2.5 sm:w-4 sm:h-4 mr-1 sm:mr-2",
+                timeLeft < 60 ? "text-red-500" : timeLeft < 240 ? "text-brand-amber" : "text-brand-cyan"
+              )} />
+              {formatTime(timeLeft)}
+            </div>
+
+            <ThemeToggle />
+            
+            <div className="relative">
+              <button 
+                onClick={() => setShowMenu(!showMenu)}
+                className="p-1.5 sm:p-2 hover:bg-muted rounded-full transition-colors"
+                aria-label="Menu"
+              >
+                <MoreVertical className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
+              </button>
+              
+              {showMenu && (
+                <div className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-xl shadow-2xl z-[70] overflow-hidden animate-in fade-in zoom-in duration-200">
+                  <button 
+                    onClick={() => { setShowMenu(false); handleSkipQuestion(); }}
+                    className="w-full text-left px-4 py-3 text-xs font-bold uppercase tracking-wider hover:bg-muted flex items-center"
+                  >
+                    <SkipForward className="w-4 h-4 mr-3" /> Skip Question
+                  </button>
+                  <div className="border-t border-border/50" />
+                  <button 
+                    onClick={() => { setShowMenu(false); handleEndEarly(); }}
+                    className="w-full text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-red-500 hover:bg-red-500/10 flex items-center"
+                  >
+                    <XCircle className="w-4 h-4 mr-3" /> Exit Session
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
+
+        {/* Mobile Progress Bar Row (Shown only on small screens) */}
+        {hasStarted && (
+          <div className="md:hidden px-4 pb-3 animate-in fade-in slide-in-from-top-1 duration-500">
+             <div className="w-full h-1 bg-muted/30 rounded-full overflow-hidden border border-border/40 relative">
+                <div 
+                  className="h-full bg-brand-amber transition-all duration-1000 ease-out shadow-[0_0_8px_rgba(255,184,0,0.3)] relative z-10"
+                  style={{ width: `${Math.min(((state.currentQuestionIndex + 1) / TOTAL_QUESTIONS) * 100, 100)}%` }}
+                />
+             </div>
+          </div>
+        )}
       </div>
 
       {/* Main Content Area */}
@@ -667,40 +685,40 @@ export function InterviewRoom() {
 
         {/* Real-time Status Area */}
         {hasStarted && state.interviewStatus !== 'completing' && !state.useFallbackMode && (
-          <div className="mt-auto pt-10 pb-2 flex flex-col items-center animate-in fade-in slide-in-from-bottom-5 duration-500">
+          <div className="mt-auto pt-4 sm:pt-10 pb-2 flex flex-col items-center animate-in fade-in slide-in-from-bottom-5 duration-500">
              {state.isAISpeaking ? (
                 <div className="flex flex-col items-center">
-                   <div className="flex items-center space-x-1.5 h-10 mb-2">
+                   <div className="flex items-center space-x-1 h-6 sm:h-10 mb-2">
                       {[1, 2, 3, 4, 5, 6].map(i => (
-                        <div key={i} className="w-1.5 bg-brand-cyan rounded-full animate-wave" style={{ height: '100%', animationDelay: `${i * 0.1}s` }} />
+                        <div key={i} className="w-1 sm:w-1.5 bg-brand-cyan rounded-full animate-wave" style={{ height: '100%', animationDelay: `${i * 0.1}s` }} />
                       ))}
                    </div>
-                   <p className="text-[10px] font-black tracking-[0.2em] uppercase text-brand-cyan flex items-center">
-                     <Volume2 className="w-3 h-3 mr-2" /> AI is speaking...
+                   <p className="text-[9px] sm:text-[10px] font-black tracking-[0.2em] uppercase text-brand-cyan flex items-center">
+                     <Volume2 className="w-3 h-3 mr-1.5 sm:mr-2" /> AI is speaking...
                    </p>
                 </div>
               ) : state.isRecording ? (
                  <div className="flex flex-col items-center w-full max-w-lg">
-                    <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mb-4 border border-red-500/20 shadow-lg shadow-red-500/5 pulse-red">
-                        <Mic className="w-8 h-8 text-red-500 animate-pulse" />
+                    <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-red-500/10 flex items-center justify-center mb-3 sm:mb-4 border border-red-500/20 shadow-lg shadow-red-500/5 pulse-red">
+                        <Mic className="w-6 h-6 sm:w-8 sm:h-8 text-red-500 animate-pulse" />
                     </div>
                     
-                    <p className="text-[11px] font-black tracking-[0.2em] uppercase mb-4 text-red-500 animate-pulse">
+                    <p className="text-[9px] sm:text-[11px] font-black tracking-[0.2em] uppercase mb-3 sm:mb-4 text-red-500 animate-pulse">
                       Listening... speak naturally
                     </p>
                     
                     {/* Real-time Transcription feedback */}
-                    <div className="w-full min-h-[4rem] px-6 py-4 bg-muted/20 rounded-2xl border border-border/40 text-center relative overflow-hidden flex items-center justify-center">
+                    <div className="w-full min-h-[3.5rem] sm:min-h-[4rem] px-4 sm:px-6 py-3 sm:py-4 bg-muted/20 rounded-xl sm:rounded-2xl border border-border/40 text-center relative overflow-hidden flex items-center justify-center">
                     {/* Show countdown only if there's no active speech detected */}
                     {silenceCountdown !== null && silenceCountdown <= 5 && !currentTranscript ? (
                          <div className="absolute inset-0 bg-brand-amber/10 flex items-center justify-center animate-in fade-in duration-300">
-                           <p className="text-brand-amber font-black tracking-widest uppercase text-xs flex items-center">
-                             <AlertCircle className="w-4 h-4 mr-2 animate-pulse" />
+                           <p className="text-brand-amber font-black tracking-widest uppercase text-[9px] sm:text-xs flex items-center px-2">
+                             <AlertCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2 animate-pulse" />
                              No voice detected... Moving on in {silenceCountdown}
                            </p>
                          </div>
                        ) : (
-                         <p className={`text-sm font-medium italic leading-relaxed ${currentTranscript.includes("Didn't catch") || currentTranscript.includes("Could you say") ? 'text-brand-amber' : 'text-foreground/80'}`}>
+                         <p className={`text-xs sm:text-sm font-medium italic leading-relaxed ${currentTranscript.includes("Didn't catch") || currentTranscript.includes("Could you say") ? 'text-brand-amber' : 'text-foreground/80'}`}>
                            {currentTranscript || "Waiting for you to speak..."}
                          </p>
                        )}

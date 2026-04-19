@@ -1,12 +1,11 @@
 /**
- * Mobile-Optimized Speech Engine
+ * Mobile-Optimized Speech Engine (v2)
  * 
  * Specifically tuned for iOS Safari and Android Chrome issues:
  * 1. Handoff delays to prevent crash/overlap.
- * 2. Automatic revival of recognition sessions.
- * 3. Mobile-specific silence and no-speech timeouts.
- * 4. Explicit microphone unlocking and AudioContext resumption.
- * 5. Aggressive memory cleanup.
+ * 2. Automatic revival of recognition sessions via watchdog.
+ * 3. Proactive refresh before 60s browser timeouts.
+ * 4. Critical initialization sequence: Stop Audio -> Wait -> Resume Context -> Start Mic.
  */
 
 import { speakWithElevenLabs, stopSpeakingElevenLabs } from "./elevenlabs-speech";
@@ -24,12 +23,15 @@ type ErrorCallback = (error: string) => void;
 // Module-level state
 let recognition: any = null;
 let isListeningActive = false;
+let isRecognitionActuallyRunning = false;
 let autoReviveCount = 0;
-const MAX_AUTO_REVIVE = 3;
+const MAX_AUTO_REVIVE = 5; // Increased for v2
 
 let noSpeechTimer: NodeJS.Timeout | null = null;
 let silenceTimer: NodeJS.Timeout | null = null;
 let startingGuardTimer: NodeJS.Timeout | null = null;
+let keepAliveInterval: NodeJS.Timeout | null = null;
+let maxDurationTimeout: NodeJS.Timeout | null = null;
 let currentUtterance: SpeechSynthesisUtterance | null = null;
 
 let currentOnResult: SpeechCallback | null = null;
@@ -52,26 +54,30 @@ export function isSpeechSynthesisSupported(): boolean {
 }
 
 /**
- * Mobile-specific Mic Unlock
+ * Mobile-specific Mic Unlock & AudioContext Resume
  */
 export async function unlockMic(): Promise<void> {
   if (typeof navigator === 'undefined' || !navigator.mediaDevices) return;
   
-  console.log("[Mobile Speech] Attempting mic unlock/permission request...");
+  console.log("[Mobile] Attempting mic unlock/permission request...");
   try {
+    // Force a permission check/grant
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     stream.getTracks().forEach(track => track.stop());
-    console.log("[Mobile Speech] Mic unlocked successfully.");
+    console.log("[Mobile] Mic permission verified.");
   } catch (err) {
-    console.warn("[Mobile Speech] Mic unlock failed:", err);
+    console.warn("[Mobile] Mic permission check failed:", err);
   }
 
-  // Resume AudioContext if it exists (for mobile browsers)
-  if (typeof window !== 'undefined' && (window as any).AudioContext) {
-    const ctx = new ((window as any).AudioContext || (window as any).webkitAudioContext)();
-    if (ctx.state === 'suspended') {
-      await ctx.resume();
-      console.log("[Mobile Speech] AudioContext resumed.");
+  // Resume AudioContext for mobile browsers
+  if (typeof window !== 'undefined') {
+    const AudioContextClass = (window as any).AudioContext || (window as any).webkitAudioContext;
+    if (AudioContextClass) {
+        const tempCtx = new AudioContextClass();
+        if (tempCtx.state === 'suspended') {
+            await tempCtx.resume();
+            console.log("[Mobile] AudioContext resumed.");
+        }
     }
   }
 }
@@ -80,32 +86,35 @@ function clearTimers() {
   if (noSpeechTimer) { clearTimeout(noSpeechTimer); noSpeechTimer = null; }
   if (silenceTimer) { clearTimeout(silenceTimer); silenceTimer = null; }
   if (startingGuardTimer) { clearTimeout(startingGuardTimer); startingGuardTimer = null; }
+  if (keepAliveInterval) { clearInterval(keepAliveInterval); keepAliveInterval = null; }
+  if (maxDurationTimeout) { clearTimeout(maxDurationTimeout); maxDurationTimeout = null; }
 }
 
 /**
- * Mobile-specific timeouts
+ * Mobile-specific timeouts (v2)
  */
 function startMobileTimeouts() {
-  clearTimers();
+  if (noSpeechTimer) clearTimeout(noSpeechTimer);
+  if (silenceTimer) clearTimeout(silenceTimer);
+  
   if (!isListeningActive) return;
 
-  // No-speech timeout: 8 seconds (if they haven't said ANY words)
+  // No-speech timeout: 8 seconds
   noSpeechTimer = setTimeout(() => {
     if (!fullTranscript.trim() && isListeningActive) {
-      console.log("[Mobile Speech] No speech detected for 8s.");
+      console.log("[Mobile] No speech detected for 8s.");
       currentOnResult?.({ transcript: "I didn't catch that. Could you say it again?", isFinal: false });
     }
   }, 8000);
 
-  // Silence timeout: 4 seconds (if they stopped talking)
-  // Note: Only triggers if there IS some text
+  // Silence timeout: 5 seconds (as requested in v2)
   if (fullTranscript.trim()) {
     silenceTimer = setTimeout(() => {
       if (isListeningActive) {
-        console.log("[Mobile Speech] 4s silence detected. Auto-ending.");
+        console.log("[Mobile] 5s silence detected. Finalizing.");
         stopListening();
       }
-    }, 4000);
+    }, 5000);
   }
 }
 
@@ -118,63 +127,75 @@ function initRecognition() {
   rec.interimResults = true;
   rec.lang = 'en-US';
 
+  rec.onstart = () => {
+    isRecognitionActuallyRunning = true;
+    isStarting = false;
+    if (startingGuardTimer) clearTimeout(startingGuardTimer);
+    console.log("[Mobile] [EVENT] onstart: Mic is now LIVE.");
+  };
+
   rec.onresult = (event: any) => {
     let interimTranscript = '';
     let currentFinalTranscript = '';
 
     for (let i = event.resultIndex; i < event.results.length; i++) {
-      const result = event.results[i];
-      if (result.isFinal) {
-        currentFinalTranscript += result[0].transcript;
-      } else {
-        interimTranscript += result[0].transcript;
-      }
+        const result = event.results[i];
+        if (result.isFinal) {
+            currentFinalTranscript += result[0].transcript;
+        } else {
+            interimTranscript += result[0].transcript;
+        }
     }
 
     if (currentFinalTranscript) {
-      fullTranscript = (fullTranscript + " " + currentFinalTranscript).trim();
-      autoReviveCount = 0; // Reset on successful speech
+        fullTranscript = (fullTranscript + " " + currentFinalTranscript).trim();
+        autoReviveCount = 0; 
     }
 
     const displayTranscript = (fullTranscript + " " + interimTranscript).trim();
     if (currentOnResult) {
-      currentOnResult({ transcript: displayTranscript, isFinal: false });
+        currentOnResult({ transcript: displayTranscript, isFinal: false });
     }
 
-    // Refresh timeouts on every result
     startMobileTimeouts();
   };
 
   rec.onerror = (event: any) => {
-    console.warn("[Mobile Speech] Recognition error:", event.error);
+    console.warn("[Mobile] [EVENT] onerror:", event.error);
+    isRecognitionActuallyRunning = false;
     
-    // Critical errors that require stopping
-    if (event.error === 'not-allowed') {
+    const error = event.error;
+    
+    if (error === 'not-allowed') {
       isListeningActive = false;
       currentOnError?.("Microphone permission denied. Please allow access in settings.");
       return;
     }
 
-    // Network errors or aborted - attempt auto-restart with backoff
-    if (isListeningActive && autoReviveCount < MAX_AUTO_REVIVE) {
-      autoReviveCount++;
-      const delay = Math.pow(2, autoReviveCount) * 500;
-      console.log(`[Mobile Speech] Auto-reviving (attempt ${autoReviveCount}) in ${delay}ms...`);
-      setTimeout(() => {
-        if (isListeningActive) startRecognitionInstance(true);
-      }, delay);
-    } else if (autoReviveCount >= MAX_AUTO_REVIVE) {
-      isListeningActive = false;
-      currentOnError?.("Speech recognition is struggling on your device. You can try typing your response instead.");
+    // Auto-restart strategies for mobile-specific errors
+    if (isListeningActive) {
+        if (error === 'network' || error === 'aborted' || error === 'no-speech') {
+            const delay = error === 'network' ? 500 : 0;
+            console.log(`[Mobile] Error [${error}] - Restarting immediately...`);
+            setTimeout(() => {
+                if (isListeningActive) startRecognitionInstance(true);
+            }, delay);
+        } else if (error === 'audio-capture') {
+            console.log("[Mobile] Mic busy - Retrying in 1s...");
+            setTimeout(() => {
+                if (isListeningActive) startRecognitionInstance(true);
+            }, 1000);
+        }
     }
   };
 
   rec.onend = () => {
+    isRecognitionActuallyRunning = false;
+    console.log("[Mobile] [EVENT] onend. Active?", isListeningActive);
+    
     if (isListeningActive && !isTTSPlaying) {
-      console.log("[Mobile Speech] End detected but active - restarting...");
-      setTimeout(() => {
-        if (isListeningActive) startRecognitionInstance(true);
-      }, 100);
+      console.log("[Mobile] Premature end - Restarting instantly.");
+      startRecognitionInstance(true);
     }
   };
 
@@ -184,43 +205,41 @@ function initRecognition() {
 function resetRecognition() {
   if (recognition) {
     try {
+      recognition.onstart = null;
       recognition.onend = null;
       recognition.onresult = null;
       recognition.onerror = null;
-      recognition.stop();
+      recognition.abort();
     } catch (e) {}
     recognition = null;
   }
 }
 
-function startRecognitionInstance(forceRefresh = true) {
-  if (isTTSPlaying) return; // Prevent mic starting during TTS
+function startRecognitionInstance(forceFresh = true) {
+  if (isTTSPlaying || !isListeningActive) return;
   
-  if (forceRefresh || !recognition) {
+  // v2: ALWAYS create fresh instance on mobile (crucial for iOS)
+  if (forceFresh || !recognition) {
     resetRecognition();
     recognition = initRecognition();
   }
 
   if (isStarting || !recognition) return;
-  
   isStarting = true;
   
   if (startingGuardTimer) clearTimeout(startingGuardTimer);
   startingGuardTimer = setTimeout(() => {
     if (isStarting) {
+      console.log("[Mobile] Watchdog: Start timed out. Retrying fresh...");
       isStarting = false;
       startRecognitionInstance(true);
     }
-  }, 2000);
+  }, 2500);
 
   try {
     recognition.start();
-    recognition.onstart = () => {
-      isStarting = false;
-      if (startingGuardTimer) clearTimeout(startingGuardTimer);
-      console.log("[Mobile Speech] Mic active.");
-    };
   } catch (e: any) {
+    console.warn("[Mobile] Start failed:", e.message);
     isStarting = false;
     if (e.name === 'InvalidStateError') {
       setTimeout(() => startRecognitionInstance(true), 100);
@@ -228,6 +247,9 @@ function startRecognitionInstance(forceRefresh = true) {
   }
 }
 
+/**
+ * START LISTENING: v2 Critical Sequence
+ */
 export async function startListening(
   onResult: SpeechCallback,
   onEnd: EndCallback,
@@ -238,7 +260,9 @@ export async function startListening(
     return;
   }
 
-  // Ensure state is clean
+  console.log("[Mobile] startListening called. Initializing v2 critical sequence.");
+
+  // 1. Sync State
   isListeningActive = true;
   fullTranscript = "";
   autoReviveCount = 0;
@@ -246,22 +270,52 @@ export async function startListening(
   currentOnEnd = onEnd;
   currentOnError = onError;
 
-  await unlockMic(); // Re-unlock for safety
-  startMobileTimeouts();
-  startRecognitionInstance(true);
+  // 2. Clear everything
+  clearTimers();
+  stopSpeaking(); // Ensure audio is stopped
+
+  // 3. Wait for Handoff (important to let mobile audio system settle)
+  const delay = device.handoffDelay;
+  console.log(`[Mobile] Handoff delay: ${delay}ms...`);
+  
+  setTimeout(async () => {
+    if (!isListeningActive) return;
+
+    // 4. Resume Context & Request Mic
+    await unlockMic();
+    
+    // 5. Start Keep-Alive (Watchdog)
+    keepAliveInterval = setInterval(() => {
+        if (isListeningActive && !isRecognitionActuallyRunning && !isStarting && !isTTSPlaying) {
+            console.log("[Mobile] Keep-Alive: Detection offline. Reviving...");
+            startRecognitionInstance(true);
+        }
+    }, 500);
+
+    // 6. Max Duration Guard (Refresh every 50s)
+    maxDurationTimeout = setTimeout(() => {
+        if (isListeningActive) {
+            console.log("[Mobile] Max Duration Guard: Proactive refresh to prevent browser kill.");
+            startRecognitionInstance(true);
+        }
+    }, 50000);
+
+    // 7. Initial start
+    startMobileTimeouts();
+    startRecognitionInstance(true);
+  }, delay);
 }
 
 export function stopListening(): void {
   const finalTranscript = fullTranscript.trim();
+  console.log("[Mobile] stopListening requested. Cleanup active.");
+  
   isListeningActive = false;
   isStarting = false;
+  isRecognitionActuallyRunning = false;
   clearTimers();
   
-  if (recognition) {
-    try {
-      recognition.abort();
-    } catch (e) {}
-  }
+  resetRecognition();
 
   if (currentOnEnd && finalTranscript) {
     currentOnEnd(finalTranscript);
@@ -291,12 +345,15 @@ export function speak(
   onStart?: (duration?: number) => void,
   onEnd?: () => void
 ): void {
-  // Mobile Safety: Stop recognition before speaking
   const wasListening = isListeningActive;
+  
+  // v2: Aggressive stop before TTS
   if (wasListening) {
-    console.log("[Mobile Speech] TTS Start - Silencing mic.");
+    console.log("[Mobile] speak() called. Disabling mic for TTS stability.");
     isListeningActive = false;
-    if (recognition) try { recognition.abort(); } catch(e){}
+    isRecognitionActuallyRunning = false;
+    clearTimers();
+    resetRecognition();
   }
 
   isTTSPlaying = true;
@@ -305,16 +362,10 @@ export function speak(
     isTTSPlaying = false;
     onEnd?.();
     
-    // Handoff Delay for stability
-    const delay = device.handoffDelay;
-    console.log(`[Mobile Speech] TTS End - Waiting ${delay}ms before handoff.`);
-    
-    setTimeout(() => {
-      if (wasListening) {
-        isListeningActive = true;
-        startRecognitionInstance(true);
-      }
-    }, delay);
+    if (wasListening) {
+      console.log("[Mobile] TTS finished. Triggering re-start flow.");
+      startListening(currentOnResult!, currentOnEnd!, currentOnError!);
+    }
   };
 
   speakWithElevenLabs(text, onStart, wrappedOnEnd, speakNative);
@@ -363,6 +414,11 @@ export function stopSpeaking(): void {
     window.speechSynthesis.cancel();
   }
 }
+
+/**
+ * Helper to check if we are in mobile engine via console
+ */
+(window as any).__SPEECH_ENGINE__ = "MOBILE_V2";
 
 export { startListening as startListeningFinal };
 export { startListening as startListeningStandard };

@@ -31,11 +31,11 @@ export function MobileNotice() {
   if (!show) return null
 
   return (
-    <div className="fixed inset-0 z-[10000] bg-brand-navy/80 backdrop-blur-md flex items-center justify-center p-6 animate-in fade-in duration-300">
+    <div className="fixed inset-0 z-[10000] bg-background/80 backdrop-blur-md flex items-center justify-center p-6 animate-in fade-in duration-300">
       <div className="max-w-md w-full glass-card p-8 sm:p-10 text-center relative overflow-hidden animate-in fade-in zoom-in-95 slide-in-from-bottom-10 duration-500">
         <button 
           onClick={handleDismiss}
-          className="absolute top-4 right-4 p-2 text-white/40 hover:text-white transition-colors"
+          className="absolute top-4 right-4 p-2 text-foreground/40 hover:text-foreground transition-colors"
         >
           <X className="w-6 h-6" />
         </button>
@@ -45,13 +45,13 @@ export function MobileNotice() {
             <div className="w-20 h-20 bg-brand-amber/10 rounded-2xl flex items-center justify-center rotate-3">
               <Laptop className="w-10 h-10 text-brand-amber -rotate-3" />
             </div>
-            <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-brand-cyan rounded-full flex items-center justify-center border-4 border-brand-navy scale-110 shadow-lg">
+            <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-brand-cyan rounded-full flex items-center justify-center border-4 border-background scale-110 shadow-lg">
                 <Monitor className="w-4 h-4 text-brand-navy" />
             </div>
           </div>
         </div>
 
-        <h2 className="text-2xl font-black tracking-tight mb-3 text-white uppercase italic">
+        <h2 className="text-2xl font-black tracking-tight mb-3 text-foreground uppercase italic">
           Better on Laptop
         </h2>
         
@@ -66,12 +66,12 @@ export function MobileNotice() {
            >
              Continue on Mobile
            </button>
-           <p className="text-[10px] text-white/30 uppercase tracking-widest font-bold">
+           <p className="text-[10px] text-foreground/30 uppercase tracking-widest font-bold">
              Or open link on your computer
            </p>
         </div>
         
-        <div className="flex items-center justify-center space-x-2 text-[10px] uppercase tracking-[0.2em] font-black text-white/20">
+        <div className="flex items-center justify-center space-x-2 text-[10px] uppercase tracking-[0.2em] font-black text-foreground/20">
           <Layout className="w-3 h-3" />
           <span>Cuemath Hiring</span>
         </div>
