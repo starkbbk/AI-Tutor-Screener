@@ -228,10 +228,30 @@ export function CandidateForm({ onStepChange }: { onStepChange?: (step: number) 
     setStep(3)
   }
 
-  const handleStartTest = () => {
+  const handleStartTest = async () => {
     setIsTesting(true)
     setTestResult("")
     setMicError(null)
+
+    if (isMobileDevice) {
+      console.log("[MIC TEST] Mobile detected: Verification-only mode (No SpeechRecognition).");
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        stream.getTracks().forEach(t => t.stop());
+        setTestResult("Microphone detected and ready! Continue to start your interview.");
+        setIsValidating(true);
+        setTimeout(() => { 
+          setIsValidating(false); 
+          setHasTested(true);
+          setIsTesting(false); 
+        }, 1500);
+      } catch (err: any) {
+        setIsTesting(false);
+        setMicError("Could not access microphone. Please check your system settings.");
+      }
+      return;
+    }
+
     startListening(
       (res: SpeechRecognitionResult) => setTestResult(res.transcript),
       (finalTranscript: string) => {

@@ -39,6 +39,11 @@ export function InterviewRoom() {
   const currentQuestionIndexRef = useRef(state.currentQuestionIndex)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   
+  // Mobile-specific local recognition engine state
+  const mobileRecognitionRef = useRef<any>(null);
+  const mobileRetryCountRef = useRef(0);
+  const isMobile = typeof window !== 'undefined' && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  
   // Keep Ref in sync with state for use in callbacks (prevents stale closures)
   useEffect(() => {
     currentQuestionIndexRef.current = state.currentQuestionIndex;
@@ -66,9 +71,18 @@ export function InterviewRoom() {
     return () => {
       if (interval) clearInterval(interval);
       stopSpeaking() 
-      stopListening()
+      if (isMobile) {
+         if (mobileRecognitionRef.current) {
+            mobileRecognitionRef.current.onend = null;
+            mobileRecognitionRef.current.onerror = null;
+            mobileRecognitionRef.current.abort();
+            mobileRecognitionRef.current = null;
+         }
+      } else {
+         stopListening()
+      }
     }
-  }, [hasStarted, state.interviewStatus])
+  }, [hasStarted, state.interviewStatus, isMobile])
 
   // Initial greeting
   useEffect(() => {
@@ -346,35 +360,108 @@ export function InterviewRoom() {
     }, 4000)
   }
 
-  const handleStartListening = async () => {
-    if (state.interviewStatus === 'completing' || state.interviewStatus === 'completed' || state.isRecording) return;
+  const startLocalMobileRecognition = async () => {
+    if (state.interviewStatus === 'completing' || state.interviewStatus === 'completed') return;
     
-    // CRITICAL: Never turn on mic in fallback/text mode
-    if (state.useFallbackMode) return;
-
-    // Fresh mic permission trick for mobile
-    const isMobileStatus = typeof window !== 'undefined' && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-    if (isMobileStatus) {
-      console.log("[MIC HANDOFF] Mobile detected: Requesting fresh permission...");
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        stream.getTracks().forEach(t => t.stop());
-        await new Promise(r => setTimeout(r, 300));
-        console.log("[MIC HANDOFF] Permissions refreshed.");
-      } catch (e) {
-        console.warn("[MIC HANDOFF] Permission refresh failed:", e);
-      }
+    console.log("[MOBILE_MIC] Initializing autonomous fresh instance...");
+    
+    // Cleanup previous if exists
+    if (mobileRecognitionRef.current) {
+        try {
+            mobileRecognitionRef.current.onend = null;
+            mobileRecognitionRef.current.onerror = null;
+            mobileRecognitionRef.current.abort();
+        } catch(e) {}
     }
 
+    // Step 1: Fresh permission/stream check
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        stream.getTracks().forEach(t => t.stop());
+        await new Promise(r => setTimeout(r, 400));
+    } catch(e) {
+        console.warn("[MOBILE_MIC] getUserMedia pre-check failed:", e);
+    }
+
+    // Step 2: Create BRAND NEW Instance
+    const SpeechRecognitionClass = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognitionClass) {
+        console.error("[MOBILE_MIC] SpeechRecognition not supported on this device.");
+        return;
+    }
+
+    const rec = new SpeechRecognitionClass();
+    rec.continuous = true;
+    rec.interimResults = true;
+    rec.lang = 'en-US';
+
+    rec.onstart = () => {
+        console.log("[MOBILE_MIC] Instance LIVE.");
+        setRecording(true);
+        mobileRetryCountRef.current = 0;
+    };
+
+    rec.onresult = (event: any) => {
+        let transcript = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+            transcript += event.results[i][0].transcript;
+        }
+        if (transcript) {
+            setCurrentTranscript(prev => (prev + " " + transcript).trim());
+            setLastTranscriptUpdate(Date.now());
+        }
+    };
+
+    rec.onerror = (event: any) => {
+        console.warn("[MOBILE_MIC] Error:", event.error);
+        if (event.error === 'not-allowed') return;
+        
+        if (mobileRetryCountRef.current < 5) {
+            mobileRetryCountRef.current++;
+            console.log(`[MOBILE_MIC] Retrying (${mobileRetryCountRef.current}/5) in 300ms...`);
+            setTimeout(startLocalMobileRecognition, 300);
+        }
+    };
+
+    rec.onend = () => {
+        console.log("[MOBILE_MIC] Instance ENDED.");
+        // If interview is still active and Mayo isn't speaking, restart immediately
+        if (state.interviewStatus === 'in_progress') {
+            const restartDelay = 200;
+            console.log(`[MOBILE_MIC] Auto-restarting in ${restartDelay}ms...`);
+            setTimeout(startLocalMobileRecognition, restartDelay);
+        } else {
+            setRecording(false);
+        }
+    };
+
+    mobileRecognitionRef.current = rec;
+    try {
+        rec.start();
+    } catch(e) {
+        console.error("[MOBILE_MIC] Fatal start error:", e);
+    }
+  };
+
+  const handleStartListening = async () => {
+    if (state.interviewStatus === 'completing' || state.interviewStatus === 'completed' || state.isRecording) return;
+    if (state.useFallbackMode) return;
+
+    if (isMobile) {
+      startLocalMobileRecognition();
+      stopSpeaking();
+      setAISpeaking(false);
+      isProcessingQuestion.current = false;
+      return;
+    }
+
+    // Desktop Path (Original)
     stopSpeaking()
     setAISpeaking(false)
     setRecording(true)
     setCurrentTranscript("")
-    setLastTranscriptUpdate(Date.now()); // Reset timer
+    setLastTranscriptUpdate(Date.now()); 
     isProcessingQuestion.current = false
-    
-    // Zero-latency handoff for instant microphone activation
-    const handoffDelay = 0;
     
     setTimeout(() => {
       startListening(
@@ -391,13 +478,12 @@ export function InterviewRoom() {
       (err: string) => {
         console.error("[INTERVIEW ROOM] Mic error:", err)
         setRecording(false)
-        // Auto-recovery if permitted
         if (state.interviewStatus !== 'completing') {
            setTimeout(handleStartListening, 1000);
         }
       }
       )
-    }, handoffDelay);
+    }, 0);
   }
 
   const handleCandidateSpeakingFinished = (transcript: string) => {
@@ -461,7 +547,14 @@ export function InterviewRoom() {
 
   const handleSkipQuestion = () => {
     isSkippingRef.current = true
-    stopListening()
+    if (isMobile) {
+      if (mobileRecognitionRef.current) {
+          mobileRecognitionRef.current.onend = null;
+          mobileRecognitionRef.current.abort();
+      }
+    } else {
+      stopListening()
+    }
     stopSpeaking()
     setRecording(false)
     setAISpeaking(false)
