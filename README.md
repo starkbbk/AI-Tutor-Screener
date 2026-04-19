@@ -9,7 +9,7 @@
 > ⚡ Built using free-tier tools to simulate a real-world scalable hiring system.
 
 🔗 **Live Demo:** [ai-tutor-screener-tau.vercel.app](https://ai-tutor-screener-tau.vercel.app)
-🎥 **Video Walkthrough:** [Watch Demo](#)
+🎥 **Video Walkthrough:** [Watch Demo](https://drive.google.com/file/d/1DHt0sbMMBN1MQc5rRsIMh3Vmr3UV2pwo/view)
 👤 **Built by:** Shivanand Verma
 
 ---
