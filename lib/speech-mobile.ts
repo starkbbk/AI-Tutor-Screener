@@ -418,7 +418,9 @@ export function stopSpeaking(): void {
 /**
  * Helper to check if we are in mobile engine via console
  */
-(window as any).__SPEECH_ENGINE__ = "MOBILE_V2";
+if (typeof window !== 'undefined') {
+  (window as any).__SPEECH_ENGINE__ = "MOBILE_V2";
+}
 
 export { startListening as startListeningFinal };
 export { startListening as startListeningStandard };
