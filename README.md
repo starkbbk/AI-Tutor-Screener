@@ -10,7 +10,7 @@
 
 ## 🚀 Quick Demo
 
-![Demo](./public/demo.gif)
+![Demo](./public/webdemo.gif)
 
 ---
 
@@ -38,7 +38,7 @@ An **AI interviewer** that conducts professional voice-based screening interview
 
 The candidate visits the website → speaks naturally with the AI interviewer → answers 6 carefully designed questions → receives an automated assessment report with scores across 5 teaching dimensions.
 
-**What used to take 3-5 days and a human interviewer now takes 8 minutes and costs practically nothing.**
+**What used to take 3-5 days and a human interviewer now takes 10 minutes and costs practically nothing.**
 
 ---
 
@@ -157,9 +157,9 @@ Landing → Application → Mic Test → AI Interview → Report → PDF
 
 ```
 ┌─────────────────────────────────────────────────┐
-│                   Frontend                       │
-│  Landing → Mic Test → Interview Room → Report    │
-│  (Next.js + React + Tailwind)                    │
+│                   Frontend                      │
+│  Landing → Mic Test → Interview Room → Report   │
+│  (Next.js + React + Tailwind)                   │
 └──────────────────────┬──────────────────────────┘
                        │
             ┌──────────┴──────────┐
@@ -205,7 +205,7 @@ npm run dev
 
 ---
 
-## 👨‍💻 About the Builder
+## 👨💻 About the Builder
 **Shivanand Verma**  
 CS (AI/ML) student building real-world AI systems with a strong focus on product thinking and scalability.
 
@@ -218,4 +218,4 @@ This project demonstrates:
 ---
 
 ## ⚠️ License
-© 2025 Shivanand Verma. Unauthorized copying or reuse of this code is strictly prohibited.
+© 2026 Shivanand Verma. Unauthorized copying or reuse of this code is strictly prohibited.
