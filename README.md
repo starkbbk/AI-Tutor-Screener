@@ -222,6 +222,26 @@ Key 1 → ❌ Rate Limited → Key 2 → ❌ → Key 3 → ... → Browser Fallb
 
 </details>
 
+<details>
+<summary><b>📱 5. Mobile Audio Context Handoff</b></summary>
+
+**❌ Problem:** Mobile Safari crashes if microphone activates immediately after the speaker. Android Chrome drops recognition mid-interview.
+
+**✅ Solution:** Implemented a device-aware speech system:
+
+| Device | Fix Applied |
+|:------:|------------|
+| 📱 iOS Safari | 1200ms handoff delay + fresh mic instance per turn + AudioContext resume |
+| 📱 Android Chrome | 800ms handoff delay + auto-revive on recognition death + error recovery |
+| 🖥️ Desktop | No changes — original flow preserved exactly |
+
+Additional mobile safeguards:
+- **Auto-Revive**: If speech recognition dies, automatically restart up to 3 times
+- **Fresh Instances**: Create brand new SpeechRecognition on every turn (mobile browsers don't like reusing)
+- **Mic Release**: Explicit stream cleanup between pages to prevent stale mic locks
+- **Text Input Fallback**: If mic fails 3 times, gracefully suggest typing instead
+
+</details>
 
 ---
 
@@ -255,6 +275,9 @@ Maya evaluates candidates across **5 dimensions** (scored out of 5):
 
 > Designed as a fault-tolerant system with multi-key API fallback and deterministic interview flow.
 
+<details>
+<summary><b>🔷 System Overview (click to expand)</b></summary>
+
 ```
 ┌──────────────────────────────────────────────────────┐
 │                    🖥️ FRONTEND                        │
@@ -280,7 +303,10 @@ Maya evaluates candidates across **5 dimensions** (scored out of 5):
        └─────────┘  └───────────┘  └─────────┘
 ```
 
-### 🔄 Core Interview Loop
+</details>
+
+<details>
+<summary><b>🔄 Core Interview Loop (click to expand)</b></summary>
 
 ```
     ┌────────────────────────────────────────────┐
@@ -322,7 +348,10 @@ Maya evaluates candidates across **5 dimensions** (scored out of 5):
                      └→ navigate("/report")
 ```
 
-### 🔊 TTS Fallback Chain
+</details>
+
+<details>
+<summary><b>🔊 TTS Fallback Chain (click to expand)</b></summary>
 
 ```
 speak()
@@ -339,9 +368,14 @@ speak()
 💡 Result: Voice NEVER fails — zero silent interviews.
 ```
 
+</details>
+
 ---
 
 ## 📁 Project Structure
+
+<details>
+<summary><b>📂 Full project structure (click to expand)</b></summary>
 
 ```
 ai-tutor-screener/
@@ -420,6 +454,8 @@ ai-tutor-screener/
 ```
 
 > 📊 **Codebase:** 41 files · 114 functions · 122 dependency connections
+
+</details>
 
 ---
 
