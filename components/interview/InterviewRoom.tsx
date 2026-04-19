@@ -538,18 +538,19 @@ export function InterviewRoom() {
         
         {/* Middle: Integrated Progress Bar */}
         {hasStarted && (
-          <div className="hidden xxs:flex flex-col items-center flex-1 max-w-[120px] sm:max-w-md mx-2 sm:mx-4">
-            <div className="flex justify-between w-full mb-1.5 px-1 items-end">
-              <span className="text-[7px] sm:text-[9px] font-black text-foreground uppercase tracking-[0.2em] opacity-40">Interview Progress</span>
-              <span className="text-[8px] sm:text-[10px] font-black text-muted-foreground uppercase opacity-80">
-                {`Q${Math.min(state.currentQuestionIndex + 1, TOTAL_QUESTIONS)} of ${TOTAL_QUESTIONS}`}
+          <div className="flex-1 flex flex-col items-center px-2 sm:px-8 max-w-xl mx-auto animate-in slide-in-from-top-2 duration-700">
+            <div className="flex justify-between w-full mb-1 sm:mb-2 items-end px-0.5">
+              <span className="text-[7px] sm:text-[9px] font-black text-foreground uppercase tracking-[0.2em] opacity-30">Interview Progress</span>
+              <span className="text-[8px] sm:text-[11px] font-black text-brand-amber uppercase tracking-wider">
+                {`Stage ${Math.min(state.currentQuestionIndex + 1, TOTAL_QUESTIONS)} / ${TOTAL_QUESTIONS}`}
               </span>
             </div>
-            <div className="w-full h-1 bg-muted/30 rounded-full overflow-hidden border border-border/50">
+            <div className="w-full h-1 sm:h-1.5 bg-muted/30 rounded-full overflow-hidden border border-border/40 relative">
               <div 
-                className="h-full bg-brand-amber transition-all duration-1000 ease-out shadow-[0_0_8px_rgba(255,159,28,0.4)]"
+                className="h-full bg-brand-amber transition-all duration-1000 ease-out shadow-[0_0_12px_rgba(255,184,0,0.4)] relative z-10"
                 style={{ width: `${Math.min(((state.currentQuestionIndex + 1) / TOTAL_QUESTIONS) * 100, 100)}%` }}
               />
+              <div className="absolute inset-0 bg-brand-amber/5 animate-pulse" />
             </div>
           </div>
         )}
