@@ -82,6 +82,13 @@ The candidate visits the website → speaks naturally with the AI interviewer �
 - **Automatic silence detection** moves the conversation forward naturally
 
 ### 🤖 Intelligent AI Interviewer (Maya)
+<table>
+  <tr>
+    <td><img src="./public/maya.png" width="100" height="100" style="border-radius: 50%;"></td>
+    <td><strong>Maya</strong><br><span style="color: grey;">AI Tutor Screener</span></td>
+  </tr>
+</table>
+
 - Powered by **Llama 3.3 70B** via Groq — ultra-fast, intelligent inference
 - **One question per turn** — linear, bulletproof interview flow
 - **Strict question tracking** — AI cannot repeat or skip questions

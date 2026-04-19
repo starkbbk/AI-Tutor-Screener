@@ -93,15 +93,20 @@ export function TranscriptDisplay({
           key={msg.id} 
           className={`flex flex-col w-full ${msg.role === 'candidate' ? 'items-end' : 'items-start'} animate-in fade-in slide-in-from-bottom-4 duration-500`}
         >
-          <div className={`flex items-center mb-3 px-3 space-x-2 text-[10px] font-black tracking-[0.2em] uppercase ${msg.role === 'ai' ? 'text-brand-cyan' : 'text-brand-amber'}`}>
+          <div className={`flex items-center mb-3 px-2 sm:px-3 space-x-2.5 sm:space-x-3 text-[10px] font-black tracking-[0.2em] uppercase ${msg.role === 'ai' ? 'text-brand-cyan' : 'text-brand-amber font-bold'}`}>
             {msg.role === 'ai' ? (
               <>
-                <Bot className="w-3.5 h-3.5" /> 
-                <span>AI Intelligence</span>
+                <div className="relative w-6 h-6 sm:w-8 sm:h-8 rounded-full overflow-hidden border-2 border-brand-cyan/20 bg-muted/50 shrink-0 shadow-sm">
+                  <img src="/maya.png" alt="Maya" className="w-full h-full object-cover scale-110" />
+                </div>
+                <div className="flex flex-col sm:flex-row sm:items-baseline sm:gap-2">
+                  <span className="text-[11px] sm:text-[13px] tracking-tight">Maya</span>
+                  <span className="text-[7px] sm:text-[8px] opacity-50 lowercase tracking-normal font-medium hidden xxs:inline">AI Interviewer</span>
+                </div>
                 {msg.status === 'done' && (
                   <button 
                     onClick={() => handleReplayClick(msg.content)}
-                    className="ml-2 hover:bg-brand-cyan/20 p-1 rounded-full transition-colors cursor-pointer"
+                    className="ml-auto hover:bg-brand-cyan/20 p-1 rounded-full transition-colors cursor-pointer"
                     title="Replay message"
                   >
                     <Volume2 className="w-3.5 h-3.5" />
@@ -109,7 +114,15 @@ export function TranscriptDisplay({
                 )}
               </>
             ) : (
-              <><span>Respondent</span> <UserCircle className="w-3.5 h-3.5" /></>
+              <>
+                <div className="flex flex-col items-end">
+                   <span className="text-[10px] sm:text-[11px] tracking-tight">Respondent</span>
+                   <span className="text-[7px] opacity-50 lowercase tracking-normal font-medium hidden xxs:inline">Candidate</span>
+                </div>
+                <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-brand-amber/10 flex items-center justify-center border-2 border-brand-amber/20 shrink-0">
+                  <UserCircle className="w-4 h-4 sm:w-5 sm:h-5 text-brand-amber" />
+                </div>
+              </>
             )}
           </div>
           <div 
