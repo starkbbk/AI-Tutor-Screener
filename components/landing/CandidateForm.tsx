@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence, Variants } from "framer-motion"
 import { useRouter } from "next/navigation"
 import { useInterview } from "@/context/InterviewContext"
-import { isSpeechRecognitionSupported, startListening, stopListening, preloadVoices } from "@/lib/speech-adapter"
+import { isSpeechRecognitionSupported, startListening, stopListening, preloadVoices, type SpeechRecognitionResult } from "@/lib/speech-adapter"
 import { cn } from "@/lib/utils"
 import {
   Mic, MicOff, AlertCircle, CheckCircle2, Loader2,
@@ -206,7 +206,7 @@ export function CandidateForm({ onStepChange }: { onStepChange?: (step: number) 
     setTestResult("")
     setMicError(null)
     startListening(
-      (res) => setTestResult(res.transcript),
+      (res: SpeechRecognitionResult) => setTestResult(res.transcript),
       (finalTranscript: string) => {
         setIsTesting(false)
         if (finalTranscript.trim().length > 0) {
