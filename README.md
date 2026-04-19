@@ -12,18 +12,6 @@
 
 ![Demo](./public/demo.gif)
 
-## 🖼️ Screenshots
-### Landing
-![Landing](./public/landing.png)
-### Application
-![Application](./public/application.png)
-### Mic Test
-![Mic Test](./public/mic-test.png)
-### Interview 
-![Interview](./public/interview.png)
-### Report
-![Report](./public/report.png)
-
 ---
 
 ## 🎯 The Problem
